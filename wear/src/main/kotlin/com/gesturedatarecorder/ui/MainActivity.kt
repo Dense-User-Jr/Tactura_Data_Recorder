@@ -12,6 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,7 +38,7 @@ import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.compose.foundation.lazy.LazyColumn
 import com.gesturedatarecorder.recording.Gesture
 import com.gesturedatarecorder.recording.RecordingPhase
 import com.gesturedatarecorder.recording.RecordingService
@@ -119,14 +120,19 @@ private fun RecorderScreen(bodySensorsGranted: Boolean) {
     }
 
     val busy = status.phase == RecordingPhase.COUNTDOWN || status.phase == RecordingPhase.RECORDING || status.phase == RecordingPhase.SAVING
-    ScalingLazyColumn(
+    LazyColumn(
         modifier = Modifier.fillMaxSize().background(Color(0xFF101418)),
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp)
     ) {
         item {
-            Text("Gesture Data", color = Color(0xFFFFB74D), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Text("Recorder", color = Color(0xFFFFB74D), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                Text("Gesture Data", color = Color(0xFFFFB74D), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text("Recorder", color = Color(0xFFFFB74D), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
         item {
             Text(

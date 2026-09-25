@@ -61,7 +61,18 @@ The watch should appear with a device or `tcpip` serial. If it appears as `unaut
 
 If more than one device is listed, save the watch serial and use `adb -s WATCH_SERIAL` in the commands below.
 
-### Install the APK
+### Option 1: Install through Android Studio
+
+1. Open the repository root in Android Studio. If prompted, allow Gradle to sync the project and install any missing SDK components.
+2. Enable ADB debugging on the watch using the steps above, then connect the watch over USB or pair it through Wireless debugging.
+3. In the Android Studio device selector, choose the connected Wear OS watch.
+4. Select the `wear` run configuration.
+5. Click **Run**. Android Studio builds the debug APK, installs it on the watch, and launches the app.
+6. On the watch, grant **Body Sensors** permission when the app requests it.
+
+If the watch is not listed, confirm that it appears in Android Studio's **Device Manager** or run `adb devices` in the terminal. Accept any debugging authorization prompt shown on the watch.
+
+### Option 2: Install the APK with ADB
 
 Install or update the debug build with:
 
@@ -69,7 +80,7 @@ Install or update the debug build with:
 adb install -r .\wear\build\outputs\apk\debug\wear-debug.apk
 ```
 
-Alternatively, open the project in Android Studio, select the `wear` run configuration, select the connected watch, and click **Run**. Android Studio builds, installs, and launches the app for you.
+After installation, open **Gesture Data Recorder** on the watch and grant **Body Sensors** permission when prompted.
 
 ## Record a gesture
 

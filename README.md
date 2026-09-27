@@ -99,11 +99,13 @@ Each recording is saved as a separate CSV in the watch's shared storage at:
 /sdcard/Download/GestureDataRecorder
 ```
 
-Filenames use the selected label in lowercase followed by a timestamp, for example:
+Filenames begin with a persistent recording number, followed by the selected label and a timestamp. For example:
 
 ```text
-twist_right_20260924_194114.csv
+0007_twist_right_20260924_194114.csv
 ```
+
+The number is based on the highest numbered CSV currently in the watch folder, which makes files easy to identify and sort. If the folder is emptied, the next recording starts at `0001`. If numbered files remain, the next recording uses the next highest number.
 
 To stop a countdown or recording early, tap **Cancel**. A cancelled recording is not saved.
 
@@ -151,6 +153,45 @@ adb shell ls /sdcard/Download/GestureDataRecorder
 ```
 
 The second command should print no CSV filenames. This leaves the app and its recording folder in place.
+
+## Plot sensor recordings
+
+The plotting utility is in `Accessory Software/sensor_gesture_plot.py`. Run it from the repository root after pulling recordings. With no input files, it automatically reads every `.csv` in:
+
+```text
+recordings/GestureDataRecorder
+```
+
+By default, it writes a new graph to the `Graphs` directory. The first graph is named:
+
+```text
+Accessory Software/Graphs/composite_sensors.png
+```
+
+If that file already exists, the script automatically uses a numbered name such as `composite_sensors_001.png`, then `composite_sensors_002.png`, so previous graphs are not overwritten.
+
+Run the default workflow with:
+
+```powershell
+python ".\Accessory Software\sensor_gesture_plot.py"
+```
+
+The `Graphs` directory is created automatically if it does not exist. To plot selected files instead, pass their paths:
+
+```powershell
+python ".\Accessory Software\sensor_gesture_plot.py" `
+	".\recordings\GestureDataRecorder\0007_twist_right_20260924_194114.csv"
+```
+
+To choose a different output file, use `-o` or `--output`. An explicitly supplied output path is used as-is:
+
+```powershell
+python ".\Accessory Software\sensor_gesture_plot.py" `
+	".\recordings\GestureDataRecorder\0007_twist_right_20260924_194114.csv" `
+	-o ".\Accessory Software\Graphs\twist_right_0007.png"
+```
+
+The utility produces accelerometer and gyroscope plots for the available channels. It aligns recordings on peak gyroscope magnitude by default and prints the number of recordings included in each plotted group.
 
 ## Interpret the CSV
 

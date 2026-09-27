@@ -179,7 +179,8 @@ class RecordingService : Service(), SensorEventListener {
 
     private fun saveCsv(): String? {
         val gesture = selectedGesture ?: return null
-        val fileName = "${gesture.name.lowercase(Locale.US)}_" +
+        val recordingNumber = nextRecordingNumber()
+        val fileName = "%04d_%s_".format(Locale.US, recordingNumber, gesture.name.lowercase(Locale.US)) +
             SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date(recordingStartWallMs)) + ".csv"
         val values = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, fileName)
@@ -203,6 +204,29 @@ class RecordingService : Service(), SensorEventListener {
             resolver.delete(uri, null, null)
             null
         }
+    }
+
+    private fun nextRecordingNumber(): Int {
+        val recordingDirectory = Environment.DIRECTORY_DOWNLOADS + "/GestureDataRecorder/"
+        val projection = arrayOf(MediaStore.Downloads.DISPLAY_NAME, MediaStore.Downloads.RELATIVE_PATH)
+        var highestNumber = 0
+        contentResolver.query(
+            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+            projection,
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(MediaStore.Downloads.DISPLAY_NAME)
+            val pathIndex = cursor.getColumnIndex(MediaStore.Downloads.RELATIVE_PATH)
+            while (cursor.moveToNext()) {
+                if (nameIndex < 0 || pathIndex < 0 || cursor.getString(pathIndex) != recordingDirectory) continue
+                val name = cursor.getString(nameIndex)
+                val number = name.substringBefore('_').toIntOrNull() ?: continue
+                highestNumber = maxOf(highestNumber, number)
+            }
+        }
+        return highestNumber + 1
     }
 
     private fun cancelRecording() {

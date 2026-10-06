@@ -24,6 +24,11 @@ export class LexiconLookupDecoder extends Decoder {
     this.lexicon = lexicon;
   }
 
+  /** Settings changed the lexicon (size, crude filter). @param {import('../lexicon/Lexicon.js').Lexicon} lexicon */
+  setLexicon(lexicon) {
+    this.lexicon = lexicon;
+  }
+
   /**
    * @param {BinToken[]} tokens
    * @returns {DecodeResult}

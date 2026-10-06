@@ -159,8 +159,23 @@ export class Pipeline {
    */
   loadLexicon(data, { excludeText = '', ...options } = {}) {
     if (!this.mapper) throw new Error('bins must load before the lexicon');
+    this.lexiconData = data;
+    this.excludeText = excludeText;
     this.lexicon = new Lexicon(data, this.mapper, { exclude: parseWordList(excludeText), ...options });
     return this.lexicon;
+  }
+
+  /**
+   * Rebuilds the vocabulary with new options (size, crude filter) from the
+   * data already loaded, and hands it to the decoder implementations that
+   * accept one (`setLexicon`).
+   * @param {import('./lexicon/Lexicon.js').LexiconOptions} options
+   */
+  reloadLexicon(options) {
+    if (!this.lexiconData) throw new Error('no lexicon data loaded');
+    const lexicon = this.loadLexicon(this.lexiconData, { excludeText: this.excludeText, ...options });
+    for (const impl of new Set([this.decoder?.standIn, this.decoder?.impl])) impl?.setLexicon?.(lexicon);
+    return lexicon;
   }
 
   /**

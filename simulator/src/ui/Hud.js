@@ -1,9 +1,11 @@
 import { h, panelHead } from './dom.js';
 import { StageBadge } from './components/StageBadge.js';
 import { ScreenMirror } from './components/ScreenMirror.js';
-import { FinishPicker } from './components/FinishPicker.js';
 import { PipelineTrace } from './components/PipelineTrace.js';
 import { Transcript } from './components/Transcript.js';
+import { TelemetryStrip } from './components/TelemetryStrip.js';
+import { SettingsPanel } from './components/SettingsPanel.js';
+import { HelpOverlay } from './components/HelpOverlay.js';
 import { isShortcutEvent } from '../core/keyboard.js';
 
 /**
@@ -14,10 +16,13 @@ import { isShortcutEvent } from '../core/keyboard.js';
  * @property {Record<string, BadgeState>} badges   rendered in insertion order
  * @property {{ fps: number, dpr: number, gl: string }} perf
  * @property {{ finish: string, mannequin: boolean }} watch
+ * @property {{ annotations: boolean, telemetry: boolean }} view
+ * @property {{ size: number, filterCrude: boolean }} lexicon
  * @property {{ yaw: number, pitch: number, distance: number }} camera   degrees, degrees, world units
  * @property {import('../pipeline/Composer.js').ComposeState} compose
  * @property {{ app: string }} screen
- * @property {{ id: string, muted: boolean }} voice
+ * @property {{ id: string, muted: boolean, volume: number }} voice
+ * @property {{ volume: number }} sound
  */
 
 /** @param {number} deg */
@@ -33,13 +38,20 @@ const GEAR_SVG = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" str
  * (02 screen, 03 trace), dock (04 transcript, 05 telemetry), and the
  * click-through stage over the full-bleed 3D viewport.
  *
- * Panels not built yet show honest placeholders; later phases fill them in.
+ * Settings (⚙) and help (? / H) open as overlays on top.
  */
 export class Hud {
   /**
-   * @param {{ root: HTMLElement, store: import('../core/store.js').Store<HudState>, bus: import('../core/eventBus.js').EventBus, version: string, finishes: Record<string, { label: string }>, voices: Array<{ id: string, label: string, note: string }>, deck: import('./components/GestureDeck.js').GestureDeck }} deps
+   * @param {{
+   *   root: HTMLElement,
+   *   store: import('../core/store.js').Store<HudState>,
+   *   bus: import('../core/eventBus.js').EventBus,
+   *   version: string,
+   *   deck: import('./components/GestureDeck.js').GestureDeck,
+   *   settings: Omit<ConstructorParameters<typeof SettingsPanel>[0], 'store'>,
+   * }} deps
    */
-  constructor({ root, store, bus, version, finishes, voices, deck }) {
+  constructor({ root, store, bus, version, deck, settings }) {
     this.root = root;
     this.store = store;
     this.bus = bus;
@@ -49,40 +61,12 @@ export class Hud {
     this.mirror = new ScreenMirror();
     this.trace = new PipelineTrace();
     this.transcript = new Transcript();
-    this.finishPicker = new FinishPicker({
-      finishes,
-      onPick: (finish) => store.update((s) => ({ ...s, watch: { ...s.watch, finish } })),
-    });
-    this.armToggle = /** @type {HTMLButtonElement} */ (
-      h('button', {
-        class: 'chip chamfer label',
-        type: 'button',
-        title: 'Show or hide the forearm and hand',
-        onClick: () => store.update((s) => ({ ...s, watch: { ...s.watch, mannequin: !s.watch.mannequin } })),
-      })
-    );
-    // voice picker (moves into the settings panel in Phase 5): click cycles the voices
-    this.voiceChip = /** @type {HTMLButtonElement} */ (
-      h('button', {
-        class: 'chip chamfer label',
-        type: 'button',
-        onClick: () =>
-          store.update((s) => {
-            const i = voices.findIndex((v) => v.id === s.voice.id);
-            return { ...s, voice: { ...s.voice, id: voices[(i + 1) % voices.length].id } };
-          }),
-      })
-    );
-    this.muteChip = /** @type {HTMLButtonElement} */ (
-      h('button', {
-        class: 'chip chamfer label',
-        type: 'button',
-        title: 'Mute or unmute the voice (M)',
-        onClick: () => store.update((s) => ({ ...s, voice: { ...s.voice, muted: !s.voice.muted } })),
-      })
-    );
+    this.telemetry = new TelemetryStrip();
+    this.settings = new SettingsPanel({ store, ...settings, onClose: () => this.gearButton.focus({ preventScroll: true }) });
+    this.help = new HelpOverlay();
 
     root.append(this.#topbar(version), this.#leftRail(), this.#stage(), this.#rightRail(), this.#dock());
+    document.body.append(this.settings.el, this.help.el);
 
     bus.on('screen:frame', (/** @type {HTMLCanvasElement} */ canvas) => {
       this.mirror.draw(canvas);
@@ -96,17 +80,9 @@ export class Hud {
     store.watch((s) => s.screen.app, (app) => {
       this.appLabel.textContent = `APP: ${app}`;
     });
-    store.watch((s) => s.watch.finish, (finish) => this.finishPicker.set(finish));
-    store.watch((s) => s.watch.mannequin, (on) => {
-      this.armToggle.textContent = on ? 'ON' : 'OFF';
-      this.armToggle.setAttribute('aria-pressed', String(on));
-    });
-    store.watch((s) => s.voice, (v) => {
-      const current = voices.find((x) => x.id === v.id);
-      this.voiceChip.textContent = current?.label ?? v.id;
-      this.voiceChip.title = `${current?.note ?? v.id}. Click for the next voice.`;
-      this.muteChip.textContent = v.muted ? 'MUTED' : 'ON';
-      this.muteChip.setAttribute('aria-pressed', String(!v.muted));
+    store.watch((s) => s.view.telemetry, (on) => {
+      this.telemetry.setEnabled(on);
+      this.telemetryRow.classList.toggle('is-off', !on);
     });
     store.watch((s) => s.camera, (cam) => {
       this.cameraReadout.textContent = `YAW ${signedDeg(cam.yaw)}  PITCH ${signedDeg(cam.pitch)}  DIST ${cam.distance.toFixed(2)}`;
@@ -127,6 +103,8 @@ export class Hud {
     });
 
     window.addEventListener('keydown', (e) => this.#onKey(e));
+    // capture phase: overlays get Esc before the composer (which would clear the buffer)
+    window.addEventListener('keydown', (e) => this.#onOverlayKey(e), true);
   }
 
   /** Fades the frame in once boot is done. */
@@ -144,14 +122,32 @@ export class Hud {
     if (e.repeat || !isShortcutEvent(e)) return;
     if (e.key === '[') this.toggleRail('leftRail');
     else if (e.key === ']') this.toggleRail('rightRail');
-    else if (e.key === '?' || e.key === 'h' || e.key === 'H') this.#notBuilt('Help overlay');
+    else if (e.key === '?' || e.key === 'h' || e.key === 'H') this.help.toggle();
     else return;
     e.preventDefault();
   }
 
-  /** @param {string} what */
-  #notBuilt(what) {
-    this.bus.emit('toast', { message: `${what} not built yet`, detail: 'Arrives in Phase 5.' });
+  /**
+   * Esc closes help, then settings, before anything else sees it. While help
+   * is open it is modal: other keys don't fire gestures underneath it.
+   * @param {KeyboardEvent} e
+   */
+  #onOverlayKey(e) {
+    if (this.help.isOpen) {
+      if (e.key === 'Escape' || e.key === '?' || e.key === 'h' || e.key === 'H') {
+        if (!e.repeat) this.help.close();
+      }
+      if (e.key !== 'Tab') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+      return;
+    }
+    if (e.key === 'Escape' && this.settings.isOpen) {
+      this.settings.close();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
   }
 
   /** @param {Record<string, BadgeState>} badges */
@@ -193,14 +189,14 @@ export class Hud {
       h(
         'div',
         { class: 'topbar__actions' },
-        h('button', {
+        (this.gearButton = h('button', {
           class: 'icon-btn chamfer',
           type: 'button',
           title: 'Settings',
           'aria-label': 'Settings',
           html: GEAR_SVG,
-          onClick: () => this.#notBuilt('Settings panel'),
-        }),
+          onClick: () => this.settings.toggle(),
+        })),
         h(
           'button',
           {
@@ -208,7 +204,7 @@ export class Hud {
             type: 'button',
             title: 'Help (?)',
             'aria-label': 'Help',
-            onClick: () => this.#notBuilt('Help overlay'),
+            onClick: () => this.help.toggle(),
           },
           '?',
         ),
@@ -324,24 +320,12 @@ export class Hud {
       ),
       h(
         'div',
-        { class: 'stage__view' },
-        this.finishPicker.el,
-        h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Arm' }, h('span', { class: 'label dim' }, 'ARM'), this.armToggle),
-        h(
-          'div',
-          { class: 'view-toggle', role: 'group', 'aria-label': 'Voice' },
-          h('span', { class: 'label dim' }, 'VOICE'),
-          this.voiceChip,
-          this.muteChip,
-        ),
-      ),
-      h(
-        'div',
         { class: 'stage__hint label dim' },
         hint(['W', 'A', 'S', 'D'], 'ORBIT'),
         hint(['DRAG'], 'ORBIT'),
         hint(['SCROLL'], 'ZOOM'),
         hint(['R'], 'RESET'),
+        hint(['?'], 'HELP'),
       ),
       this.readout,
       this.toastRoot,
@@ -368,13 +352,13 @@ export class Hud {
         this.transcript.el,
         this.transcript.aside,
       ),
-      h(
+      (this.telemetryRow = h(
         'div',
         { class: 'dock__row dock__row--telemetry' },
         dockLabel('05', 'TELEMETRY'),
-        h('div', { class: 'telemetry label dim' }, 'ACCEL —   GYRO —'),
-        h('div', { class: 'dock__aside label dim' }, 'OFFLINE'),
-      ),
+        this.telemetry.el,
+        this.telemetry.aside,
+      )),
     );
   }
 }

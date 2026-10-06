@@ -41,6 +41,12 @@ const BREATH_STEPS = 24; // the breathing dot redraws in steps, not every frame
 export class TacturaStarterApp extends ScreenApp {
   name = 'TACTURA STARTER';
 
+  /** @param {{ reducedMotion?: boolean }} [options] reduced motion: no assembly, shake, pop or shrink */
+  constructor({ reducedMotion = false } = {}) {
+    super();
+    this.reducedMotion = reducedMotion;
+  }
+
   /** @param {ScreenApi} api */
   mount(api) {
     this.api = api;
@@ -82,7 +88,7 @@ export class TacturaStarterApp extends ScreenApp {
 
   wake() {
     this.mode = 'boot';
-    this.bootT = 0;
+    this.bootT = this.reducedMotion ? BOOT.assemble : 0; // reduced motion: the wordmark is already assembled
     this.api.invalidate();
   }
 
@@ -150,7 +156,7 @@ export class TacturaStarterApp extends ScreenApp {
       return;
     }
     ctx.save();
-    if (o?.kind === 'noword') {
+    if (o?.kind === 'noword' && !this.reducedMotion) {
       const p = o.t / NOWORD_MS;
       ctx.translate(Math.sin(o.t * 0.09) * 9 * (1 - p) ** 2, 0); // haptic-style shake, decaying
     }
@@ -286,7 +292,8 @@ export class TacturaStarterApp extends ScreenApp {
    * @param {CommitOverlay} o
    */
   #renderCommit(ctx, o) {
-    const t = o.t;
+    const still = this.reducedMotion;
+    const t = still ? Math.max(o.t, COMMIT.pop) : o.t;
     // 1. the buffer chips fly into the center slot and fade
     if (t < COMMIT.pop) {
       const p = easeInOutCubic(t / COMMIT.pop);
@@ -335,7 +342,7 @@ export class TacturaStarterApp extends ScreenApp {
     }
 
     // 4. the word shrinks into the top line
-    const p = easeInOutCubic(clamp01((t - o.shrinkAt) / COMMIT.shrink));
+    const p = still ? 1 : easeInOutCubic(clamp01((t - o.shrinkAt) / COMMIT.shrink));
     const size = bigSize + (26 - bigSize) * p;
     const y = 270 + (LAST_LINE_Y - 270) * p;
     ctx.fillStyle = mix(INK.text, INK.muted, p);

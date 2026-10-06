@@ -35,8 +35,11 @@ export class VoiceEngine {
   /**
    * @param {{ voice?: string, muted?: boolean, moduleUrl?: string, onChange?: (state: VoiceState) => void, onNotice?: (message: string, detail: string) => void }} [options]
    */
-  constructor({ voice = DEFAULT_VOICE, muted = false, moduleUrl = KOKORO.module, onChange = () => {}, onNotice = () => {} } = {}) {
+  constructor({ voice = DEFAULT_VOICE, muted = false, volume = 1, moduleUrl = KOKORO.module, onChange = () => {}, onNotice = () => {} } = {}) {
     this.moduleUrl = moduleUrl;
+    this.volume = volume;
+    /** @type {GainNode | null} */
+    this.gain = null;
     this.onChange = onChange;
     this.onNotice = onNotice;
     this.system = createSystemSpeaker();
@@ -114,6 +117,12 @@ export class VoiceEngine {
   /** @param {string} voice Kokoro voice id */
   setVoice(voice) {
     this.#set({ voice });
+  }
+
+  /** @param {number} volume 0..1 */
+  setVolume(volume) {
+    this.volume = volume;
+    if (this.gain) this.gain.gain.value = volume;
   }
 
   /** @param {boolean} muted */
@@ -290,9 +299,12 @@ export class VoiceEngine {
     const AudioCtx = window.AudioContext ?? /** @type {any} */ (window).webkitAudioContext;
     if (!AudioCtx) return;
     this.ctx = new AudioCtx();
+    // source → analyser → gain → speakers: the ring follows the voice even when it's turned down
     this.analyser = this.ctx.createAnalyser();
     this.analyser.fftSize = 512;
-    this.analyser.connect(this.ctx.destination);
+    this.gain = this.ctx.createGain();
+    this.gain.gain.value = this.volume;
+    this.analyser.connect(this.gain).connect(this.ctx.destination);
   }
 
   /** @param {Float32Array} samples @param {number} rate */
@@ -332,7 +344,7 @@ export class VoiceEngine {
       if (token === this.systemToken) this.systemSpeaking = false;
     };
     this.systemSpeaking = true;
-    this.system.speak(word, { onEnd: done });
+    this.system.speak(word, { onEnd: done, volume: this.volume });
     // some browsers never fire onend when interrupted; don't let the ring hang
     window.setTimeout(done, 4000);
   }

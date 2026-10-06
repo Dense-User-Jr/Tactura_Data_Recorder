@@ -2,7 +2,7 @@
 
 A 3D web simulator of a Samsung Galaxy Watch 7 for testing the feel and flow of the Tactura gesture-to-speech pipeline without the physical watch. The full build spec is in [SPEC.md](SPEC.md).
 
-> **Status: Phase 4 (voice).** Gestures flow through the full pipeline (classifier → phoneme bin → word lookup) onto the watch screen, the trace panel and the transcript, and committed words are spoken with a neural voice. Try `6 3 5 Space` (cheese) or `6 4 5` then `Tab` (choose / jews / juice). Help overlay, settings panel and telemetry come in Phase 5.
+> **Status: Phase 5 (polish), v1 feature-complete.** Gestures flow through the full pipeline (classifier → phoneme bin → word lookup) onto the watch screen, the trace panel and the transcript, and committed words are spoken with a neural voice. Try `6 3 5 Space` (cheese) or `6 4 5` then `Tab` (choose / jews / juice). Press `?` for every control, and `⚙` (top right) for settings. The bottom strip shows **synthetic** accel/gyro derived from the animation.
 
 ## Launch
 
@@ -32,23 +32,45 @@ The launchers call `tools/ensure-deps.mjs`, which runs `npm ci` only when `node_
 
 ## Controls
 
-| Key | Action | Available |
-|---|---|---|
-| `1` to `6` | Fire gesture (Flick Up, Flick Down, Twist Right, Twist Left, Shake, Double Tap). Holding a key fires once. Tiles in the left rail are clickable too | **Now** |
-| `Space` | Commit the current buffer as a word. With no exact match: `NO WORD`, and the buffer stays | **Now** |
-| `Backspace` | Remove the last gesture, or the last word if the buffer is empty | **Now** |
-| `Tab` / `Shift+Tab` | Cycle candidates when several words match (otherwise Tab moves focus as usual) | **Now** |
-| `Esc` | Clear the buffer | **Now** |
-| `W A S D`, arrow keys | Orbit the camera (A/D yaw, W/S pitch) | **Now** |
-| Mouse drag / scroll | Orbit and zoom | **Now** |
-| `R` | Reset camera to the hero angle | **Now** |
-| `M` | Mute or unmute voice | **Now** |
-| `[` / `]` | Collapse the left / right rail | **Now** |
-| `?` or `H` | Help overlay | Phase 5 (shows a notice for now) |
+| Key | Action |
+|---|---|
+| `1` to `6` | Fire gesture (Flick Up, Flick Down, Twist Right, Twist Left, Shake, Double Tap). Holding a key fires once. Tiles in the left rail are clickable too |
+| `Space` | Commit the current buffer as a word. With no exact match: `NO WORD`, and the buffer stays |
+| `Backspace` | Remove the last gesture, or the last word if the buffer is empty |
+| `Tab` / `Shift+Tab` | Cycle candidates when several words match (otherwise Tab moves focus as usual) |
+| `Esc` | Close the help or settings if open, otherwise clear the buffer |
+| `W A S D`, arrow keys | Orbit the camera (A/D yaw, W/S pitch) |
+| Mouse drag / scroll | Orbit and zoom |
+| `R` | Reset camera to the hero angle |
+| `M` | Mute or unmute voice |
+| `[` / `]` | Collapse the left / right rail |
+| `?` or `H` | Help overlay: every control on a keyboard diagram. While it's open, other keys do nothing |
 
 Shortcuts are ignored while typing in a text field, and while Ctrl/Cmd/Alt is held so browser shortcuts keep working. Gesture keys use physical key positions, so they work on any keyboard layout.
 
-The viewport's top-right corner has the case finish (Silver, Green, Cream), the `ARM` toggle, and the voice (click the name to cycle Heart, Bella, Emma, Michael; `ON`/`MUTED` is the same as `M`). With the arm on (default), the watch lies face up on a forearm and the camera looks from the wearer's side; with it off, the watch stands upright like a product shot. These choices are remembered per browser and move into the settings panel in Phase 5.
+## Settings
+
+`⚙` in the top bar opens the settings drawer. Everything is remembered per browser; `RESET` at the bottom restores the defaults.
+
+| Section | Setting | Default |
+|---|---|---|
+| Watch | Case finish: Silver, Green, Cream | Silver |
+| View | Arm: with it on, the watch lies face up on a forearm and the camera looks from the wearer's side; off, the watch stands upright like a product shot | On |
+| | Callouts: the numbered labels on the keys, display, IMU and sensors | On |
+| | Telemetry: the synthetic strip in the dock | On |
+| Lexicon | Size: top 5k, 20k or 50k words (the `LEX` badge and the matches update at once) | 5k |
+| | Crude words: hidden or shown | Hidden |
+| Voice | Heart, Bella, Emma, Michael | Heart |
+| | Speech on or muted (same as `M`), and its volume | On, 90% |
+| Sound | UI ticks volume (gesture, commit, `NO WORD`) | 35% |
+
+With `prefers-reduced-motion` set in the OS, the sim skips the boot assembly, camera easing and glides, the screen's word pop and `NO WORD` shake, and UI sweeps. State changes stay instant. Gestures still animate, since the motion is what they show.
+
+## Telemetry (synthetic)
+
+The bottom strip plots six channels, each in its own tile: accelerometer X/Y/Z (m/s²) and gyroscope X/Y/Z (rad/s), the last 3 seconds at 50 Hz, in the recorder's axes (X toward 3 o'clock, Y toward 12, Z out of the screen). Hover a tile to read a past sample.
+
+**These numbers are made up from the animation** ([SyntheticImu.js](src/telemetry/SyntheticImu.js): gyro is the watch's angular velocity, accel is Rᵀ(a − g)). They're there to build intuition, like seeing that a Twist Right spikes gyro X and swings gravity into accel Y. They are not sensor data: never train or evaluate a classifier on them. The strip is labeled `SYNTHETIC` for that reason.
 
 ## Voice
 
@@ -126,6 +148,7 @@ simulator/
   src/
     main.js          boot sequence and wiring
     config/          gestures.js (ids, keys, glyphs), gesture_bins.json (spec §8.5), lexicon.js
+    config/          … and settings.js (settings defaults, validation, per-browser save)
     core/            eventBus, store, clock, keyboard helpers, prefs
     input/           InputSource (interface), KeyboardInput (keys 1–6 + tiles), CameraKeys, ComposeKeys
     pipeline/        types.js, registry.js (load + fallback), Pipeline.js (STAGES), Composer.js (buffer,
@@ -135,8 +158,11 @@ simulator/
                      watch/ (WatchModel, geometry, materials)
     screen/          WatchScreen (480 × 480 canvas host), ScreenApp (interface), apps/TacturaStarterApp
     voice/           VoiceEngine (tiers, cache, prefetch, level), kokoro.worker.js, webSpeech.js
-    ui/              Hud, uiSounds, components/, styles/ (tokens.css, base.css, hud.css)
-  tests/             Vitest: core, gesture clips, lexicon, decoder, bin mapper, registry, composer, voice
+    telemetry/       SyntheticImu (accel/gyro derived from the animation)
+    ui/              Hud, uiSounds, components/ (… HelpOverlay, SettingsPanel, TelemetryStrip),
+                     styles/ (tokens.css, base.css, hud.css)
+  tests/             Vitest: core, gesture clips, lexicon, decoder, bin mapper, registry, composer, voice,
+                     synthetic IMU
 ```
 
 SPEC.md §5 has the full target structure.
@@ -207,3 +233,12 @@ SPEC.md §5 has the full target structure.
 | 2026-10-05 | `VOICE: NEURAL` is white (project), `SYSTEM` and `MUTED` muted, `NONE` red | The voice engine is the real speaker stage (§8.2: "Same"); the system voice is its fallback |
 | 2026-10-05 | A newer committed word cuts off the one still speaking. If synthesis fails for one word, that word uses the system voice (with a toast); if loading fails, the system voice is used until reload | Responsive, and never silent without saying why |
 | 2026-10-05 | `?break=voice` test switch | Demonstrates the Phase 4 acceptance check (no internet on first run → system voice, badge says so) without unplugging anything |
+| 2026-10-05 | **The settings drawer replaces the viewport's corner chips** (finish, `ARM`, voice, mute), and the `⚙` button sits in the top bar next to `?`. Saved choices from Phases 1–4 aren't carried over (the keys changed), so those reset once | One place for every setting, and the viewport is clean for the render. Mute stays on `M` |
+| 2026-10-05 | Changing the lexicon size or crude filter rebuilds the vocabulary in place: the `LEX` badge, the current matches and the watch screen update without a reload, with a toast giving the new count | Lets you compare 5k / 20k / 50k while typing a word |
+| 2026-10-05 | **Synthetic IMU frame:** the numbers come from the gesture motion in a fixed physical frame (watch face up on a level forearm), not from the watch's pose in the 3D scene. §12 reads gravity as three.js −Y in the watch's world rotation | In the upright product view (arm off), world −Y would put gravity on the watch's −Y and make the rest reading disagree with the recordings' `(0.3, 0.6, 9.7)`. This way rest reads `(0, 0, 9.81)` in both views, and the camera never affects it. Supersedes the "gravity along world −Z" note from Phase 1 |
+| 2026-10-05 | **Telemetry as six small tiles** (one channel each, shared ±20 scale, hairline zero line, hover readout), not the two combined `accel ~~~ gyro ~~~` lines in the §6.2 sketch | Three overlaid lines per plot need three colors, and the design has one accent reserved for events and errors. One channel per tile keeps every line labeled in text, with no color legend |
+| 2026-10-05 | Telemetry samples are resampled to 50 Hz from the render frames, and the strip only redraws when a value moves | Matches the recorder's rate; an idle sim still costs nothing |
+| 2026-10-05 | The help overlay is a keyboard diagram: keys the sim uses are lit with their action, the rest are drawn dim. It's modal: while it's open only `Esc`, `?`, `H` and `Tab` do anything | Pressing `5` to "see what it does" with the help open shouldn't fire a gesture behind it |
+| 2026-10-05 | `Esc` closes the help or the settings first; only with both closed does it clear the buffer | Closing a panel shouldn't throw away a half-typed word |
+| 2026-10-05 | Reduced motion keeps gesture animations | §7.4 asks to drop sweeps and easing. The gesture motion is the content (it shows the user what to do), so it stays |
+| 2026-10-05 | The `FPS · DPR · GL` readout stays visible (no setting to hide it) | It's small and dim, and it's useful when testing the sim on new hardware. Easy to add a toggle if it bothers anyone |

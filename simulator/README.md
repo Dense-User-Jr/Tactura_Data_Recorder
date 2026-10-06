@@ -2,7 +2,7 @@
 
 A 3D web simulator of a Samsung Galaxy Watch 7 for testing the feel and flow of the Tactura gesture-to-speech pipeline without the physical watch. The full build spec is in [SPEC.md](SPEC.md).
 
-> **Status: Phase 2 (gestures).** Keys 1–6 (or the gesture tiles) fire the six gestures: the arm and watch animate, the tile flashes, the case rim glows red and a UI tick plays. The pipeline (classifier → bins → decoder, trace, transcript) arrives in Phase 3 and voice in Phase 4. Stage badges read `OFFLINE` until their stage is built. The watch screen shows a standby clock until the Tactura screen app lands in Phase 3.
+> **Status: Phase 3 (pipeline, screen, transcript).** Gestures now flow through the full pipeline (classifier → phoneme bin → word lookup) onto the watch screen, the trace panel and the transcript. Try `6 3 5 Space` (cheese) or `6 4 5` then `Tab` (choose / jews / juice). Voice arrives in Phase 4; until then committed words are not spoken.
 
 ## Launch
 
@@ -35,10 +35,10 @@ The launchers call `tools/ensure-deps.mjs`, which runs `npm ci` only when `node_
 | Key | Action | Available |
 |---|---|---|
 | `1` to `6` | Fire gesture (Flick Up, Flick Down, Twist Right, Twist Left, Shake, Double Tap). Holding a key fires once. Tiles in the left rail are clickable too | **Now** |
-| `Space` | Commit the current buffer as a word | Phase 3 |
-| `Backspace` | Remove the last gesture, or the last word if the buffer is empty | Phase 3 |
-| `Tab` / `Shift+Tab` | Cycle candidates when several words match | Phase 3 |
-| `Esc` | Clear the buffer | Phase 3 |
+| `Space` | Commit the current buffer as a word. With no exact match: `NO WORD`, and the buffer stays | **Now** |
+| `Backspace` | Remove the last gesture, or the last word if the buffer is empty | **Now** |
+| `Tab` / `Shift+Tab` | Cycle candidates when several words match (otherwise Tab moves focus as usual) | **Now** |
+| `Esc` | Clear the buffer | **Now** |
 | `W A S D`, arrow keys | Orbit the camera (A/D yaw, W/S pitch) | **Now** |
 | Mouse drag / scroll | Orbit and zoom | **Now** |
 | `R` | Reset camera to the hero angle | **Now** |
@@ -52,26 +52,74 @@ The viewport's top-right corner has the case finish (Silver, Green, Cream) and t
 
 The viewport's bottom-right readout shows drawn frames per second. It reads `IDLE` when nothing is moving: the 3D view only redraws when something changes, so an idle sim costs no GPU time.
 
+## The pipeline and its badges
+
+```
+key 1–6 → RawInput → segment → classify → GestureEvent → bin mapper → BinToken
+        → buffer → decode → DecodeResult → watch screen, trace, transcript   (Space commits)
+```
+
+Each stage is a socket with a **stand-in** that ships with the sim and an optional **project** implementation. The top-bar badges say which one is running; hover or click a badge for the reason.
+
+| Badge | Now | Meaning |
+|---|---|---|
+| `CLS` | `STAND-IN` | Passthrough: keyboard input is already labeled, so it reports that gesture with confidence 1.0. It recognizes nothing |
+| `BINS` | `LOADED` | `src/config/gesture_bins.json`, the team's real assignment (white = project, not a stand-in) |
+| `LEX` | `26` | Spellable words at top 5k after filtering (see below) |
+| `DEC` | `STAND-IN` | Placeholder dictionary lookup, ranked by word frequency. No language model |
+| any | `ERROR` (red) | A project implementation is configured but failed to load or threw; the stand-in covered for it and the sim kept running |
+
+### Plugging in a real stage
+
+Edit `STAGES` in [src/pipeline/Pipeline.js](src/pipeline/Pipeline.js) and set the stage's `project` loader. That's the whole change.
+
+- **Classifier (Raghav):** [RandomForestClassifier.js](src/pipeline/classifier/RandomForestClassifier.js) documents the exact feature contract of `recording_features()` on the ML branch, and the two ways to run the model (ONNX in the browser, or a local Python helper).
+- **Decoder (Russell):** [Decoder.js](src/pipeline/decoder/Decoder.js) explains the input and output with examples. `decode(tokens)` may return a Promise.
+
+To see the fallback path work, add a test switch to the URL. It does nothing unless present.
+
+| URL | What happens |
+|---|---|
+| `?break=classifier` | The classifier points at the random-forest stub, whose `init()` throws → `CLS: ERROR`, the passthrough takes over |
+| `?break=decoder` | The decoder points at a file that doesn't exist → `DEC: ERROR`, the lookup takes over |
+| `?break=classifier-runtime` | A classifier that loads, then throws on every gesture → `CLS: ERROR` after the first gesture |
+
+### Lexicon
+
+`public/data/lexicon_base.json` (1.9 MB, committed) holds CMUdict pronunciations for wordfreq's top 50,000 English words, **not** filtered by the bins. The sim filters it at startup against `gesture_bins.json`, so editing the bins changes the vocabulary without rebuilding anything. It drops single letters, the words in `tools/lexicon_exclude.txt` (acronyms, letter names) and, by default, crude words (`src/config/lexicon.js`). At top 5k that leaves 26 of the 37 spellable entries.
+
+To rebuild it (only if you change the builder; the sim never needs Python):
+
+```
+cd simulator
+python -m venv tools/.venv
+tools/.venv/Scripts/pip install -r tools/requirements.txt     # macOS: tools/.venv/bin/pip
+tools/.venv/Scripts/python tools/build_lexicon.py             # macOS: tools/.venv/bin/python
+npm test                                                      # checks the spec's 37 / 26 / 6 numbers
+```
+
 ## Layout
 
 ```
 simulator/
   Start Simulator (Windows).bat, Start Simulator (Mac).command   launchers
   index.html, vite.config.js, package.json
-  public/            static files served as-is (favicon; lexicon data later)
-  tools/             ensure-deps.mjs (launcher helper); lexicon builder later
+  public/data/       lexicon_base.json (generated, committed)
+  tools/             ensure-deps.mjs (launcher helper), build_lexicon.py, requirements.txt,
+                     lexicon_exclude.txt
   src/
     main.js          boot sequence and wiring
-    config/          gestures.js (ids, keys, glyphs), gesture_bins.json (bins, spec §8.5)
+    config/          gestures.js (ids, keys, glyphs), gesture_bins.json (spec §8.5), lexicon.js
     core/            eventBus, store, clock, keyboard helpers, prefs
-    input/           InputSource (interface), KeyboardInput (keys 1–6 + tiles), CameraKeys
-    pipeline/        types.js (shared data types, spec §8.1); stages arrive in Phase 3
+    input/           InputSource (interface), KeyboardInput (keys 1–6 + tiles), CameraKeys, ComposeKeys
+    pipeline/        types.js, registry.js (load + fallback), Pipeline.js (STAGES), Composer.js (buffer,
+                     transcript, Space/Backspace/Tab/Esc), classifier/, mapper/, decoder/, lexicon/
     scene/           SceneRoot (renderer, post, render-on-demand), CameraRig, lighting,
                      WristMannequin (arm rig), GestureAnimator, Annotations, SoftBloomPass,
                      watch/ (WatchModel, geometry, materials)
-    screen/          WatchScreen (the 480 × 480 display canvas)
+    screen/          WatchScreen (480 × 480 canvas host), ScreenApp (interface), apps/TacturaStarterApp
     ui/              Hud, uiSounds, components/, styles/ (tokens.css, base.css, hud.css)
-  tests/             Vitest (core, gesture clip motion)
+  tests/             Vitest: core, gesture clips, lexicon, decoder, bin mapper, registry, composer
 ```
 
 SPEC.md §5 has the full target structure.
@@ -119,3 +167,16 @@ SPEC.md §5 has the full target structure.
 | 2026-10-05 | Tile clicks emit `RawInput` with `source: 'mouse'`; keys emit `'keyboard'` | Matches §8.1's source list and keeps the two honest in the trace later |
 | 2026-10-05 | `pipeline/types.js` and `config/gesture_bins.json` exist from Phase 2 | Input already emits `RawInput`, and the tiles show each bin's phonemes. Bin validation comes with the BinMapper in Phase 3 |
 | 2026-10-05 | Phase 2 wiring: an input event drives the animation, tile flash and tick directly | Phase 3 inserts the pipeline (classifier → bin mapper → decoder) between input and the trace/screen; the animation keeps showing the physical input |
+| 2026-10-05 | Lexicon JSON rows carry a 4th field, the wordfreq `rank`, plus top-level `topN` and the tool versions (`cmudict` 1.1.3, `wordfreq` 3.1.1, pinned) | The 5k / 20k / 50k size setting needs each word's rank. The build reproduces the spec's sanity numbers exactly: 37 / 26 / 6 at top 5k, 114 at 20k, 217 at 50k |
+| 2026-10-05 | The lexicon builder runs in a venv inside `simulator/tools/.venv` (gitignored) | Keeps `cmudict` and `wordfreq` out of everyone's global Python |
+| 2026-10-05 | After filtering, top 5k has **26** words and 3 collisions: see/sea, peace/piece, choose/**jews**/juice | The spec's "+ one more" on choose/juice is "jews", a real word, so it stays. §6.4's "9 words start with Double Tap" is really 6 (choose, cheap, cheese, jews, juice, chip) |
+| 2026-10-05 | `tools/lexicon_exclude.txt` holds acronyms and letter names spellable at 5k–50k; crude words are a separate list in `src/config/lexicon.js`, filtered by default. The app reads the exclude file directly (Vite `?raw` import) | One source of truth, no copy into `public/` |
+| 2026-10-05 | **A project stage that fails to load shows `ERROR` (red)**, not `STAND-IN` as in §8.3's pseudocode. A stage that throws at runtime also flips to `ERROR` and stays there until reload | So the badge visibly flips (§14 acceptance), and a broken project stage can't be mistaken for "none configured" |
+| 2026-10-05 | `?break=classifier`, `?break=decoder`, `?break=classifier-runtime` URL test switches | Demonstrates the fallback acceptance criteria without editing code. Inactive unless in the URL |
+| 2026-10-05 | `decode()` may return a Promise; stages may have an async `init()` | Leaves room for a heavier real decoder or a model that loads |
+| 2026-10-05 | `BINS` badge is white (project): it's the team's real assignment. `LEX` is muted: the sim's own vocabulary for the placeholder decoder | Honesty badges mean what they say |
+| 2026-10-05 | Tab is only taken over when more than one word matches; Space is swallowed on keyup as well, and tiles drop focus after a click | Tab keeps working for keyboard focus otherwise, and Space can never "click" a focused tile instead of committing |
+| 2026-10-05 | Until the voice exists, the commit ring does one soft pulse instead of following a voice level | Phase 4 drives it with the real output level |
+| 2026-10-05 | Composing screen extras: under `N POSSIBLE`, a dim preview of the top 3 words; `NO MATCH` when no word starts with the buffer; a hint line (`SPACE COMMIT · ⌫ UNDO`) | Shows where the buffer is heading and how to get out of a dead end |
+| 2026-10-05 | Trace rows lead with the phonemes, then the bin name, and show the input source and classifier confidence (`KEY 1.00`) | Phonemes survive truncation, and the confidence makes the passthrough's "1.00" visibly not a real measurement |
+| 2026-10-05 | A toast identical to one already showing refreshes it instead of stacking | A stage failing on every gesture would otherwise bury the screen in copies |

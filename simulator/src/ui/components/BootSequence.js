@@ -10,7 +10,7 @@ const PITCH = 12; // px between dot centers
 const DOT_R = 3.4;
 const PAD = 56; // canvas overhang so scattered dots can start outside the wordmark
 const UNLIT_ALPHA = 0.08;
-const LINE_GAP_MS = 90; // minimum spacing between log lines so each one is readable
+const LINE_GAP_MS = 80; // minimum spacing between log lines so each one is readable
 const HOLD_MS = 280;
 const FADE_MS = 360;
 
@@ -92,19 +92,22 @@ export class BootSequence {
 
   /**
    * Runs one init step and logs its outcome as `LABEL ........ VALUE`.
+   * A `quiet` step only gets a line if it fails.
    * @param {string} label
-   * @param {() => StepResult | Promise<StepResult>} run
+   * @param {() => StepResult | Promise<StepResult> | void} run
+   * @param {{ quiet?: boolean }} [options]
    * @returns {Promise<boolean>} false if the step threw
    */
-  async step(label, run) {
+  async step(label, run, { quiet = false } = {}) {
     const wait = this.lastLineAt + LINE_GAP_MS - performance.now();
-    if (!this.reducedMotion && wait > 0) await sleep(wait);
+    if (!quiet && !this.reducedMotion && wait > 0) await sleep(wait);
 
     let value;
     let tone;
     let ok = true;
     try {
-      const result = await run();
+      const result = (await run()) ?? 'OK';
+      if (quiet) return true;
       ({ value, tone = 'ok' } = typeof result === 'string' ? { value: result } : result);
     } catch (err) {
       console.error(`[boot] ${label} failed`, err);

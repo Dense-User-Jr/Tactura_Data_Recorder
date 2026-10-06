@@ -2,6 +2,8 @@ import { h, panelHead } from './dom.js';
 import { StageBadge } from './components/StageBadge.js';
 import { ScreenMirror } from './components/ScreenMirror.js';
 import { FinishPicker } from './components/FinishPicker.js';
+import { PipelineTrace } from './components/PipelineTrace.js';
+import { Transcript } from './components/Transcript.js';
 import { isShortcutEvent } from '../core/keyboard.js';
 
 /**
@@ -13,6 +15,8 @@ import { isShortcutEvent } from '../core/keyboard.js';
  * @property {{ fps: number, dpr: number, gl: string }} perf
  * @property {{ finish: string, mannequin: boolean }} watch
  * @property {{ yaw: number, pitch: number, distance: number }} camera   degrees, degrees, world units
+ * @property {import('../pipeline/Composer.js').ComposeState} compose
+ * @property {{ app: string }} screen
  */
 
 /** @param {number} deg */
@@ -42,6 +46,8 @@ export class Hud {
     /** @type {Map<string, StageBadge>} */
     this.badges = new Map();
     this.mirror = new ScreenMirror();
+    this.trace = new PipelineTrace();
+    this.transcript = new Transcript();
     this.finishPicker = new FinishPicker({
       finishes,
       onPick: (finish) => store.update((s) => ({ ...s, watch: { ...s.watch, finish } })),
@@ -60,6 +66,14 @@ export class Hud {
     bus.on('screen:frame', (/** @type {HTMLCanvasElement} */ canvas) => {
       this.mirror.draw(canvas);
       this.mirrorEl.classList.add('has-signal');
+    });
+    store.watch((s) => s.compose, (compose) => {
+      this.trace.render(compose);
+      this.transcript.render(compose);
+    });
+    bus.on('compose:noword', () => this.transcript.flashNoWord());
+    store.watch((s) => s.screen.app, (app) => {
+      this.appLabel.textContent = `APP: ${app}`;
     });
     store.watch((s) => s.watch.finish, (finish) => this.finishPicker.set(finish));
     store.watch((s) => s.watch.mannequin, (on) => {
@@ -237,22 +251,21 @@ export class Hud {
                 h('span', { class: 'mirror__msg label' }, 'NO SIGNAL'),
               )),
             ),
-            h('div', { class: 'mirror-meta label dim' }, h('span', {}, '480 × 480'), h('span', {}, 'APP: NONE')),
+            h(
+              'div',
+              { class: 'mirror-meta label dim' },
+              h('span', {}, '480 × 480'),
+              (this.appLabel = h('span', {}, 'APP: NONE')),
+            ),
           ),
         ),
         h(
           'section',
           { class: 'panel panel--grow' },
           panelHead('03', 'TRACE', 'LAST 8'),
-          h(
-            'div',
-            { class: 'trace-head label' },
-            h('span', {}, 'T+MS'),
-            h('span', {}, 'GESTURE ▸ BIN'),
-            h('span', {}, 'PH'),
-            h('span', {}, 'N'),
-          ),
-          h('div', { class: 'empty label' }, 'NO EVENTS'),
+          this.trace.candidates,
+          this.trace.head,
+          this.trace.list,
         ),
       ),
       this.#railTab(']', 'rightRail', '02 / SCREEN · 03 / TRACE'),
@@ -317,8 +330,8 @@ export class Hud {
         'div',
         { class: 'dock__row dock__row--transcript' },
         dockLabel('04', 'TRANSCRIPT'),
-        h('div', { class: 'transcript' }, h('span', { class: 'cursor', 'aria-hidden': 'true' })),
-        h('div', { class: 'dock__aside label dim' }, 'BUFFER: EMPTY'),
+        this.transcript.el,
+        this.transcript.aside,
       ),
       h(
         'div',

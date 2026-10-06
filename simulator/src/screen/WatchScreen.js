@@ -9,13 +9,16 @@ const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
  * canvas that is both the display mesh's texture and the source for the HUD
  * screen mirror. After each redraw it emits `screen:frame` with the canvas.
  *
- * Phase 1: no ScreenApp yet, so it shows a built-in standby clock.
- * Phase 3 adds app hosting (TacturaStarterApp) on top of this.
+ * Hosts exactly one ScreenApp at a time (spec §11.2). With no app mounted it
+ * shows a built-in standby clock.
+ *
+ * @typedef {import('./ScreenApp.js').ScreenApp} ScreenApp
  */
 export class WatchScreen {
-  /** @param {{ bus: import('../core/eventBus.js').EventBus }} deps */
-  constructor({ bus }) {
+  /** @param {{ bus: import('../core/eventBus.js').EventBus, store: import('../core/store.js').Store<any> }} deps */
+  constructor({ bus, store }) {
     this.bus = bus;
+    this.store = store;
     this.canvas = document.createElement('canvas');
     this.canvas.width = this.canvas.height = SCREEN_SIZE;
     this.ctx = /** @type {CanvasRenderingContext2D} */ (this.canvas.getContext('2d'));
@@ -23,17 +26,71 @@ export class WatchScreen {
     this.texture.colorSpace = THREE.SRGBColorSpace;
     this.texture.anisotropy = 4;
     this.lastMinute = -1;
+    /** @type {ScreenApp | null} */
+    this.app = null;
+    this.dirty = true;
+    /** Speech output level 0..1; the voice engine (Phase 4) sets this. */
+    this.voiceLevel = () => 0;
   }
 
-  /** Call every frame; only redraws when the content changes. */
-  update() {
+  /** @param {ScreenApp} app */
+  setApp(app) {
+    this.app?.unmount();
+    this.app = app;
+    app.mount({
+      store: this.store,
+      bus: this.bus,
+      size: SCREEN_SIZE,
+      invalidate: () => {
+        this.dirty = true;
+      },
+      voiceLevel: () => this.voiceLevel(),
+    });
+    this.dirty = true;
+  }
+
+  /** The display just turned on: let the app play its boot. */
+  wake() {
+    this.app?.wake();
+  }
+
+  /** @param {number} dt seconds. Call every frame; redraws only when something changed. */
+  update(dt = 0) {
+    if (!this.app) {
+      this.#updateStandby();
+      return;
+    }
+    this.app.update(dt);
+    if (!this.dirty) return;
+    this.dirty = false;
+    const { ctx } = this;
+    ctx.save();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, SCREEN_SIZE, SCREEN_SIZE);
+    ctx.beginPath();
+    ctx.arc(SCREEN_SIZE / 2, SCREEN_SIZE / 2, SCREEN_SIZE / 2, 0, Math.PI * 2);
+    ctx.clip();
+    try {
+      this.app.render(ctx);
+    } catch (err) {
+      console.error('[screen] app render failed', err);
+    }
+    ctx.restore();
+    this.#publish();
+  }
+
+  #publish() {
+    this.texture.needsUpdate = true;
+    this.bus.emit('screen:frame', this.canvas);
+  }
+
+  #updateStandby() {
     const now = new Date();
     const minute = now.getHours() * 60 + now.getMinutes();
     if (minute === this.lastMinute) return;
     this.lastMinute = minute;
     this.#drawStandby(now);
-    this.texture.needsUpdate = true;
-    this.bus.emit('screen:frame', this.canvas);
+    this.#publish();
   }
 
   /** @param {Date} now */
@@ -56,40 +113,44 @@ export class WatchScreen {
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    setSpacing(ctx, '4px');
     ctx.fillStyle = '#8C8C93';
     ctx.font = '400 22px "Space Mono"';
     ctx.fillText(`${DAYS[now.getDay()]} ${String(now.getDate()).padStart(2, '0')}`, c, 168);
-
-    // time, with the colon drawn as two dots (Doto's heavy colon reads as a smudge at this size)
-    setSpacing(ctx, '0px');
-    ctx.fillStyle = '#F4F4F1';
-    ctx.font = '900 118px "Doto"';
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const gap = 36;
-    const wH = ctx.measureText(hh).width;
-    const wM = ctx.measureText(mm).width;
-    const left = c - (wH + gap + wM) / 2;
-    ctx.textAlign = 'left';
-    ctx.fillText(hh, left, 290);
-    ctx.fillText(mm, left + wH + gap, 290);
-    for (const y of [222, 266]) {
-      ctx.beginPath();
-      ctx.arc(left + wH + gap / 2, y, 6.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.textAlign = 'center';
-
-    setSpacing(ctx, '4px');
+    drawTime(ctx, now, c, 290, 118);
     ctx.fillStyle = '#55555C';
     ctx.font = '400 16px "Space Mono"';
     ctx.fillText('TACTURA SIM', c, 352);
-    setSpacing(ctx, '0px');
   }
 }
 
-/** Canvas letterSpacing where supported (Chromium, recent Safari/Firefox). */
-function setSpacing(ctx, value) {
-  if ('letterSpacing' in ctx) ctx.letterSpacing = value;
+/**
+ * HH:MM in Doto with the colon drawn as two dots (Doto's heavy colon reads
+ * as a smudge at display sizes).
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Date} now
+ * @param {number} cx center x
+ * @param {number} baseline
+ * @param {number} size font px
+ * @param {string} [color]
+ */
+export function drawTime(ctx, now, cx, baseline, size, color = '#F4F4F1') {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.font = `900 ${size}px "Doto"`;
+  ctx.textAlign = 'left';
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const gap = size * 0.3;
+  const wH = ctx.measureText(hh).width;
+  const wM = ctx.measureText(mm).width;
+  const left = cx - (wH + gap + wM) / 2;
+  ctx.fillText(hh, left, baseline);
+  ctx.fillText(mm, left + wH + gap, baseline);
+  const r = size * 0.055;
+  for (const k of [0.575, 0.2]) {
+    ctx.beginPath();
+    ctx.arc(left + wH + gap / 2, baseline - size * k, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }

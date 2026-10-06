@@ -24,7 +24,7 @@ async function setup(breakName = null) {
   const type = (keys) =>
     Promise.all([...keys].map((k, i) => composer.push({ source: 'keyboard', t: i, label: GESTURES[Number(k) - 1].id })));
   const events = [];
-  for (const name of ['compose:commit', 'compose:noword', 'compose:uncommit']) bus.on(name, (p) => events.push([name, p]));
+  for (const name of ['compose:commit', 'compose:noword', 'compose:uncommit', 'compose:clearall']) bus.on(name, (p) => events.push([name, p]));
   return { composer, store, type, events, statuses };
 }
 
@@ -85,6 +85,20 @@ describe('Composer (spec §6.4 core flow, §14 Phase 3 acceptance)', () => {
     await type('63');
     await composer.clear();
     expect(compose(store).buffer).toEqual([]);
+  });
+
+  it('R clears the buffer and every committed word at once', async () => {
+    const { composer, store, type, events } = await setup();
+    await type('635');
+    await composer.commit();
+    await type('645');
+    await composer.commit();
+    await type('63');
+    await composer.clearAll();
+    expect(compose(store)).toMatchObject({ buffer: [], result: null, transcript: [] });
+    expect(events.at(-1)).toEqual(['compose:clearall', { words: ['cheese', 'choose'] }]);
+    await composer.clearAll(); // nothing left: no event
+    expect(events.filter(([name]) => name === 'compose:clearall')).toHaveLength(1);
   });
 
   it('records a trace row per gesture, newest first, at most 8', async () => {

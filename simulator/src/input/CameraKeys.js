@@ -1,7 +1,8 @@
 import { isShortcutEvent } from '../core/keyboard.js';
 
 /**
- * WASD and arrow keys → camera orbit axes (spec §6.3), plus R to reset.
+ * WASD and arrow keys → camera orbit axes (spec §6.3), plus C to reset
+ * (spec's R now clears the text, see the README decision log).
  * Reports held-key state as axes in -1..1; CameraRig turns that into eased
  * angular velocity. WASD uses physical key positions (`event.code`), so it
  * works on AZERTY and other layouts too.
@@ -50,7 +51,7 @@ export class CameraKeys {
   /** @param {KeyboardEvent} e */
   onKeyDown(e) {
     if (!isShortcutEvent(e)) return;
-    if (e.code === 'KeyR') {
+    if (e.code === 'KeyC') {
       if (!e.repeat) this.onReset();
       e.preventDefault();
       return;

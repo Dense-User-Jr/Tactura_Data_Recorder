@@ -8,6 +8,7 @@ import { isShortcutEvent } from '../core/keyboard.js';
  *   Tab / Shift+Tab    cycle candidates, only when several words match
  *                      (otherwise Tab keeps moving keyboard focus as usual)
  *   Esc                clear the buffer
+ *   R                  clear everything: the buffer and every committed word
  *
  * Space is swallowed on both keydown and keyup so it never also "clicks" a
  * focused button such as a gesture tile.
@@ -49,6 +50,10 @@ export class ComposeKeys {
         break;
       case 'Escape':
         this.composer.clear();
+        break;
+      case 'KeyR':
+        e.preventDefault();
+        if (!e.repeat) this.composer.clearAll();
         break;
       default:
     }

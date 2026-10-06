@@ -1344,8 +1344,8 @@ rect.ann__mark {
   color: var(--text-muted);
 }
 
-/* gesture names ("TWIST RIGHT", "DOUBLE TAP") wrap onto two short lines */
-.kb__key.is-gesture .kb__act { white-space: normal; }
+/* two-word actions ("TWIST RIGHT", "CLEAR ALL") wrap onto two short lines */
+.kb__key.is-live .kb__act { white-space: normal; }
 
 .help__legend {
   display: grid;

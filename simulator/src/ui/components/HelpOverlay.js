@@ -18,7 +18,8 @@ const ACTIONS = {
   KeyA: 'ORBIT',
   KeyS: 'ORBIT',
   KeyD: 'ORBIT',
-  KeyR: 'RESET',
+  KeyR: 'CLEAR ALL',
+  KeyC: 'RESET VIEW',
   KeyM: 'MUTE',
   KeyH: 'HELP',
   Slash: 'HELP',
@@ -50,6 +51,7 @@ const LEGEND = [
       ['⌫', 'Undo a gesture, then a word'],
       ['TAB', 'Next match (⇧ previous)'],
       ['ESC', 'Clear the buffer'],
+      ['R', 'Clear all text'],
     ],
   ],
   [
@@ -58,7 +60,7 @@ const LEGEND = [
       ['W A S D', 'Orbit (or arrows)'],
       ['DRAG', 'Orbit'],
       ['SCROLL', 'Zoom'],
-      ['R', 'Reset to the hero view'],
+      ['C', 'Reset to the hero view'],
     ],
   ],
   [

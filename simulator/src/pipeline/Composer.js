@@ -9,6 +9,7 @@ import { describeError } from './registry.js';
  *   backspace() drop the last gesture; on an empty buffer, the last word
  *   cycle(±1)   Tab / Shift+Tab: step through collisions (choose / juice)
  *   clear()     Esc: empty the buffer
+ *   clearAll()  R: empty the buffer and the transcript
  *
  * Space-to-commit is the sim's word boundary; the real watch's end-of-word
  * mechanism is still undecided (decision log). Everything runs through one
@@ -19,6 +20,7 @@ import { describeError } from './registry.js';
  *   compose:commit   { word, candidate, tokens }
  *   compose:noword   { tokens }
  *   compose:uncommit { word }
+ *   compose:clearall { words }
  *
  * @typedef {import('./types.js').BinToken} BinToken
  * @typedef {import('./types.js').DecodeResult} DecodeResult
@@ -153,6 +155,15 @@ export class Composer {
   clear() {
     return this.#enqueue(async () => {
       if (this.state.buffer.length) this.#set({ buffer: [], result: null, selected: 0 });
+    });
+  }
+
+  clearAll() {
+    return this.#enqueue(async () => {
+      const { buffer, transcript } = this.state;
+      if (!buffer.length && !transcript.length) return;
+      this.#set({ buffer: [], result: null, selected: 0, transcript: [] });
+      this.bus.emit('compose:clearall', { words: transcript });
     });
   }
 

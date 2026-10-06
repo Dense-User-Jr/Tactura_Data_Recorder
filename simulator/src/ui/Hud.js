@@ -324,7 +324,7 @@ export class Hud {
         hint(['W', 'A', 'S', 'D'], 'ORBIT'),
         hint(['DRAG'], 'ORBIT'),
         hint(['SCROLL'], 'ZOOM'),
-        hint(['R'], 'RESET'),
+        hint(['C'], 'RESET'),
         hint(['?'], 'HELP'),
       ),
       this.readout,

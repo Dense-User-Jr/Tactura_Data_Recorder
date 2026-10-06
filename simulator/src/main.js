@@ -24,6 +24,12 @@ import { DIM } from './scene/watch/geometry.js';
 import { Annotations } from './scene/Annotations.js';
 import { WatchScreen } from './screen/WatchScreen.js';
 import { CameraKeys } from './input/CameraKeys.js';
+import { KeyboardInput } from './input/KeyboardInput.js';
+import { GestureDeck } from './ui/components/GestureDeck.js';
+import { UiSounds } from './ui/uiSounds.js';
+import { GESTURES } from './config/gestures.js';
+import gestureBins from './config/gesture_bins.json';
+import { readPref, writePref } from './core/prefs.js';
 
 /* global __APP_VERSION__ */
 /** `0.1.0` → `0.1`, as shown in the top bar. */
@@ -40,27 +46,6 @@ const FONT_FACES = [
 ];
 const FONT_TIMEOUT_MS = 2000;
 const FPS_SAMPLE_MS = 500;
-const FINISH_KEY = 'tactura.sim.finish';
-
-/** Remembered finish for this browser (a per-viewer convenience, so plain localStorage). */
-const storedFinish = {
-  get() {
-    try {
-      const value = localStorage.getItem(FINISH_KEY);
-      return value && value in FINISHES ? value : DEFAULT_FINISH;
-    } catch {
-      return DEFAULT_FINISH;
-    }
-  },
-  /** @param {string} value */
-  set(value) {
-    try {
-      localStorage.setItem(FINISH_KEY, value);
-    } catch {
-      // storage unavailable (private window, blocked site data): the choice just won't persist
-    }
-  },
-};
 
 /** @returns {import('./ui/Hud.js').HudState} */
 function initialState() {
@@ -78,7 +63,10 @@ function initialState() {
       voice: offline('VOICE', 'Voice engine not built yet (Phase 4).'),
     },
     perf: { fps: 0, dpr: 1, gl: 'PENDING' },
-    watch: { finish: storedFinish.get() },
+    watch: {
+      finish: readPref('finish', DEFAULT_FINISH, (v) => typeof v === 'string' && v in FINISHES),
+      mannequin: readPref('mannequin', true, (v) => typeof v === 'boolean'), // spec §10.4: default ON
+    },
     camera: { yaw: 0, pitch: 0, distance: 0 },
   };
 }
@@ -148,14 +136,35 @@ async function boot() {
     return 'GW7 44MM';
   });
 
+  const keyboard = new KeyboardInput();
+  const sounds = new UiSounds();
+  /** @type {Record<string, string[]>} */
+  const phonemes = Object.fromEntries(gestureBins.bins.map((b) => [b.gesture, b.phonemes]));
+  const deck = new GestureDeck({ gestures: GESTURES, phonemes, onPress: (id) => keyboard.press(id) });
+
   /** @type {Hud | null} */
   let hud = null;
   await bootScreen.step('HUD', () => {
-    hud = new Hud({ root: el('hud'), store, bus, version: VERSION, finishes: FINISHES });
+    hud = new Hud({ root: el('hud'), store, bus, version: VERSION, finishes: FINISHES, deck });
     const toaster = createToaster(hud.toastRoot);
     bus.on('toast', ({ message, ...options }) => toaster.show(message, options));
     scene?.setFocusElement(hud.stageEl);
+    annotations?.setBounds(hud.stageEl);
     return 'OK';
+  });
+
+  // Phase 2: a fired gesture animates, flashes its tile and ticks. Phase 3 puts the
+  // pipeline (classifier → bins → decoder) between the input and the trace/screen.
+  bus.on('input', (/** @type {import('./pipeline/types.js').RawInput} */ raw) => {
+    if (!raw.label) return;
+    scene?.playGesture(raw.label);
+    deck.flash(raw.label);
+    sounds.tick();
+  });
+
+  await bootScreen.step('INPUT', () => {
+    store.set({ input: { source: keyboard.id } });
+    return 'KEYBOARD';
   });
 
   await bootScreen.step('PIPELINE', () => ({ value: 'NOT WIRED', tone: 'muted' }));
@@ -163,7 +172,11 @@ async function boot() {
   store.watch((s) => s.watch.finish, (finish) => {
     watch?.setFinish(/** @type {any} */ (finish));
     scene?.invalidate();
-    storedFinish.set(finish);
+    writePref('finish', finish);
+  });
+  store.watch((s) => s.watch.mannequin, (on) => {
+    scene?.setMannequinVisible(on);
+    writePref('mannequin', on);
   });
   bus.on('screen:frame', () => scene?.invalidate());
 
@@ -211,6 +224,7 @@ async function boot() {
     const rig = scene.rig;
     new CameraKeys({ onAxes: (yaw, pitch) => rig.setInput(yaw, pitch), onReset: () => rig.reset() }).start();
   }
+  keyboard.start((raw) => bus.emit('input', raw));
 
   for (const { label, error } of bootScreen.errors) {
     bus.emit('toast', { message: `${label} failed at boot`, tone: 'error', detail: error.message, ms: 6000 });
@@ -218,7 +232,7 @@ async function boot() {
 
   if (import.meta.env.DEV) {
     // Handy in the devtools console while building later phases.
-    Object.assign(window, { __tactura: { bus, store, clock, scene, watch, screen } });
+    Object.assign(window, { __tactura: { bus, store, clock, scene, watch, screen, sounds } });
   }
 }
 

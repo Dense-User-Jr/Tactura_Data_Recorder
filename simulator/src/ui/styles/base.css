@@ -99,6 +99,12 @@ button {
   initial-value: #2A2A2F;
 }
 
+@property --fill {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: transparent;
+}
+
 .chamfer {
   --c: var(--chamfer);
   --edge: var(--line);

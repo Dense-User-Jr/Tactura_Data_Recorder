@@ -10,7 +10,7 @@ const PITCH = 12; // px between dot centers
 const DOT_R = 3.4;
 const PAD = 56; // canvas overhang so scattered dots can start outside the wordmark
 const UNLIT_ALPHA = 0.08;
-const LINE_GAP_MS = 110; // minimum spacing between log lines so each one is readable
+const LINE_GAP_MS = 90; // minimum spacing between log lines so each one is readable
 const HOLD_MS = 280;
 const FADE_MS = 360;
 

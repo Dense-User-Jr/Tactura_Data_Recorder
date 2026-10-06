@@ -53,6 +53,16 @@ export function createWatchMaterials(finish, screenTexture) {
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
+  const ripple = addGlassRipple(glass);
+
+  // Fire feedback (spec §10.5): signal red ring on the case shoulder, HDR-bright at peak so it blooms
+  const glow = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(0, 0, 0),
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    toneMapped: false,
+  });
 
   // AMOLED off-pixels: the thin black border between display and case. Unlit, so it stays pure black.
   const panelBlack = new THREE.MeshBasicMaterial({ color: 0x000000 });
@@ -91,7 +101,92 @@ export function createWatchMaterials(finish, screenTexture) {
     normalScale: new THREE.Vector2(0.14, 0.14),
   });
 
-  return { aluminum, aluminumPlain, button, glass, panelBlack, display, port, sensorGlass, sensorWindow, electrode, strap };
+  return {
+    aluminum,
+    aluminumPlain,
+    button,
+    glass,
+    ripple,
+    glow,
+    panelBlack,
+    display,
+    port,
+    sensorGlass,
+    sensorWindow,
+    electrode,
+    strap,
+  };
+}
+
+const ACCENT = new THREE.Color('#FF3B2F'); // --accent, converted to linear
+const GLOW_PEAK = 3.2;
+
+/**
+ * Edge glow brightness, 0 (off) to 1 (peak).
+ * @param {ReturnType<typeof createWatchMaterials>} materials
+ * @param {number} level
+ */
+export function setGlowLevel(materials, level) {
+  materials.glow.color.copy(ACCENT).multiplyScalar(GLOW_PEAK * level);
+}
+
+/**
+ * Double Tap's "tiny ripple on the screen glass highlight": a radial wave that
+ * travels out from the center and bends the glass normals, so the reflections
+ * shimmer as it passes. Patches the physical shader in place.
+ * @param {THREE.MeshPhysicalMaterial} material
+ * @returns {{ time: { value: number }, amp: { value: number } }} time in s since the tap, amp 0..1
+ */
+function addGlassRipple(material) {
+  const uniforms = { time: { value: 0 }, amp: { value: 0 } };
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uRippleTime = uniforms.time;
+    shader.uniforms.uRippleAmp = uniforms.amp;
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+        varying float vRippleR;
+        varying vec3 vRippleDir;`,
+      )
+      .replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        vRippleR = length(position.xy);
+        vRippleDir = normalize(normalMatrix * vec3(position.xy + 1e-4, 0.0));`,
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+        varying float vRippleR;
+        varying vec3 vRippleDir;
+        uniform float uRippleTime;
+        uniform float uRippleAmp;
+        float rippleFront() { return vRippleR - uRippleTime * 85.0; }  // wavefront at 85 mm/s
+        vec3 rippled(vec3 n) {
+          if (uRippleAmp <= 0.0) return n;
+          float d = rippleFront();
+          float wave = exp(-d * d / 10.0) * sin(d * 1.4);    // a short packet around the front
+          return normalize(n + vRippleDir * wave * 0.35 * uRippleAmp);
+        }`,
+      )
+      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = rippled(normal);')
+      // the dark studio leaves little reflection to distort, so the front also catches a faint light
+      .replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>
+        if (uRippleAmp > 0.0) {
+          float f = rippleFront();
+          totalEmissiveRadiance += vec3(0.2) * exp(-f * f / 1.4) * uRippleAmp;
+        }`,
+      )
+      .replace(
+        '#include <clearcoat_normal_fragment_begin>',
+        '#include <clearcoat_normal_fragment_begin>\nclearcoatNormal = rippled(clearcoatNormal);',
+      );
+  };
+  return uniforms;
 }
 
 /**

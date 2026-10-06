@@ -31,7 +31,11 @@ export class GestureDeck {
           dataset: { gesture: g.id },
           title: `${g.name} (key ${g.key})`,
           'aria-keyshortcuts': g.key,
-          onClick: () => onPress(g.id),
+          onClick: (/** @type {MouseEvent} */ e) => {
+            // don't keep focus: Space (commit) must never re-activate a tile
+            if (e.detail > 0) /** @type {HTMLElement} */ (e.currentTarget).blur();
+            onPress(g.id);
+          },
         },
         h('span', { class: 'tile__scan', 'aria-hidden': 'true' }),
         h('span', { class: 'tile__key' }, g.key),

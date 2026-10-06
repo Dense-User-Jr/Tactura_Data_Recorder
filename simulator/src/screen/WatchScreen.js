@@ -29,8 +29,12 @@ export class WatchScreen {
     /** @type {ScreenApp | null} */
     this.app = null;
     this.dirty = true;
-    /** Speech output level 0..1; the voice engine (Phase 4) sets this. */
-    this.voiceLevel = () => 0;
+    /** The voice engine plugs in here so apps can show speaking state. */
+    this.voice = {
+      level: () => 0,
+      /** @returns {'idle'|'preparing'|'speaking'} */
+      activity: () => 'idle',
+    };
   }
 
   /** @param {ScreenApp} app */
@@ -44,7 +48,8 @@ export class WatchScreen {
       invalidate: () => {
         this.dirty = true;
       },
-      voiceLevel: () => this.voiceLevel(),
+      voiceLevel: () => this.voice.level(),
+      voiceActivity: () => this.voice.activity(),
     });
     this.dirty = true;
   }

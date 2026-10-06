@@ -20,6 +20,7 @@ import { layoutDots } from '../../ui/dotMatrix.js';
  * @typedef {import('../ScreenApp.js').ScreenApi} ScreenApi
  * @typedef {import('../../pipeline/Composer.js').ComposeState} ComposeState
  * @typedef {import('../../pipeline/types.js').BinToken} BinToken
+ * @typedef {{ kind: 'commit', word: string, tokens: BinToken[], t: number, shrinkAt: number | null, voiced: boolean }} CommitOverlay
  */
 
 const SIZE = 480;
@@ -27,8 +28,8 @@ const C = SIZE / 2;
 const SAFE_R = SIZE * 0.42; // inscribed safe circle at 84% of the diameter
 
 const BOOT = { assemble: 800, hold: 450, pitch: 9.4, dot: 3.1 };
-const COMMIT = { pop: 220, ring: 900, shrink: 320 };
-const COMMIT_MS = COMMIT.pop + COMMIT.ring + COMMIT.shrink;
+/** The ring phase lasts at least `ring`, longer while the voice is synthesizing or speaking (up to `maxRing`). */
+const COMMIT = { pop: 220, ring: 900, maxRing: 4500, shrink: 320 };
 const NOWORD_MS = 600;
 const FRESH_MS = 300;
 
@@ -49,7 +50,7 @@ export class TacturaStarterApp extends ScreenApp {
     this.clockT = 0;
     /** @type {ComposeState} */
     this.compose = api.store.get().compose;
-    /** @type {{ kind: 'commit', word: string, tokens: BinToken[], t: number } | { kind: 'noword', t: number } | null} */
+    /** @type {CommitOverlay | { kind: 'noword', t: number } | null} */
     this.overlay = null;
     this.freshT = Infinity;
     this.minute = -1;
@@ -69,7 +70,7 @@ export class TacturaStarterApp extends ScreenApp {
         },
       ),
       api.bus.on('compose:commit', ({ word, tokens }) => {
-        this.overlay = { kind: 'commit', word, tokens, t: 0 };
+        this.overlay = { kind: 'commit', word, tokens, t: 0, shrinkAt: null, voiced: false };
         api.invalidate();
       }),
       api.bus.on('compose:noword', () => {
@@ -102,10 +103,19 @@ export class TacturaStarterApp extends ScreenApp {
       return;
     }
 
-    if (this.overlay) {
-      this.overlay.t += ms;
-      const length = this.overlay.kind === 'commit' ? COMMIT_MS : NOWORD_MS;
-      if (this.overlay.t >= length) this.overlay = null;
+    const o = this.overlay;
+    if (o) {
+      o.t += ms;
+      if (o.kind === 'noword') {
+        if (o.t >= NOWORD_MS) this.overlay = null;
+      } else if (o.shrinkAt === null) {
+        const busy = this.api.voiceActivity() !== 'idle';
+        if (busy) o.voiced = true;
+        const ringDone = o.t >= COMMIT.pop + COMMIT.ring && (!busy || o.t >= COMMIT.pop + COMMIT.maxRing);
+        if (ringDone) o.shrinkAt = o.t;
+      } else if (o.t >= o.shrinkAt + COMMIT.shrink) {
+        this.overlay = null;
+      }
       this.api.invalidate();
     }
     if (this.freshT < FRESH_MS) {
@@ -273,7 +283,7 @@ export class TacturaStarterApp extends ScreenApp {
 
   /**
    * @param {CanvasRenderingContext2D} ctx
-   * @param {{ kind: 'commit', word: string, tokens: BinToken[], t: number }} o
+   * @param {CommitOverlay} o
    */
   #renderCommit(ctx, o) {
     const t = o.t;
@@ -291,8 +301,7 @@ export class TacturaStarterApp extends ScreenApp {
       return s;
     })();
 
-    const shrinkStart = COMMIT.pop + COMMIT.ring;
-    if (t < shrinkStart) {
+    if (o.shrinkAt === null) {
       // 2. the word lands in the center
       const p = clamp01(t / COMMIT.pop);
       const scale = 0.84 + 0.16 * easeOutCubic(p);
@@ -305,11 +314,15 @@ export class TacturaStarterApp extends ScreenApp {
       ctx.fillText(o.word, 0, 0);
       ctx.restore();
 
-      // 3. the speaking ring: the voice level once the voice exists, a single soft pulse until then
+      // 3. the speaking ring: follows the voice's output level; breathes faintly while the
+      //    word is being synthesized; one soft pulse when there's no voice (muted / none)
       const ringT = t - COMMIT.pop;
       if (ringT > 0) {
-        const voice = this.api.voiceLevel();
-        const level = voice > 0 ? voice : Math.sin(Math.PI * clamp01(ringT / COMMIT.ring)) * 0.8;
+        const activity = this.api.voiceActivity();
+        let level;
+        if (activity === 'preparing') level = 0.12 + 0.08 * Math.sin(ringT / 140);
+        else if (o.voiced) level = this.api.voiceLevel();
+        else level = Math.sin(Math.PI * clamp01(ringT / COMMIT.ring)) * 0.8;
         ctx.strokeStyle = INK.text;
         ctx.globalAlpha = 0.15 + 0.75 * level;
         ctx.lineWidth = 1.5 + 4 * level;
@@ -322,7 +335,7 @@ export class TacturaStarterApp extends ScreenApp {
     }
 
     // 4. the word shrinks into the top line
-    const p = easeInOutCubic(clamp01((t - shrinkStart) / COMMIT.shrink));
+    const p = easeInOutCubic(clamp01((t - o.shrinkAt) / COMMIT.shrink));
     const size = bigSize + (26 - bigSize) * p;
     const y = 270 + (LAST_LINE_Y - 270) * p;
     ctx.fillStyle = mix(INK.text, INK.muted, p);

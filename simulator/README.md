@@ -2,7 +2,7 @@
 
 A 3D web simulator of a Samsung Galaxy Watch 7 for testing the feel and flow of the Tactura gesture-to-speech pipeline without the physical watch. The full build spec is in [SPEC.md](SPEC.md).
 
-> **Status: Phase 3 (pipeline, screen, transcript).** Gestures now flow through the full pipeline (classifier → phoneme bin → word lookup) onto the watch screen, the trace panel and the transcript. Try `6 3 5 Space` (cheese) or `6 4 5` then `Tab` (choose / jews / juice). Voice arrives in Phase 4; until then committed words are not spoken.
+> **Status: Phase 4 (voice).** Gestures flow through the full pipeline (classifier → phoneme bin → word lookup) onto the watch screen, the trace panel and the transcript, and committed words are spoken with a neural voice. Try `6 3 5 Space` (cheese) or `6 4 5` then `Tab` (choose / jews / juice). Help overlay, settings panel and telemetry come in Phase 5.
 
 ## Launch
 
@@ -42,13 +42,29 @@ The launchers call `tools/ensure-deps.mjs`, which runs `npm ci` only when `node_
 | `W A S D`, arrow keys | Orbit the camera (A/D yaw, W/S pitch) | **Now** |
 | Mouse drag / scroll | Orbit and zoom | **Now** |
 | `R` | Reset camera to the hero angle | **Now** |
-| `M` | Mute or unmute voice | Phase 4 |
+| `M` | Mute or unmute voice | **Now** |
 | `[` / `]` | Collapse the left / right rail | **Now** |
 | `?` or `H` | Help overlay | Phase 5 (shows a notice for now) |
 
 Shortcuts are ignored while typing in a text field, and while Ctrl/Cmd/Alt is held so browser shortcuts keep working. Gesture keys use physical key positions, so they work on any keyboard layout.
 
-The viewport's top-right corner has the case finish (Silver, Green, Cream) and the `ARM` toggle. With the arm on (default), the watch lies face up on a forearm and the camera looks from the wearer's side; with it off, the watch stands upright like a product shot. Both choices are remembered per browser and move into the settings panel in Phase 5.
+The viewport's top-right corner has the case finish (Silver, Green, Cream), the `ARM` toggle, and the voice (click the name to cycle Heart, Bella, Emma, Michael; `ON`/`MUTED` is the same as `M`). With the arm on (default), the watch lies face up on a forearm and the camera looks from the wearer's side; with it off, the watch stands upright like a product shot. These choices are remembered per browser and move into the settings panel in Phase 5.
+
+## Voice
+
+Committed words are spoken (never single gestures). The `VOICE` badge says which engine is talking:
+
+| Badge | Meaning |
+|---|---|
+| `STANDBY` | Nothing loaded yet. The neural voice starts loading on your first key press or click |
+| `LOADING 42%` | Downloading [Kokoro-82M](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX) from Hugging Face. Words are spoken by the system voice meanwhile |
+| `NEURAL` | Kokoro is speaking, in a Web Worker (WebGPU fp32 if your browser has WebGPU, otherwise WASM q8) |
+| `SYSTEM` | The neural voice couldn't load (e.g. no internet on the first run), so the browser's own voice speaks. Reload with internet to try again |
+| `MUTED` | `M` was pressed |
+
+**First run needs internet** and downloads about **311 MB** with WebGPU (**88 MB** without). The browser caches it, so later runs work offline and the voice is ready about 10 seconds after your first key press. On an Intel Arc laptop GPU a new word takes about 0.5–1 s to synthesize, but the sim prepares the current best match while you type, so pressing Space usually speaks at once. Each word is synthesized only once per voice.
+
+Test switch: `?break=voice` makes the voice's code unreachable, like a first run with no internet, to see the `SYSTEM` fallback.
 
 The viewport's bottom-right readout shows drawn frames per second. It reads `IDLE` when nothing is moving: the 3D view only redraws when something changes, so an idle sim costs no GPU time.
 
@@ -118,8 +134,9 @@ simulator/
                      WristMannequin (arm rig), GestureAnimator, Annotations, SoftBloomPass,
                      watch/ (WatchModel, geometry, materials)
     screen/          WatchScreen (480 × 480 canvas host), ScreenApp (interface), apps/TacturaStarterApp
+    voice/           VoiceEngine (tiers, cache, prefetch, level), kokoro.worker.js, webSpeech.js
     ui/              Hud, uiSounds, components/, styles/ (tokens.css, base.css, hud.css)
-  tests/             Vitest: core, gesture clips, lexicon, decoder, bin mapper, registry, composer
+  tests/             Vitest: core, gesture clips, lexicon, decoder, bin mapper, registry, composer, voice
 ```
 
 SPEC.md §5 has the full target structure.
@@ -180,3 +197,13 @@ SPEC.md §5 has the full target structure.
 | 2026-10-05 | Composing screen extras: under `N POSSIBLE`, a dim preview of the top 3 words; `NO MATCH` when no word starts with the buffer; a hint line (`SPACE COMMIT · ⌫ UNDO`) | Shows where the buffer is heading and how to get out of a dead end |
 | 2026-10-05 | Trace rows lead with the phonemes, then the bin name, and show the input source and classifier confidence (`KEY 1.00`) | Phonemes survive truncation, and the confidence makes the passthrough's "1.00" visibly not a real measurement |
 | 2026-10-05 | A toast identical to one already showing refreshes it instead of stacking | A stage failing on every gesture would otherwise bury the screen in copies |
+| 2026-10-05 | **kokoro-js is loaded at runtime** from jsDelivr (its self-contained `dist/kokoro.web.js`, pinned to 1.2.1), not npm-installed | The npm package pulls in `onnxruntime-node` (287 MB) and `onnxruntime-web` (138 MB) that the browser never uses, which would make everyone's first double-click install minutes longer. The neural voice needs internet on first use anyway (the model comes from Hugging Face and the ONNX runtime from jsDelivr), and the browser caches all of it. Vendoring the bundle instead would commit GPL espeak-ng code into the repo. If jsDelivr is unreachable, the system voice speaks |
+| 2026-10-05 | Before the first key press or click the badge reads `VOICE: STANDBY`, not `LOADING` as in §6.1's boot example | §9 says to load lazily after the first interaction, so nothing is loading at boot |
+| 2026-10-05 | WebGPU uses fp32 as §9 specifies: a 311 MB first download (WASM q8 is 88 MB). Measured on this machine: 15 s download, 8.5–11.6 s to start from cache, 0.5–1.1 s per new word | Spec choice kept; the README warns about the size |
+| 2026-10-05 | **Speculative synthesis:** the word Space would commit right now (top match, or the one Tab selected) is synthesized in the background while you type | Measured: speech starts 0 ms after Space instead of 0.5–1.9 s. Cheap, since the vocabulary is tiny |
+| 2026-10-05 | Words are synthesized as "word." (trailing period) and leading silence is trimmed | Natural falling intonation for a single word, and no dead air before it |
+| 2026-10-05 | The watch's speaking ring follows the real output level for the neural voice. The Web Speech voice can't be measured, so it gets a gentle synthetic flicker while speaking. The ring breathes faintly while a word is being synthesized and holds until speech ends (max 4.5 s) | Honest where measurable; never frozen while waiting |
+| 2026-10-05 | The male option is `am_michael` | Kokoro's best-rated US male voice (C+) |
+| 2026-10-05 | `VOICE: NEURAL` is white (project), `SYSTEM` and `MUTED` muted, `NONE` red | The voice engine is the real speaker stage (§8.2: "Same"); the system voice is its fallback |
+| 2026-10-05 | A newer committed word cuts off the one still speaking. If synthesis fails for one word, that word uses the system voice (with a toast); if loading fails, the system voice is used until reload | Responsive, and never silent without saying why |
+| 2026-10-05 | `?break=voice` test switch | Demonstrates the Phase 4 acceptance check (no internet on first run → system voice, badge says so) without unplugging anything |

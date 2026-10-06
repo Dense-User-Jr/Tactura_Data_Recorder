@@ -11,6 +11,10 @@ export default defineConfig({
     // three.js alone is ~500 kB minified; that's fine for a locally served tool.
     chunkSizeWarningLimit: 1200,
   },
+  worker: {
+    // the voice worker is a module worker that dynamic-imports kokoro-js at runtime
+    format: 'es',
+  },
   server: {
     open: true,
     port: 5173,

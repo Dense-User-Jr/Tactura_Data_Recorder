@@ -769,9 +769,14 @@
   top: 18px;
   right: 40px;
   display: flex;
-  gap: 22px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 22px;
+  max-width: calc(100% - 340px); /* wrap below rather than run into the camera readout */
   pointer-events: auto;
 }
+
+.view-toggle .chip[aria-pressed="false"] { color: var(--text-dim); }
 
 .view-toggle {
   display: flex;

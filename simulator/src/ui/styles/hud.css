@@ -63,6 +63,9 @@
 
 .topbar {
   grid-area: top;
+  /* backdrop-filter makes this a stacking context; lift it so badge tooltips sit above the viewport */
+  position: relative;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -192,7 +195,7 @@
   top: calc(100% + 8px);
   right: 0;
   z-index: 5;
-  width: 248px;
+  width: 300px;
   padding: 10px 12px 12px;
   opacity: 0;
   transform: translateY(-4px);
@@ -221,6 +224,7 @@
   line-height: 1.45;
   color: var(--text-muted);
   white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Rails and panels ---------- */
@@ -510,18 +514,201 @@
   margin-top: 12px;
 }
 
-/* Trace placeholder */
+/* 03 / TRACE: candidates */
+
+.cands {
+  flex: none;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cands__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.cands__meta {
+  margin-left: auto;
+  color: var(--text-dim);
+}
+
+.tag {
+  --c: 5px;
+  --edge: var(--line-strong);
+  padding: 3px 6px 2px;
+  font-size: 10px;
+  color: var(--text);
+}
+
+.tag[hidden] { display: none; }
+
+.cands__list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cand {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) 64px 34px;
+  align-items: center;
+  gap: 8px;
+  height: 27px;
+}
+
+.cand__mark {
+  font-size: 11px;
+  color: var(--text);
+}
+
+.cand__word {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+}
+
+.cand--selected .cand__word { color: var(--text); }
+.cand--prefix .cand__word { color: var(--text-dim); }
+
+.cand__bar {
+  height: 1px;
+  background: var(--line);
+}
+
+.cand__bar i {
+  display: block;
+  height: 100%;
+  background: var(--text-muted);
+}
+
+.cand--selected .cand__bar i { background: var(--text); }
+.cand--prefix .cand__bar i { background: var(--text-dim); }
+
+.cand__z {
+  text-align: right;
+  color: var(--text-dim);
+}
+
+/* 03 / TRACE: event rows */
 
 .trace-head {
   display: grid;
-  grid-template-columns: 64px 1fr 56px 24px;
+  grid-template-columns: 74px minmax(0, 1fr) 24px;
   gap: 8px;
+  flex: none;
   padding: 10px 16px;
   border-bottom: 1px solid var(--line);
   color: var(--text-dim);
 }
 
 .trace-head :last-child { text-align: right; }
+
+.trace-scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.trace {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trace__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) 24px;
+  align-items: start;
+  gap: 8px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--line);
+  animation: row-in var(--t-med) var(--ease-out);
+}
+
+/* the red tick on the newest row, fading */
+.trace__row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0;
+  animation: tick-fade 900ms var(--ease-out);
+}
+
+.trace__t { color: var(--text-dim); font-size: 10px; padding-top: 2px; }
+
+.trace__main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.trace__g {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.trace__glyph svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+}
+
+.trace__bin {
+  display: flex;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.trace__bin-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trace__src {
+  flex: none;
+  margin-left: auto;
+  color: var(--text-dim);
+}
+
+.trace__n {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  text-align: right;
+  color: var(--text);
+}
+
+.trace__row--error .trace__bin,
+.trace__row--error .trace__n { color: var(--accent); white-space: normal; }
+
+.trace-scroll .empty[hidden] { display: none; }
+
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(-6px); }
+}
 
 .empty {
   flex: 1;
@@ -753,10 +940,11 @@ rect.ann__mark {
 .transcript {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   min-width: 0;
   padding: 0 24px;
   overflow: hidden;
+  scroll-behavior: auto;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 36px;
@@ -769,6 +957,69 @@ rect.ann__mark {
   height: 0.82em;
   background: var(--text);
   animation: blink 1.06s steps(1, end) infinite;
+}
+
+.transcript__words {
+  display: flex;
+  gap: 0.5em;
+  flex: none;
+  white-space: nowrap;
+}
+
+.transcript__words:empty { display: none; }
+
+.transcript__word { position: relative; }
+
+.transcript__word.is-new {
+  animation: word-in 260ms var(--ease-out);
+}
+
+/* a red underline on a freshly committed word, fading */
+.transcript__word.is-new::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  animation: tick-fade 1200ms var(--ease-out);
+}
+
+.transcript__chips {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.buf-chip {
+  --c: var(--chamfer-sm);
+  --edge: var(--line-strong);
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  color: var(--text);
+}
+
+.buf-chip:last-child { --edge: var(--text-muted); }
+
+.dock__aside .aside__keys {
+  display: flex;
+  gap: 3px;
+}
+
+.aside__status { color: var(--text-muted); }
+
+.dock__aside.is-noword .aside__status { display: none; }
+.dock__aside.is-noword::after {
+  content: attr(data-flash);
+  color: var(--accent);
+}
+
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(10px); }
 }
 
 @keyframes blink {
@@ -789,7 +1040,7 @@ rect.ann__mark {
   display: flex;
   align-items: center;
   gap: 12px;
-  max-width: 560px;
+  max-width: 680px;
   padding: 10px 18px 10px 12px;
   opacity: 0;
   transform: translateY(8px);
@@ -804,7 +1055,7 @@ rect.ann__mark {
 }
 
 .toast__tag { color: var(--text-dim); }
-.toast__msg { color: var(--text); }
+.toast__msg { color: var(--text); white-space: nowrap; }
 
 .toast__detail {
   font-family: var(--font-body);

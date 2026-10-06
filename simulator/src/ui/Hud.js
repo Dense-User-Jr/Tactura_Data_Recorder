@@ -1,5 +1,7 @@
 import { h, panelHead } from './dom.js';
 import { StageBadge } from './components/StageBadge.js';
+import { ScreenMirror } from './components/ScreenMirror.js';
+import { FinishPicker } from './components/FinishPicker.js';
 import { isShortcutEvent } from '../core/keyboard.js';
 
 /**
@@ -9,7 +11,12 @@ import { isShortcutEvent } from '../core/keyboard.js';
  * @property {{ source: string }} input
  * @property {Record<string, BadgeState>} badges   rendered in insertion order
  * @property {{ fps: number, dpr: number, gl: string }} perf
+ * @property {{ finish: string }} watch
+ * @property {{ yaw: number, pitch: number, distance: number }} camera   degrees, degrees, world units
  */
+
+/** @param {number} deg */
+const signedDeg = (deg) => `${deg < 0 ? '−' : '+'}${String(Math.abs(Math.round(deg))).padStart(3, '0')}°`;
 
 const GEAR_SVG = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
   <circle cx="8" cy="8" r="2.1"/><circle cx="8" cy="8" r="4.6"/>
@@ -26,16 +33,30 @@ const GEAR_SVG = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" str
  */
 export class Hud {
   /**
-   * @param {{ root: HTMLElement, store: import('../core/store.js').Store<HudState>, bus: import('../core/eventBus.js').EventBus, version: string }} deps
+   * @param {{ root: HTMLElement, store: import('../core/store.js').Store<HudState>, bus: import('../core/eventBus.js').EventBus, version: string, finishes: Record<string, { label: string }> }} deps
    */
-  constructor({ root, store, bus, version }) {
+  constructor({ root, store, bus, version, finishes }) {
     this.root = root;
     this.store = store;
     this.bus = bus;
     /** @type {Map<string, StageBadge>} */
     this.badges = new Map();
+    this.mirror = new ScreenMirror();
+    this.finishPicker = new FinishPicker({
+      finishes,
+      onPick: (finish) => store.update((s) => ({ ...s, watch: { ...s.watch, finish } })),
+    });
 
     root.append(this.#topbar(version), this.#leftRail(), this.#stage(), this.#rightRail(), this.#dock());
+
+    bus.on('screen:frame', (/** @type {HTMLCanvasElement} */ canvas) => {
+      this.mirror.draw(canvas);
+      this.mirrorEl.classList.add('has-signal');
+    });
+    store.watch((s) => s.watch.finish, (finish) => this.finishPicker.set(finish));
+    store.watch((s) => s.camera, (cam) => {
+      this.cameraReadout.textContent = `YAW ${signedDeg(cam.yaw)}  PITCH ${signedDeg(cam.pitch)}  DIST ${cam.distance.toFixed(2)}`;
+    });
 
     store.watch((s) => s.ui, (ui) => {
       root.dataset.left = ui.leftRail ? 'open' : 'closed';
@@ -46,8 +67,9 @@ export class Hud {
       this.inputValue.textContent = input.source.toUpperCase();
     });
     store.watch((s) => s.perf, (perf) => {
-      this.readout.textContent =
-        perf.gl === 'ERROR' ? 'GL: ERROR' : `FPS ${String(perf.fps).padStart(2, '0')} · DPR ${perf.dpr.toFixed(1)} · ${perf.gl}`;
+      // fps counts drawn frames; 0 means the scene is idle and skipping the GPU entirely
+      const fps = perf.fps > 0 ? String(perf.fps).padStart(2, '0') : 'IDLE';
+      this.readout.textContent = perf.gl === 'ERROR' ? 'GL: ERROR' : `FPS ${fps} · DPR ${perf.dpr.toFixed(1)} · ${perf.gl}`;
     });
 
     window.addEventListener('keydown', (e) => this.#onKey(e));
@@ -206,7 +228,12 @@ export class Hud {
             h(
               'div',
               { class: 'mirror-frame' },
-              h('div', { class: 'mirror' }, h('span', { class: 'mirror__msg label' }, 'NO SIGNAL')),
+              (this.mirrorEl = h(
+                'div',
+                { class: 'mirror' },
+                this.mirror.canvas,
+                h('span', { class: 'mirror__msg label' }, 'NO SIGNAL'),
+              )),
             ),
             h('div', { class: 'mirror-meta label dim' }, h('span', {}, '480 × 480'), h('span', {}, 'APP: NONE')),
           ),
@@ -232,21 +259,39 @@ export class Hud {
 
   #stage() {
     this.readout = h('div', { class: 'stage__readout label' });
+    this.cameraReadout = h('div', { class: 'stage__camera label dim' });
     this.toastRoot = h('div', { class: 'toasts', 'aria-live': 'polite' });
-    return h(
+    const hint = (keys, action) => h('span', {}, ...keys.map((k) => h('kbd', {}, k)), h('span', { class: 'stage__hint-act' }, action));
+    /** The viewport cell; the 3D view keeps the watch centered in it. */
+    this.stageEl = h(
       'div',
       { class: 'stage' },
       ['tl', 'tr', 'bl', 'br'].map((corner) => h('span', { class: `stage__mark stage__mark--${corner}` })),
       h(
         'div',
-        { class: 'stage__label label' },
-        h('span', { class: 'panel__num' }, '00'),
-        h('span', { class: 'panel__sep' }, '/'),
-        h('span', {}, 'VIEWPORT'),
+        { class: 'stage__head' },
+        h(
+          'div',
+          { class: 'stage__label label' },
+          h('span', { class: 'panel__num' }, '00'),
+          h('span', { class: 'panel__sep' }, '/'),
+          h('span', {}, 'VIEWPORT'),
+        ),
+        this.cameraReadout,
+      ),
+      h('div', { class: 'stage__finish' }, this.finishPicker.el),
+      h(
+        'div',
+        { class: 'stage__hint label dim' },
+        hint(['W', 'A', 'S', 'D'], 'ORBIT'),
+        hint(['DRAG'], 'ORBIT'),
+        hint(['SCROLL'], 'ZOOM'),
+        hint(['R'], 'RESET'),
       ),
       this.readout,
       this.toastRoot,
     );
+    return this.stageEl;
   }
 
   #dock() {

@@ -2,7 +2,7 @@
 
 A 3D web simulator of a Samsung Galaxy Watch 7 for testing the feel and flow of the Tactura gesture-to-speech pipeline without the physical watch. The full build spec is in [SPEC.md](SPEC.md).
 
-> **Status: Phase 0 (scaffold and launch).** The shell, launchers and HUD frame exist. The watch arrives in Phase 1, gestures in Phase 2, the pipeline in Phase 3 and voice in Phase 4. Stage badges read `OFFLINE` until their stage is built.
+> **Status: Phase 1 (the watch).** Launchers, HUD frame, and the 3D Galaxy Watch 7 with studio lighting, orbit camera, callouts and finish switcher are in. Gestures arrive in Phase 2, the pipeline in Phase 3 and voice in Phase 4. Stage badges read `OFFLINE` until their stage is built. The watch screen shows a standby clock until the Tactura screen app lands in Phase 3.
 
 ## Launch
 
@@ -39,14 +39,16 @@ The launchers call `tools/ensure-deps.mjs`, which runs `npm ci` only when `node_
 | `Backspace` | Remove the last gesture, or the last word if the buffer is empty | Phase 3 |
 | `Tab` / `Shift+Tab` | Cycle candidates when several words match | Phase 3 |
 | `Esc` | Clear the buffer | Phase 3 |
-| `W A S D`, arrow keys | Orbit the camera | Phase 1 |
-| Mouse drag / scroll | Orbit and zoom | Phase 1 |
-| `R` | Reset camera to the hero angle | Phase 1 |
+| `W A S D`, arrow keys | Orbit the camera (A/D yaw, W/S pitch) | **Now** |
+| Mouse drag / scroll | Orbit and zoom | **Now** |
+| `R` | Reset camera to the hero angle | **Now** |
 | `M` | Mute or unmute voice | Phase 4 |
 | `[` / `]` | Collapse the left / right rail | **Now** |
 | `?` or `H` | Help overlay | Phase 5 (shows a notice for now) |
 
-Shortcuts are ignored while typing in a text field, and while Ctrl/Cmd/Alt is held so browser shortcuts keep working.
+Shortcuts are ignored while typing in a text field, and while Ctrl/Cmd/Alt is held so browser shortcuts keep working. The case finish (Silver, Green, Cream) is picked in the viewport's top-right corner for now and is remembered per browser. It moves into the settings panel in Phase 5.
+
+The viewport's bottom-right readout shows drawn frames per second. It reads `IDLE` when nothing is moving: the 3D view only redraws when something changes, so an idle sim costs no GPU time.
 
 ## Layout
 
@@ -59,7 +61,10 @@ simulator/
   src/
     main.js          boot sequence
     core/            eventBus, store, clock, keyboard helpers
-    scene/           three.js scene (SceneRoot now; watch, lights, camera later)
+    input/           CameraKeys (WASD / arrows / R)
+    scene/           SceneRoot (renderer, post, render-on-demand), CameraRig, lighting,
+                     Annotations, SoftBloomPass, watch/ (WatchModel, geometry, materials)
+    screen/          WatchScreen (the 480 × 480 display canvas)
     ui/              Hud, components/, styles/ (tokens.css, base.css, hud.css)
   tests/             Vitest
 ```
@@ -85,3 +90,16 @@ SPEC.md §5 has the full target structure.
 | 2026-10-05 | Small `FPS · DPR · GL` readout in the viewport corner (not in the §6.2 layout) | Makes the 60 fps acceptance check visible. Easy to hide behind a setting in Phase 5 |
 | 2026-10-05 | Boot wordmark and terminal banner use a hand-drawn 5×7 dot glyph table (`src/ui/dotMatrix.js`) instead of sampling the Doto font | Individual dots can animate, and the same table renders the ASCII banner. All other display text uses Doto |
 | 2026-10-05 | Extra `tests/core.test.js` for the event bus and store | So `npm test` is meaningful from Phase 0 |
+| 2026-10-05 | **Presentation frame:** at rest the watch stands upright (12 o'clock up, face toward the hero camera) and the camera orbits the vertical axis, like a product shot. Read physically, the camera is the wearer looking down at a face-up wrist | Keeps 12 o'clock at the top of the screen while orbiting, and puts the contact shadow on a floor below the watch. Phase 5's synthetic IMU will use gravity along world −Z, so the rest reading matches the recordings' face-up `(0.3, 0.6, 9.7)` |
+| 2026-10-05 | **Reflections come from a small code-built studio** (dark room plus softbox panels through PMREMGenerator) instead of three's `RoomEnvironment` | Same technique, still no HDR file. RoomEnvironment's evenly bright grey room washed the AMOLED blacks to grey and made the aluminum read flat white |
+| 2026-10-05 | Bloom clamps radiance in its bright-pass and runs at half resolution (`SoftBloomPass`); strength 0.09, threshold 1.4 | Specular glints reach 50+ and flooded the frame with glow. Half resolution cut bloom's cost with no visible change |
+| 2026-10-05 | 4× MSAA only below device pixel ratio 1.75 | On an Intel Arc iGPU at DPR 2, MSAA alone took the frame rate from 200 to 55 fps, and 1:1 crops looked the same without it |
+| 2026-10-05 | The 3D view renders on demand: only when the camera, an animation, or a texture changes | An idle sim costs no GPU time. Measured on Intel Arc iGPU with continuous redraw: 226 fps at DPR 1, 156 at 1.25, 116 at 1.5, 240 at 2 |
+| 2026-10-05 | Key and rim lights ride with the camera; the studio reflections stay fixed in the world | Every orbit angle stays lit like a studio shot, while reflections still slide across the metal as you orbit |
+| 2026-10-05 | The strap is a closed loop around a wrist-sized cross-section (about 61 × 40 mm) | Reads as worn, and the Phase 2 forearm passes through it. Consequence: the sensor dome faces into the loop, so it's visible through the strap's side opening, not straight from behind |
+| 2026-10-05 | Display material is boosted 1.5× | Post-processing tone-maps the whole frame (ACES), which would otherwise dim the AMOLED whites to ~90% grey. Blacks stay pure black |
+| 2026-10-05 | The watch screen shows a built-in standby clock, and the HUD screen mirror is wired now (spec lists it for Phase 3) | A dark screen would undercut the product-render look. The standby face is the screen's "no app" state; `APP: NONE` stays honest until the Tactura app mounts in Phase 3 |
+| 2026-10-05 | Clock colon drawn as two dots instead of Doto's `:` glyph | At weight 900 and 118 px, Doto's colon read as a smudge |
+| 2026-10-05 | The IMU callout anchors below the clock digits rather than at the exact case center | Its marker sat on top of the time. The IMU's real board position isn't known anyway |
+| 2026-10-05 | Finish picker lives in the viewport's top-right until the Phase 5 settings panel; the choice is remembered in localStorage | Phase 1 needs a finish switcher before settings exist |
+| 2026-10-05 | Camera readout (`YAW / PITCH / DIST`) under the viewport label, and a controls hint along the bottom edge (hidden below 1280 px wide) | Makes the hero angle and orbit state legible. The hint stands in for the Phase 5 help overlay |

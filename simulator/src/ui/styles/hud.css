@@ -428,6 +428,20 @@
   color: var(--text-dim);
 }
 
+.mirror__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity var(--t-reveal) var(--ease-out);
+}
+
+.mirror.has-signal .mirror__canvas { opacity: 1; }
+.mirror.has-signal::before,
+.mirror.has-signal::after,
+.mirror.has-signal .mirror__msg { display: none; }
+
 .mirror-meta {
   display: flex;
   justify-content: space-between;
@@ -476,12 +490,22 @@
 .stage__mark--bl { bottom: 16px; left: 16px; border-width: 0 0 1px 1px; }
 .stage__mark--br { bottom: 16px; right: 16px; border-width: 0 1px 1px 0; }
 
-.stage__label {
+.stage__head {
   position: absolute;
   top: 24px;
   left: 40px;
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stage__label {
+  display: flex;
   gap: 6px;
+}
+
+.stage__camera {
+  white-space: pre;
 }
 
 .stage__readout {
@@ -491,16 +515,130 @@
   color: var(--text-dim);
 }
 
+.stage__finish {
+  position: absolute;
+  top: 18px;
+  right: 40px;
+  pointer-events: auto;
+}
+
+.stage__hint {
+  position: absolute;
+  left: 40px;
+  bottom: 20px;
+  display: flex;
+  gap: 18px;
+  white-space: nowrap;
+}
+
+/* too tight to share the bottom edge with the readout on narrow windows */
+@media (max-width: 1279px) {
+  .stage__hint { display: none; }
+}
+
+.stage__hint > span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.stage__hint-act {
+  margin-left: 5px;
+}
+
+.finish-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.finish-picker > .label {
+  margin-right: 4px;
+}
+
+.chip {
+  --c: var(--chamfer-sm);
+  height: 24px;
+  padding: 0 10px;
+  color: var(--text-muted);
+  transition:
+    --edge var(--t-med) var(--ease-out),
+    color var(--t-med) var(--ease-out);
+}
+
+.chip:hover {
+  --edge: var(--line-strong);
+  color: var(--text);
+}
+
+.chip[aria-pressed="true"] {
+  --edge: var(--text-muted);
+  color: var(--text);
+}
+
 .toasts {
   position: absolute;
   left: 50%;
-  bottom: 40px;
+  bottom: 56px;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
   gap: 8px;
   pointer-events: none;
+}
+
+/* ---------- 3D callouts (spec §10.6) ---------- */
+
+.annotations {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 600ms var(--ease-out) 900ms;
+}
+
+.annotations.is-live { opacity: 1; }
+.annotations.is-hidden { opacity: 0; transition-delay: 0ms; }
+
+.ann__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ann__line {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  opacity: 0.75;
+}
+
+.ann__line--internal { stroke-dasharray: 3 3; }
+
+.ann__mark {
+  fill: var(--text);
+}
+
+rect.ann__mark {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1;
+}
+
+.ann__label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: 5px;
+  font-size: 10.5px;
+  white-space: nowrap;
+  will-change: transform;
 }
 
 /* ---------- Dock: transcript + telemetry ---------- */

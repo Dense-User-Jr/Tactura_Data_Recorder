@@ -29,7 +29,7 @@ export function rankSystemVoices(voices) {
  * @typedef {Object} SystemSpeaker
  * @property {boolean} available
  * @property {() => string} voiceName
- * @property {(text: string, hooks?: { onStart?: () => void, onEnd?: () => void }) => void} speak
+ * @property {(text: string, hooks?: { onStart?: () => void, onEnd?: () => void, volume?: number }) => void} speak
  * @property {() => void} cancel
  */
 
@@ -50,7 +50,7 @@ export function createSystemSpeaker() {
   return {
     available,
     voiceName: () => voice?.name ?? 'browser default',
-    speak(text, { onStart, onEnd } = {}) {
+    speak(text, { onStart, onEnd, volume = 1 } = {}) {
       if (!available || !synth) {
         onEnd?.();
         return;
@@ -61,6 +61,7 @@ export function createSystemSpeaker() {
       utterance.lang = voice?.lang ?? 'en-US';
       utterance.rate = SYSTEM_VOICE.rate;
       utterance.pitch = SYSTEM_VOICE.pitch;
+      utterance.volume = Math.min(1, Math.max(0, volume));
       utterance.onstart = () => onStart?.();
       utterance.onend = () => onEnd?.();
       utterance.onerror = () => onEnd?.();

@@ -14,7 +14,7 @@ import './ui/styles/hud.css';
 import { createEventBus } from './core/eventBus.js';
 import { createStore } from './core/store.js';
 import { createClock, formatT } from './core/clock.js';
-import { readPref, writePref } from './core/prefs.js';
+import { loadSettings, resetSettings, saveSetting } from './config/settings.js';
 import { BootSequence } from './ui/components/BootSequence.js';
 import { createToaster } from './ui/components/Toast.js';
 import { GestureDeck } from './ui/components/GestureDeck.js';
@@ -22,7 +22,7 @@ import { Hud } from './ui/Hud.js';
 import { UiSounds } from './ui/uiSounds.js';
 import { SceneRoot } from './scene/SceneRoot.js';
 import { WatchModel } from './scene/watch/WatchModel.js';
-import { DEFAULT_FINISH, FINISHES } from './scene/watch/materials.js';
+import { FINISHES } from './scene/watch/materials.js';
 import { DIM } from './scene/watch/geometry.js';
 import { Annotations } from './scene/Annotations.js';
 import { WatchScreen } from './screen/WatchScreen.js';
@@ -31,15 +31,16 @@ import { CameraKeys } from './input/CameraKeys.js';
 import { KeyboardInput } from './input/KeyboardInput.js';
 import { ComposeKeys } from './input/ComposeKeys.js';
 import { GESTURES } from './config/gestures.js';
-import { DEFAULT_FILTER_CRUDE, DEFAULT_LEXICON_SIZE } from './config/lexicon.js';
+import { LEXICON_SIZES } from './config/lexicon.js';
 import gestureBins from './config/gesture_bins.json';
 import lexiconExclude from '../tools/lexicon_exclude.txt?raw';
 import { Pipeline, stagesWith } from './pipeline/Pipeline.js';
 import { Composer, emptyCompose } from './pipeline/Composer.js';
 import { describeError } from './pipeline/registry.js';
 import { VoiceEngine } from './voice/VoiceEngine.js';
-import { DEFAULT_VOICE, KOKORO, VOICES } from './config/voice.js';
+import { KOKORO, VOICES } from './config/voice.js';
 import { isShortcutEvent } from './core/keyboard.js';
+import { SyntheticImu } from './telemetry/SyntheticImu.js';
 
 /* global __APP_VERSION__ */
 /** `0.1.0` → `0.1`, as shown in the top bar. */
@@ -120,6 +121,20 @@ function voiceBadge(s) {
   }
 }
 
+/**
+ * The LEX badge: spellable-word count at the current size and filter (spec §8.6).
+ * @param {import('./pipeline/lexicon/Lexicon.js').Lexicon['stats']} s
+ * @returns {import('./ui/components/StageBadge.js').BadgeState}
+ */
+function lexiconBadge(s) {
+  return {
+    label: 'LEX',
+    value: String(s.words),
+    tone: 'stand-in',
+    reason: `${s.source}, top ${s.size / 1000}k words, filtered by the current bins: ${s.words} spellable words, ${s.sequences} gesture sequences, ${s.collisions} shared by more than one word.${s.filterCrude ? ' Crude words hidden.' : ''}`,
+  };
+}
+
 /** @returns {import('./ui/Hud.js').HudState} */
 function initialState() {
   /** @type {(label: string, value: string, reason: string) => import('./ui/components/StageBadge.js').BadgeState} */
@@ -134,15 +149,8 @@ function initialState() {
       decoder: pending('DEC', 'LOADING', 'Decoder stage loading.'),
       voice: pending('VOICE', 'LOADING', 'Voice engine starting.'),
     },
-    voice: {
-      id: readPref('voice', DEFAULT_VOICE, (v) => VOICES.some((x) => x.id === v)),
-      muted: readPref('muted', false, (v) => typeof v === 'boolean'),
-    },
     perf: { fps: 0, dpr: 1, gl: 'PENDING' },
-    watch: {
-      finish: readPref('finish', DEFAULT_FINISH, (v) => typeof v === 'string' && v in FINISHES),
-      mannequin: readPref('mannequin', true, (v) => typeof v === 'boolean'), // spec §10.4: default ON
-    },
+    ...loadSettings(), // watch, view, lexicon, voice, sound (remembered per browser)
     camera: { yaw: 0, pitch: 0, distance: 0 },
     compose: emptyCompose(),
     screen: { app: 'NONE' },
@@ -194,7 +202,7 @@ async function boot() {
   store.set({ perf: { ...store.get().perf, gl: glOk ? 'WEBGL2' : 'ERROR', dpr: scene?.pixelRatio ?? 1 } });
 
   const screen = new WatchScreen({ bus, store });
-  const starterApp = new TacturaStarterApp();
+  const starterApp = new TacturaStarterApp({ reducedMotion });
   screen.setApp(starterApp);
   store.set({ screen: { app: starterApp.name } });
 
@@ -222,7 +230,7 @@ async function boot() {
   });
 
   const keyboard = new KeyboardInput();
-  const sounds = new UiSounds();
+  const sounds = new UiSounds({ volume: store.get().sound.volume });
   /** @type {Record<string, string[]>} */
   const phonemes = Object.fromEntries(gestureBins.bins.map((b) => [b.gesture, b.phonemes]));
   const deck = new GestureDeck({ gestures: GESTURES, phonemes, onPress: (id) => keyboard.press(id) });
@@ -232,7 +240,14 @@ async function boot() {
   await bootScreen.step(
     'HUD',
     () => {
-      hud = new Hud({ root: el('hud'), store, bus, version: VERSION, finishes: FINISHES, voices: VOICES, deck });
+      hud = new Hud({
+        root: el('hud'),
+        store,
+        bus,
+        version: VERSION,
+        deck,
+        settings: { finishes: FINISHES, voices: VOICES, lexiconSizes: LEXICON_SIZES, reset: resetSettings },
+      });
       const toaster = createToaster(hud.toastRoot);
       bus.on('toast', ({ message, ...options }) => toaster.show(message, options));
       scene?.setFocusElement(hud.stageEl);
@@ -290,19 +305,10 @@ async function boot() {
       return skipped();
     }
     try {
-      const lexicon = pipeline.loadLexicon(await loadLexiconData(), {
-        excludeText: lexiconExclude,
-        size: DEFAULT_LEXICON_SIZE,
-        filterCrude: DEFAULT_FILTER_CRUDE,
-      });
-      const s = lexicon.stats;
-      setBadge('lexicon', {
-        label: 'LEX',
-        value: String(s.words),
-        tone: 'stand-in',
-        reason: `${s.source}, top ${s.size / 1000}k words, filtered by the current bins: ${s.words} spellable words, ${s.sequences} gesture sequences, ${s.collisions} shared by more than one word.${s.filterCrude ? ' Crude words hidden.' : ''}`,
-      });
-      return `${s.words} WORDS`;
+      const { size, filterCrude } = store.get().lexicon;
+      const lexicon = pipeline.loadLexicon(await loadLexiconData(), { excludeText: lexiconExclude, size, filterCrude });
+      setBadge('lexicon', lexiconBadge(lexicon.stats));
+      return `${lexicon.stats.words} WORDS`;
     } catch (err) {
       setBadge('lexicon', { label: 'LEX', value: 'ERROR', tone: 'error', reason: describeError(err) });
       throw err;
@@ -315,6 +321,7 @@ async function boot() {
   const voice = new VoiceEngine({
     voice: store.get().voice.id,
     muted: store.get().voice.muted,
+    volume: store.get().voice.volume,
     moduleUrl: breakName === 'voice' ? UNREACHABLE_KOKORO : KOKORO.module,
     onChange: (state) => setBadge('voice', voiceBadge(state)),
     onNotice: (message, detail) => bus.emit('toast', { message, tone: 'error', detail, ms: 6000 }),
@@ -349,26 +356,34 @@ async function boot() {
     if (next) voice.prefetch(next);
   });
 
-  store.watch((s) => s.voice.id, (id) => {
-    voice.setVoice(id);
-    writePref('voice', id);
-  });
-  store.watch((s) => s.voice.muted, (muted, prev) => {
-    voice.setMuted(muted);
-    writePref('muted', muted);
-    if (prev !== undefined) bus.emit('toast', { message: muted ? 'Voice muted' : 'Voice on', detail: 'Press M to toggle.' });
-  });
-
+  // ---- settings (spec §14 Phase 5): apply each change, remember it in this browser ----
+  for (const slice of /** @type {const} */ (['watch', 'view', 'lexicon', 'voice', 'sound'])) {
+    store.watch((s) => s[slice], (value) => saveSetting(slice, value));
+  }
   store.watch((s) => s.watch.finish, (finish) => {
     watch?.setFinish(/** @type {any} */ (finish));
     scene?.invalidate();
-    writePref('finish', finish);
   });
-  store.watch((s) => s.watch.mannequin, (on) => {
-    scene?.setMannequinVisible(on);
-    writePref('mannequin', on);
+  store.watch((s) => s.watch.mannequin, (on) => scene?.setMannequinVisible(on));
+  store.watch((s) => s.view.annotations, (on) => annotations?.setVisible(on));
+  store.watch((s) => s.lexicon, (options, prev) => {
+    if (!prev || !pipeline.lexicon) return; // the boot step already built it
+    const lexicon = pipeline.reloadLexicon(options);
+    setBadge('lexicon', lexiconBadge(lexicon.stats));
+    composer.refresh();
+    bus.emit('toast', { message: `Lexicon: top ${options.size / 1000}k · ${lexicon.stats.words} words`, detail: `${lexicon.stats.collisions} shared sequences` });
   });
+  store.watch((s) => s.voice.id, (id) => voice.setVoice(id));
+  store.watch((s) => s.voice.muted, (muted, prev) => {
+    voice.setMuted(muted);
+    if (prev !== undefined) bus.emit('toast', { message: muted ? 'Voice muted' : 'Voice on', detail: 'Press M to toggle.' });
+  });
+  store.watch((s) => s.voice.volume, (v) => voice.setVolume(v));
+  store.watch((s) => s.sound.volume, (v) => sounds.setVolume(v));
   bus.on('screen:frame', () => scene?.invalidate());
+
+  // SYNTHETIC telemetry (spec §12): derived from the animation, for intuition only
+  const imu = new SyntheticImu();
 
   // `frames` counts frames actually drawn; the scene skips drawing while nothing changes
   let frames = 0;
@@ -381,6 +396,10 @@ async function boot() {
       if (scene.render()) {
         frames++;
         annotations?.update();
+      }
+      if (store.get().view.telemetry) {
+        imu.step(scene.arm.forearm, scene.arm.watchMount, dt, now);
+        hud?.telemetry.render(imu);
       }
 
       const pose = scene.rig.pose;
@@ -431,7 +450,7 @@ async function boot() {
 
   if (import.meta.env.DEV) {
     // Handy in the devtools console while building later phases.
-    Object.assign(window, { __tactura: { bus, store, clock, scene, watch, screen, sounds, pipeline, composer, voice } });
+    Object.assign(window, { __tactura: { bus, store, clock, scene, watch, screen, sounds, pipeline, composer, voice, imu, hud } });
   }
 }
 

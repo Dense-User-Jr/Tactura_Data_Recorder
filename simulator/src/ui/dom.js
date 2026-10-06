@@ -18,12 +18,17 @@ export function h(tag, props = {}, ...children) {
     if (value == null || value === false) continue;
     if (key === 'class') el.className = value;
     else if (key === 'dataset') Object.assign(el.dataset, value);
-    else if (key === 'style') Object.assign(el.style, value);
+    else if (key === 'style') {
+      for (const [prop, v] of Object.entries(value)) {
+        if (prop.startsWith('--')) el.style.setProperty(prop, v); // custom properties need setProperty
+        else el.style[/** @type {any} */ (prop)] = v;
+      }
+    }
     else if (key === 'html') el.innerHTML = value;
     else if (key.startsWith('on') && typeof value === 'function') el.addEventListener(key.slice(2).toLowerCase(), value);
     else el.setAttribute(key, value === true ? '' : String(value));
   }
-  for (const child of children.flat()) {
+  for (const child of children.flat(Infinity)) {
     if (child == null || child === false) continue;
     el.append(child instanceof Node ? child : String(child));
   }

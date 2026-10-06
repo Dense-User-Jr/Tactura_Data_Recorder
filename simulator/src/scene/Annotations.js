@@ -30,6 +30,8 @@ export class Annotations {
     this.camera = camera;
     this.target = target;
     this.radiusMm = radiusMm;
+    /** @type {HTMLElement | null} labels stay inside this element (the HUD's viewport cell) */
+    this.boundsEl = null;
 
     this.svg = document.createElementNS(SVG_NS, 'svg');
     this.svg.setAttribute('class', 'ann__lines');
@@ -73,6 +75,11 @@ export class Annotations {
     this.root.classList.toggle('is-hidden', !visible);
   }
 
+  /** Keep labels inside this element, flipping them to the other side of the watch if needed. @param {HTMLElement} el */
+  setBounds(el) {
+    this.boundsEl = el;
+  }
+
   /** Re-project every callout. Call after the camera and the watch have moved for this frame. */
   update() {
     const width = this.root.clientWidth;
@@ -91,6 +98,8 @@ export class Annotations {
     this._right.setFromMatrixColumn(this.camera.matrixWorld, 0);
     const edge = toScreen(centerWorld.clone().addScaledVector(this._right, this.radiusMm * this._scale.x));
     const radiusPx = Math.hypot(edge.x - center.x, edge.y - center.y);
+    const bounds = this.boundsEl?.getBoundingClientRect();
+    const root = this.root.getBoundingClientRect();
 
     for (const item of this.items) {
       const world = this.target.localToWorld(item.anchor.position.clone());
@@ -109,9 +118,22 @@ export class Annotations {
       if (item.internal || len < radiusPx * 0.25) [dx, dy] = item.prefer;
       else [dx, dy] = [dx / len, dy / len];
 
-      const elbow = { x: center.x + dx * (radiusPx + LEAD_PX), y: center.y + dy * (radiusPx + LEAD_PX) };
-      const side = dx >= 0 ? 1 : -1;
-      const end = { x: elbow.x + side * SHELF_PX, y: elbow.y };
+      const layout = (ux) => {
+        const elbow = { x: center.x + ux * (radiusPx + LEAD_PX), y: center.y + dy * (radiusPx + LEAD_PX) };
+        const side = ux >= 0 ? 1 : -1;
+        const end = { x: elbow.x + side * SHELF_PX, y: elbow.y };
+        return { elbow, side, end };
+      };
+      let { elbow, side, end } = layout(dx);
+      if (bounds) {
+        // labels that would leave the viewport cell (e.g. under a rail) go to the other side
+        const width = (item.width ||= item.label.offsetWidth);
+        const left = root.left + (side > 0 ? end.x + 6 : end.x - 6 - width);
+        if (left < bounds.left + 12 || left + width > bounds.right - 12) ({ elbow, side, end } = layout(-dx));
+        const top = bounds.top - root.top + 36;
+        const bottom = bounds.bottom - root.top - 36;
+        elbow.y = end.y = THREE.MathUtils.clamp(elbow.y, top, bottom);
+      }
 
       item.g.style.opacity = String(alpha);
       item.line.setAttribute('points', `${p.x},${p.y} ${elbow.x},${elbow.y} ${end.x},${end.y}`);

@@ -77,6 +77,14 @@ export function createLighting(scene, renderer, { floorY }) {
     update(camera) {
       rig.quaternion.copy(camera.quaternion);
     },
+    /**
+     * Places the contact shadow (world units; scale 1 = 100 × 72 mm).
+     * @param {{ x: number, y: number, z: number, scaleX: number, scaleZ: number }} place
+     */
+    setShadow({ x, y, z, scaleX, scaleZ }) {
+      shadow.position.set(x, y, z);
+      shadow.scale.set(scaleX, scaleZ, 1); // the plane is laid flat, so its local Y runs along world Z
+    },
   };
 }
 
@@ -154,7 +162,7 @@ function createContactShadow(floorY) {
   );
   mesh.name = 'contactShadow';
   mesh.rotation.x = -Math.PI / 2;
-  // centered under the loop, which sits mostly behind the case
+  // centered under the strap loop, which sits mostly behind the upright case
   mesh.position.set(0, floorY, -0.17);
   mesh.renderOrder = -1;
   return mesh;

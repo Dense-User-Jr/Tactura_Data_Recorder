@@ -11,7 +11,7 @@ import { isShortcutEvent } from '../core/keyboard.js';
  * @property {{ source: string }} input
  * @property {Record<string, BadgeState>} badges   rendered in insertion order
  * @property {{ fps: number, dpr: number, gl: string }} perf
- * @property {{ finish: string }} watch
+ * @property {{ finish: string, mannequin: boolean }} watch
  * @property {{ yaw: number, pitch: number, distance: number }} camera   degrees, degrees, world units
  */
 
@@ -28,17 +28,17 @@ const GEAR_SVG = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" str
  * (02 screen, 03 trace), dock (04 transcript, 05 telemetry), and the
  * click-through stage over the full-bleed 3D viewport.
  *
- * Phase 0 renders the frame with honest placeholders; later phases fill
- * the panels in.
+ * Panels not built yet show honest placeholders; later phases fill them in.
  */
 export class Hud {
   /**
-   * @param {{ root: HTMLElement, store: import('../core/store.js').Store<HudState>, bus: import('../core/eventBus.js').EventBus, version: string, finishes: Record<string, { label: string }> }} deps
+   * @param {{ root: HTMLElement, store: import('../core/store.js').Store<HudState>, bus: import('../core/eventBus.js').EventBus, version: string, finishes: Record<string, { label: string }>, deck: import('./components/GestureDeck.js').GestureDeck }} deps
    */
-  constructor({ root, store, bus, version, finishes }) {
+  constructor({ root, store, bus, version, finishes, deck }) {
     this.root = root;
     this.store = store;
     this.bus = bus;
+    this.deck = deck;
     /** @type {Map<string, StageBadge>} */
     this.badges = new Map();
     this.mirror = new ScreenMirror();
@@ -46,6 +46,14 @@ export class Hud {
       finishes,
       onPick: (finish) => store.update((s) => ({ ...s, watch: { ...s.watch, finish } })),
     });
+    this.armToggle = /** @type {HTMLButtonElement} */ (
+      h('button', {
+        class: 'chip chamfer label',
+        type: 'button',
+        title: 'Show or hide the forearm and hand',
+        onClick: () => store.update((s) => ({ ...s, watch: { ...s.watch, mannequin: !s.watch.mannequin } })),
+      })
+    );
 
     root.append(this.#topbar(version), this.#leftRail(), this.#stage(), this.#rightRail(), this.#dock());
 
@@ -54,6 +62,10 @@ export class Hud {
       this.mirrorEl.classList.add('has-signal');
     });
     store.watch((s) => s.watch.finish, (finish) => this.finishPicker.set(finish));
+    store.watch((s) => s.watch.mannequin, (on) => {
+      this.armToggle.textContent = on ? 'ON' : 'OFF';
+      this.armToggle.setAttribute('aria-pressed', String(on));
+    });
     store.watch((s) => s.camera, (cam) => {
       this.cameraReadout.textContent = `YAW ${signedDeg(cam.yaw)}  PITCH ${signedDeg(cam.pitch)}  DIST ${cam.distance.toFixed(2)}`;
     });
@@ -180,19 +192,6 @@ export class Hud {
   }
 
   #leftRail() {
-    const skeleton = [1, 2, 3, 4, 5, 6].map((n) =>
-      h(
-        'div',
-        { class: 'tile-skel chamfer', 'aria-hidden': 'true' },
-        h('span', { class: 'tile-skel__num' }, String(n)),
-        h(
-          'span',
-          { class: 'tile-skel__lines' },
-          h('span', { class: 'skel-bar', style: { width: `${64 + ((n * 23) % 40)}px` } }),
-          h('span', { class: 'skel-bar', style: { width: '44px' } }),
-        ),
-      ),
-    );
     return h(
       'aside',
       { class: 'rail rail--left' },
@@ -202,9 +201,12 @@ export class Hud {
         h(
           'section',
           { class: 'panel panel--grow' },
-          panelHead('01', 'GESTURES', this.#railToggle('[', 'leftRail', 'gestures rail')),
-          h('div', { class: 'panel__body deck' }, skeleton),
-          h('div', { class: 'empty label' }, 'INPUT NOT WIRED'),
+          panelHead(
+            '01',
+            'GESTURES',
+            h('span', { class: 'panel__meta-group' }, 'KEYS 1–6', this.#railToggle('[', 'leftRail', 'gestures rail')),
+          ),
+          h('div', { class: 'panel__body' }, this.deck.el),
         ),
       ),
       this.#railTab('[', 'leftRail', '01 / GESTURES'),
@@ -279,7 +281,12 @@ export class Hud {
         ),
         this.cameraReadout,
       ),
-      h('div', { class: 'stage__finish' }, this.finishPicker.el),
+      h(
+        'div',
+        { class: 'stage__view' },
+        this.finishPicker.el,
+        h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Arm' }, h('span', { class: 'label dim' }, 'ARM'), this.armToggle),
+      ),
       h(
         'div',
         { class: 'stage__hint label dim' },

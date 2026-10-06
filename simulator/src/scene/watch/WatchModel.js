@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { DEFAULT_FINISH, applyFinish, createWatchMaterials, setDisplayLevel } from './materials.js';
+import { DEFAULT_FINISH, applyFinish, createWatchMaterials, setDisplayLevel, setGlowLevel } from './materials.js';
 import {
   DIM,
   buttonGeometry,
@@ -15,6 +15,9 @@ import {
   strapThickness,
   sweptBandGeometry,
 } from './geometry.js';
+
+/** A tap ripple crosses the glass (~20 mm at 85 mm/s) and fades in this long. */
+const RIPPLE_S = 0.32;
 
 /**
  * @typedef {import('./materials.js').FinishId} FinishId
@@ -68,6 +71,14 @@ export class WatchModel {
     this.glass = add(glassGeometry(), m.glass, 'glass');
     this.glass.renderOrder = 2;
 
+    // fire glow: a thin ring hugging the upper case shoulder, just off the surface
+    this.glowRing = add(new THREE.TorusGeometry(21.8, 0.3, 12, 180), m.glow, 'edgeGlow');
+    this.glowRing.position.z = 3.8;
+    this.glowRing.renderOrder = 3;
+    this.glowRing.visible = false;
+    /** @type {number | null} seconds since the last tap ripple, null when idle */
+    this.rippleT = null;
+
     // side keys on the 3 o'clock side: Home above center, Back below
     /** @type {{ home: THREE.Mesh, back: THREE.Mesh }} */
     this.buttons = { home: this.#button(1), back: this.#button(-1) };
@@ -108,6 +119,34 @@ export class WatchModel {
   /** @param {number} level 0 (off) to 1 (normal) */
   setDisplayLevel(level) {
     setDisplayLevel(this.materials, level);
+  }
+
+  /** Red edge glow, 0 (off) to 1 (peak). @param {number} level */
+  setGlow(level) {
+    setGlowLevel(this.materials, level);
+    this.glowRing.visible = level > 0.001;
+  }
+
+  /** Start a ripple across the glass (Double Tap). */
+  ripple() {
+    this.rippleT = 0;
+  }
+
+  get rippleActive() {
+    return this.rippleT !== null;
+  }
+
+  /** @param {number} dt seconds */
+  updateRipple(dt) {
+    if (this.rippleT === null) return;
+    this.rippleT += dt;
+    const { time, amp } = this.materials.ripple;
+    time.value = this.rippleT;
+    amp.value = Math.max(0, 1 - this.rippleT / RIPPLE_S);
+    if (this.rippleT >= RIPPLE_S) {
+      this.rippleT = null;
+      amp.value = 0;
+    }
   }
 
   /** @param {THREE.Texture} texture */

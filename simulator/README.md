@@ -2,7 +2,7 @@
 
 A 3D web simulator of a Samsung Galaxy Watch 7 for testing the feel and flow of the Tactura gesture-to-speech pipeline without the physical watch. The full build spec is in [SPEC.md](SPEC.md).
 
-> **Status: Phase 1 (the watch).** Launchers, HUD frame, and the 3D Galaxy Watch 7 with studio lighting, orbit camera, callouts and finish switcher are in. Gestures arrive in Phase 2, the pipeline in Phase 3 and voice in Phase 4. Stage badges read `OFFLINE` until their stage is built. The watch screen shows a standby clock until the Tactura screen app lands in Phase 3.
+> **Status: Phase 2 (gestures).** Keys 1–6 (or the gesture tiles) fire the six gestures: the arm and watch animate, the tile flashes, the case rim glows red and a UI tick plays. The pipeline (classifier → bins → decoder, trace, transcript) arrives in Phase 3 and voice in Phase 4. Stage badges read `OFFLINE` until their stage is built. The watch screen shows a standby clock until the Tactura screen app lands in Phase 3.
 
 ## Launch
 
@@ -34,7 +34,7 @@ The launchers call `tools/ensure-deps.mjs`, which runs `npm ci` only when `node_
 
 | Key | Action | Available |
 |---|---|---|
-| `1` to `6` | Fire gesture (Flick Up, Flick Down, Twist Right, Twist Left, Shake, Double Tap) | Phase 2 |
+| `1` to `6` | Fire gesture (Flick Up, Flick Down, Twist Right, Twist Left, Shake, Double Tap). Holding a key fires once. Tiles in the left rail are clickable too | **Now** |
 | `Space` | Commit the current buffer as a word | Phase 3 |
 | `Backspace` | Remove the last gesture, or the last word if the buffer is empty | Phase 3 |
 | `Tab` / `Shift+Tab` | Cycle candidates when several words match | Phase 3 |
@@ -46,7 +46,9 @@ The launchers call `tools/ensure-deps.mjs`, which runs `npm ci` only when `node_
 | `[` / `]` | Collapse the left / right rail | **Now** |
 | `?` or `H` | Help overlay | Phase 5 (shows a notice for now) |
 
-Shortcuts are ignored while typing in a text field, and while Ctrl/Cmd/Alt is held so browser shortcuts keep working. The case finish (Silver, Green, Cream) is picked in the viewport's top-right corner for now and is remembered per browser. It moves into the settings panel in Phase 5.
+Shortcuts are ignored while typing in a text field, and while Ctrl/Cmd/Alt is held so browser shortcuts keep working. Gesture keys use physical key positions, so they work on any keyboard layout.
+
+The viewport's top-right corner has the case finish (Silver, Green, Cream) and the `ARM` toggle. With the arm on (default), the watch lies face up on a forearm and the camera looks from the wearer's side; with it off, the watch stands upright like a product shot. Both choices are remembered per browser and move into the settings panel in Phase 5.
 
 The viewport's bottom-right readout shows drawn frames per second. It reads `IDLE` when nothing is moving: the 3D view only redraws when something changes, so an idle sim costs no GPU time.
 
@@ -59,14 +61,17 @@ simulator/
   public/            static files served as-is (favicon; lexicon data later)
   tools/             ensure-deps.mjs (launcher helper); lexicon builder later
   src/
-    main.js          boot sequence
-    core/            eventBus, store, clock, keyboard helpers
-    input/           CameraKeys (WASD / arrows / R)
+    main.js          boot sequence and wiring
+    config/          gestures.js (ids, keys, glyphs), gesture_bins.json (bins, spec §8.5)
+    core/            eventBus, store, clock, keyboard helpers, prefs
+    input/           InputSource (interface), KeyboardInput (keys 1–6 + tiles), CameraKeys
+    pipeline/        types.js (shared data types, spec §8.1); stages arrive in Phase 3
     scene/           SceneRoot (renderer, post, render-on-demand), CameraRig, lighting,
-                     Annotations, SoftBloomPass, watch/ (WatchModel, geometry, materials)
+                     WristMannequin (arm rig), GestureAnimator, Annotations, SoftBloomPass,
+                     watch/ (WatchModel, geometry, materials)
     screen/          WatchScreen (the 480 × 480 display canvas)
-    ui/              Hud, components/, styles/ (tokens.css, base.css, hud.css)
-  tests/             Vitest
+    ui/              Hud, uiSounds, components/, styles/ (tokens.css, base.css, hud.css)
+  tests/             Vitest (core, gesture clip motion)
 ```
 
 SPEC.md §5 has the full target structure.
@@ -103,3 +108,14 @@ SPEC.md §5 has the full target structure.
 | 2026-10-05 | The IMU callout anchors below the clock digits rather than at the exact case center | Its marker sat on top of the time. The IMU's real board position isn't known anyway |
 | 2026-10-05 | Finish picker lives in the viewport's top-right until the Phase 5 settings panel; the choice is remembered in localStorage | Phase 1 needs a finish switcher before settings exist |
 | 2026-10-05 | Camera readout (`YAW / PITCH / DIST`) under the viewport label, and a controls hint along the bottom edge (hidden below 1280 px wide) | Makes the hero angle and orbit state legible. The hint stands in for the Phase 5 help overlay |
+| 2026-10-05 | **Shake is a rapid left-right roll about the forearm axis (X)**, not "side to side about Y" as §10.5 says. Kept ±12°, 3.5 cycles, ~450 ms, decaying; the envelope is normalized so the strongest swing reaches the full ±12° | Russell: "like twisting your hand very fast left and right, I believe". There's no Shake recording yet, so revisit once one exists. The profile peaks near 10 rad/s on gyro_x, in the range of the real twists |
+| 2026-10-05 | **With the arm shown, the watch lies face up on a level forearm** and the camera sits where the wearer's eyes would be. With the arm hidden, the Phase 1 upright product view stays. The `ARM` toggle animates between them | In the upright view, physical "up" points at the camera, so Flick Up came toward you and Flick Down appeared to rise on screen. Face up matches the recordings' rest pose: Flick Up rises, Double Tap dips down |
+| 2026-10-05 | Arm-mode hero: from the elbow side and above (yaw −22°, pitch 40°, distance 4.8), orbiting a point over the wrist. The spec's hero (keys visible) applies with the arm hidden | A real hand is ~185 mm long; the product hero cropped it and flicks didn't read. In this view the side keys face away |
+| 2026-10-05 | The arm is drawn "ghost" style: near-black body, light rim at the silhouette, sparse hairline sections, separate fingers | Spec allows matte grey or hairline wireframe. Solid matte grey read as a foam paddle and competed with the watch |
+| 2026-10-05 | Twist timing: 180 ms eased out-stroke, 60 ms hold, underdamped spring return (overshoot ≈ 5%). Unit tests lock the recorded constraints | Main stroke peaks ≈ 10.6 rad/s (recordings: 8–17) and the return stroke ≈ 71% of it (recordings: 60–75%) |
+| 2026-10-05 | A gesture fired mid-animation hands over from the current pose over 200 ms | No snapping, and back-to-back twists stay near real twist speeds (~20 rad/s vs 17 recorded) |
+| 2026-10-05 | Edge glow is a thin red ring on the case's upper shoulder, peaking HDR-bright so the bloom catches it | Reads as "the rim lit up". ACES tone mapping shifts the brightest moment slightly toward orange-red |
+| 2026-10-05 | Double Tap's glass ripple bends the glass normals and adds a faint light ring at the wavefront | The dark studio leaves almost no reflection to distort, so the normal ripple alone was invisible |
+| 2026-10-05 | Tile clicks emit `RawInput` with `source: 'mouse'`; keys emit `'keyboard'` | Matches §8.1's source list and keeps the two honest in the trace later |
+| 2026-10-05 | `pipeline/types.js` and `config/gesture_bins.json` exist from Phase 2 | Input already emits `RawInput`, and the tiles show each bin's phonemes. Bin validation comes with the BinMapper in Phase 3 |
+| 2026-10-05 | Phase 2 wiring: an input event drives the animation, tile flash and tick directly | Phase 3 inserts the pipeline (classifier → bin mapper → decoder) between input and the trace/screen; the animation keeps showing the physical input |

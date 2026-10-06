@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { CameraRig, HERO, easeOutCubic } from './CameraRig.js';
+import { ARM_HERO, CameraRig, HERO, easeInOutCubic, easeOutCubic } from './CameraRig.js';
 import { SoftBloomPass } from './SoftBloomPass.js';
 import { createLighting } from './lighting.js';
+import { WristMannequin } from './WristMannequin.js';
+import { GestureAnimator } from './GestureAnimator.js';
 import { DIM } from './watch/geometry.js';
 
 /** Spec §7.4: cap device pixel ratio at 2 to hold 60 fps on integrated GPUs. */
@@ -25,6 +27,18 @@ const VIEW_EPSILON = 1e-6;
  */
 const MSAA_MAX_DPR = 1.75;
 const MSAA_SAMPLES = 4;
+/**
+ * watchRig rotation about X with the arm shown: face up, 12 o'clock pointing
+ * away from the viewer, the forearm level along world X. Like the recordings'
+ * rest pose, so a flick up rises on screen and a tap dips down.
+ */
+const ARM_PRESENTATION = -Math.PI / 2;
+/** Contact shadow per presentation (world units). Arm: on the floor under the elbow end of the forearm. */
+const SHADOW = {
+  product: { x: 0, y: DIM.floorY * MM, z: -0.17, scaleX: 1, scaleZ: 1 },
+  arm: { x: 0.3, y: -0.54, z: 0, scaleX: 2.6, scaleZ: 1.5 },
+};
+const HERO_SWITCH_MS = 800;
 const deg = THREE.MathUtils.degToRad;
 
 /**
@@ -34,13 +48,18 @@ const deg = THREE.MathUtils.degToRad;
  *
  *   scene
  *   ├─ stage (scale MM, everything below is in millimeters)
- *   │  └─ watchRig        pose root that gesture animations drive (Phase 2)
- *   │     └─ watch.group  watch-local axes: +X 3 o'clock, +Y 12 o'clock, +Z out of the screen
+ *   │  └─ watchRig                  watch-local axes: +X 3 o'clock, +Y 12 o'clock, +Z out of the screen
+ *   │     └─ forearm                (WristMannequin) rolls/tips on the arm's axis; GestureAnimator drives it
+ *   │        ├─ watchMount
+ *   │        │  └─ watch.group
+ *   │        └─ wrist               the hand's pivot
  *   ├─ lightRig, ambient, contact shadow
  *
- * Presentation: at rest the watch stands upright facing +Z (world Y up), like
- * a product shot. Read physically, the camera is the wearer looking down at a
- * face-up wrist.
+ * Presentation (world Y up):
+ *   - arm hidden: the watch stands upright facing +Z, 12 o'clock up, like a product shot.
+ *   - arm shown: watchRig turns −90° about X so the watch lies face up on a level
+ *     forearm, as in the recordings; the camera is the wearer's eye.
+ * Gesture animation happens inside watchRig, so it is the same in both.
  *
  * Renders on demand: a frame is drawn only when the camera moved, an intro or
  * animation is running, or something called `invalidate()`. An idle sim costs
@@ -75,6 +94,9 @@ export class SceneRoot {
     this.watchRig = new THREE.Group();
     this.watchRig.name = 'watchRig';
     this.stage.add(this.watchRig);
+    this.arm = new WristMannequin();
+    this.watchRig.add(this.arm.forearm);
+    this.animator = new GestureAnimator(this.arm);
 
     const target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: MSAA_SAMPLES });
     this.composer = new EffectComposer(renderer, target);
@@ -92,6 +114,10 @@ export class SceneRoot {
     this.focusEl = null;
     /** @type {number | null} ms into the boot intro, null when not playing */
     this.introElapsed = null;
+    /** True once the boot intro has started; before that, view changes jump instead of animating. */
+    this.live = false;
+    /** @type {{ from: number, to: number, elapsed: number } | null} watchRig tilt between presentations */
+    this.presentTween = null;
 
     this.dirty = true;
     this.lastView = new THREE.Matrix4();
@@ -139,8 +165,46 @@ export class SceneRoot {
   addWatch(watch) {
     this.watch = watch;
     watch.setDisplayLevel(0);
-    this.watchRig.add(watch.group);
+    this.arm.watchMount.add(watch.group);
+    this.animator.setWatch(watch);
     this.invalidate();
+  }
+
+  /** Animate a gesture on the arm and watch. @param {import('../pipeline/types.js').GestureId} id */
+  playGesture(id) {
+    this.animator.play(id);
+    this.invalidate();
+  }
+
+  /**
+   * Show or hide the forearm and hand, switching presentation: the watch tips
+   * between upright (product) and face up on the arm, and the camera moves to
+   * the matching hero. Animated once the sim is live.
+   * @param {boolean} visible
+   */
+  setMannequinVisible(visible) {
+    this.arm.setVisible(visible);
+    const animate = this.live && !this.reducedMotion;
+    this.rig.setHero(visible ? ARM_HERO : HERO, animate ? HERO_SWITCH_MS : 0);
+    const to = visible ? ARM_PRESENTATION : 0;
+    if (animate) this.presentTween = { from: this.watchRig.rotation.x, to, elapsed: 0 };
+    else this.#present(to);
+    this.invalidate();
+  }
+
+  /** @param {number} angle watchRig rotation about X, 0 (product) to ARM_PRESENTATION (arm) */
+  #present(angle) {
+    this.watchRig.rotation.x = angle;
+    const k = angle / ARM_PRESENTATION;
+    const lerp = (a, b) => a + (b - a) * k;
+    const { product: p, arm: a } = SHADOW;
+    this.lighting?.setShadow({
+      x: lerp(p.x, a.x),
+      y: lerp(p.y, a.y),
+      z: lerp(p.z, a.z),
+      scaleX: lerp(p.scaleX, a.scaleX),
+      scaleZ: lerp(p.scaleZ, a.scaleZ),
+    });
   }
 
   /**
@@ -156,6 +220,7 @@ export class SceneRoot {
 
   /** Boot fade-in: studio light comes up from black, the display wakes, the camera settles on the hero angle. */
   intro() {
+    this.live = true;
     this.container.classList.add('is-live');
     this.invalidate();
     if (this.reducedMotion) {
@@ -164,8 +229,9 @@ export class SceneRoot {
       return;
     }
     this.introElapsed = 0;
-    this.rig.animateTo(HERO, INTRO_MS, {
-      from: { yaw: HERO.yaw - deg(16), pitch: HERO.pitch + deg(5), distance: HERO.distance * 1.25 },
+    const hero = this.rig.hero;
+    this.rig.animateTo(hero, INTRO_MS, {
+      from: { ...hero, yaw: hero.yaw - deg(16), pitch: hero.pitch + deg(5), distance: hero.distance * 1.25 },
       ease: easeOutCubic,
     });
   }
@@ -199,6 +265,15 @@ export class SceneRoot {
       this.invalidate();
       if (p >= 1) this.introElapsed = null;
     }
+    if (this.presentTween) {
+      const tw = this.presentTween;
+      tw.elapsed += dt * 1000;
+      const k = easeInOutCubic(Math.min(tw.elapsed / HERO_SWITCH_MS, 1));
+      this.#present(tw.from + (tw.to - tw.from) * k);
+      if (tw.elapsed >= HERO_SWITCH_MS) this.presentTween = null;
+      this.invalidate();
+    }
+    if (this.animator.update(dt)) this.invalidate();
     this.rig.update(dt);
     this.lighting?.update(this.camera);
   }

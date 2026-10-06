@@ -6,12 +6,27 @@ const deg = THREE.MathUtils.degToRad;
 /**
  * @typedef {Object} Pose
  * @property {number} yaw       radians around the vertical axis; 0 = straight at the face, + = toward 3 o'clock
- * @property {number} pitch     radians above the watch's equator
- * @property {number} distance  world units from the watch center
+ * @property {number} pitch     radians above the target's equator
+ * @property {number} distance  world units from the target
+ * @property {THREE.Vector3} [target]  orbit center, world units (default: keep the current one)
  */
 
-/** Hero angle (spec §10.3): slightly above, ~25° off the face normal toward the side keys. */
-export const HERO = /** @type {Pose} */ ({ yaw: deg(25), pitch: deg(12), distance: 2.6 });
+/** Hero angle with the arm hidden (spec §10.3): slightly above, ~25° off the face normal toward the side keys. */
+export const HERO = /** @type {Pose} */ ({ yaw: deg(25), pitch: deg(12), distance: 2.6, target: new THREE.Vector3(0, 0, 0) });
+
+/**
+ * Hero with the arm shown. The arm lies along world X with the watch face up
+ * (see SceneRoot), and the camera sits where the wearer's eyes would be:
+ * above, on the body side, a little toward the elbow. A real hand is ~185 mm
+ * long, so this pulls back and orbits a point over the wrist to keep watch
+ * and hand in frame.
+ */
+export const ARM_HERO = /** @type {Pose} */ ({
+  yaw: deg(-22),
+  pitch: deg(40),
+  distance: 4.8,
+  target: new THREE.Vector3(0.6, -0.1, 0),
+});
 
 const MIN_PITCH = deg(-78); // clamped short of the poles so the view never flips
 const MAX_PITCH = deg(80);
@@ -20,7 +35,7 @@ const KEY_ACCEL_TAU = 0.14; // s, ease toward full speed
 const KEY_RELEASE_TAU = 0.2; // s, coast to a stop
 const RESET_MS = 600;
 
-const easeInOutCubic = (p) => (p < 0.5 ? 4 * p * p * p : 1 - (-2 * p + 2) ** 3 / 2);
+export const easeInOutCubic = (p) => (p < 0.5 ? 4 * p * p * p : 1 - (-2 * p + 2) ** 3 / 2);
 export const easeOutCubic = (p) => 1 - (1 - p) ** 3;
 
 /** Wraps an angle difference into (-π, π] so tweens take the short way round. */
@@ -58,23 +73,36 @@ export class CameraRig {
 
     this.input = { yaw: 0, pitch: 0 };
     this.velocity = { yaw: 0, pitch: 0 };
-    /** @type {{ from: Pose, to: Pose, elapsed: number, ms: number, ease: (p: number) => number } | null} */
+    /** @type {{ from: Required<Pose>, to: Required<Pose>, elapsed: number, ms: number, ease: (p: number) => number } | null} */
     this.tween = null;
+    /** Where `R` returns to. */
+    this.hero = HERO;
 
     this.setPose(HERO);
   }
 
-  /** @returns {Pose} */
+  /** @returns {Required<Pose>} */
   get pose() {
     const s = new THREE.Spherical().setFromVector3(this.camera.position.clone().sub(this.controls.target));
-    return { yaw: s.theta, pitch: Math.PI / 2 - s.phi, distance: s.radius };
+    return { yaw: s.theta, pitch: Math.PI / 2 - s.phi, distance: s.radius, target: this.controls.target.clone() };
   }
 
   /** @param {Pose} pose */
-  setPose({ yaw, pitch, distance }) {
+  setPose({ yaw, pitch, distance, target }) {
+    if (target) this.controls.target.copy(target);
     const s = new THREE.Spherical(distance, Math.PI / 2 - pitch, yaw);
     this.camera.position.setFromSpherical(s).add(this.controls.target);
     this.camera.lookAt(this.controls.target);
+  }
+
+  /**
+   * Change the hero (and go there).
+   * @param {Pose} hero
+   * @param {number} ms 0 = jump
+   */
+  setHero(hero, ms) {
+    this.hero = hero;
+    this.animateTo(hero, ms);
   }
 
   /**
@@ -89,7 +117,7 @@ export class CameraRig {
 
   /** `R`: animate back to the hero angle. */
   reset() {
-    this.animateTo(HERO, RESET_MS);
+    this.animateTo(this.hero, RESET_MS);
   }
 
   /**
@@ -106,8 +134,14 @@ export class CameraRig {
       this.setPose(to);
       return;
     }
-    this.setPose(from);
-    this.tween = { from, to: { ...to, yaw: from.yaw + wrap(to.yaw - from.yaw) }, elapsed: 0, ms, ease };
+    const start = { ...from, target: (from.target ?? this.controls.target).clone() };
+    const end = {
+      ...to,
+      yaw: start.yaw + wrap(to.yaw - start.yaw),
+      target: (to.target ?? start.target).clone(),
+    };
+    this.setPose(start);
+    this.tween = { from: start, to: end, elapsed: 0, ms, ease };
   }
 
   /** @param {number} dt seconds */
@@ -131,6 +165,7 @@ export class CameraRig {
         yaw: tw.from.yaw + (tw.to.yaw - tw.from.yaw) * k,
         pitch: tw.from.pitch + (tw.to.pitch - tw.from.pitch) * k,
         distance: tw.from.distance + (tw.to.distance - tw.from.distance) * k,
+        target: new THREE.Vector3().lerpVectors(tw.from.target, tw.to.target, k),
       });
       if (tw.elapsed >= tw.ms) this.tween = null;
     } else if (this.velocity.yaw || this.velocity.pitch) {

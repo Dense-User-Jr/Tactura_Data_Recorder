@@ -342,7 +342,13 @@
   padding: 16px;
 }
 
-/* Gesture deck placeholder (real tiles arrive in Phase 2) */
+.panel__meta-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Gesture deck (spec §7.3) */
 
 .deck {
   display: flex;
@@ -350,33 +356,89 @@
   gap: 8px;
 }
 
-.tile-skel {
-  height: 60px;
-  display: flex;
+.tile {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 16px;
   align-items: center;
   gap: 14px;
+  width: 100%;
+  height: 64px;
   padding: 0 14px;
+  text-align: left;
+  transition:
+    --edge var(--t-flash) var(--ease-out),
+    --fill var(--t-fast) var(--ease-out);
 }
 
-.tile-skel__num {
-  width: 18px;
+.tile:hover { --edge: var(--line-strong); }
+.tile:active { --fill: var(--surface-2); }
+
+.tile__key {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1;
-  color: var(--text-dim);
+  color: var(--text);
+  transition: color var(--t-flash) var(--ease-out);
 }
 
-.tile-skel__lines {
+.tile__text {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  min-width: 0;
 }
 
-.skel-bar {
+.tile__name { color: var(--text); font-size: 12px; }
+.tile__ph { color: var(--text-muted); }
+
+.tile__glyph {
+  color: var(--text-dim);
+  transition: color var(--t-flash) var(--ease-out);
+}
+
+.tile__glyph svg {
   display: block;
-  height: 5px;
-  background: var(--surface-2);
+  width: 16px;
+  height: 16px;
+}
+
+/* red wash with a 1px leading edge, swept left to right */
+.tile__scan {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  background: var(--accent-soft);
+  border-right: 1px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tile.is-firing {
+  --edge: var(--accent);
+  transition: none;
+}
+
+.tile.is-firing .tile__key,
+.tile.is-firing .tile__glyph {
+  color: var(--accent);
+  transition: none;
+}
+
+.tile.is-firing .tile__scan { animation: tile-scan var(--t-flash) var(--ease-out) forwards; }
+.tile.is-decaying .tile__scan { width: 100%; animation: tile-fade var(--t-flash) var(--ease-out) forwards; }
+
+@keyframes tile-scan {
+  from { width: 0; opacity: 1; }
+  to { width: 100%; opacity: 1; }
+}
+
+@keyframes tile-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* Screen mirror placeholder (the real canvas mirror arrives in Phase 3) */
@@ -515,12 +577,22 @@
   color: var(--text-dim);
 }
 
-.stage__finish {
+.stage__view {
   position: absolute;
   top: 18px;
   right: 40px;
+  display: flex;
+  gap: 22px;
   pointer-events: auto;
 }
+
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-toggle .chip { min-width: 46px; }
 
 .stage__hint {
   position: absolute;

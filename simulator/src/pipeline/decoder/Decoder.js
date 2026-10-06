@@ -35,7 +35,9 @@
  * the trace panel draws it as a bar, so return something comparable or 0.
  *
  * Optional: `init()` (sync or async) runs once when the stage loads; throw
- * from it to signal the decoder can't start.
+ * from it to signal the decoder can't start. `setLexicon(lexicon)` is called
+ * when the settings rebuild the sim's vocabulary (lexicon size, crude filter);
+ * a decoder with its own vocabulary can ignore it.
  *
  * @typedef {import('../types.js').BinToken} BinToken
  * @typedef {import('../types.js').DecodeResult} DecodeResult

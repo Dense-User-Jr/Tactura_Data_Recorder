@@ -39,9 +39,10 @@ The launchers call `tools/ensure-deps.mjs`, which runs `npm ci` only when `node_
 | `Backspace` | Remove the last gesture, or the last word if the buffer is empty |
 | `Tab` / `Shift+Tab` | Cycle candidates when several words match (otherwise Tab moves focus as usual) |
 | `Esc` | Close the help or settings if open, otherwise clear the buffer |
+| `R` | Clear all text at once: the buffer and every committed word |
 | `W A S D`, arrow keys | Orbit the camera (A/D yaw, W/S pitch) |
 | Mouse drag / scroll | Orbit and zoom |
-| `R` | Reset camera to the hero angle |
+| `C` | Reset camera to the hero angle |
 | `M` | Mute or unmute voice |
 | `[` / `]` | Collapse the left / right rail |
 | `?` or `H` | Help overlay: every control on a keyboard diagram. While it's open, other keys do nothing |
@@ -242,3 +243,4 @@ SPEC.md §5 has the full target structure.
 | 2026-10-05 | `Esc` closes the help or the settings first; only with both closed does it clear the buffer | Closing a panel shouldn't throw away a half-typed word |
 | 2026-10-05 | Reduced motion keeps gesture animations | §7.4 asks to drop sweeps and easing. The gesture motion is the content (it shows the user what to do), so it stays |
 | 2026-10-05 | The `FPS · DPR · GL` readout stays visible (no setting to hide it) | It's small and dim, and it's useful when testing the sim on new hardware. Easy to add a toggle if it bothers anyone |
+| 2026-10-05 | **`R` clears all text** (buffer and transcript at once); camera reset moves from `R` (§6.3) to `C` | Russell's request: a one-key way to start over, next to Backspace's one-at-a-time undo. `C` for camera |

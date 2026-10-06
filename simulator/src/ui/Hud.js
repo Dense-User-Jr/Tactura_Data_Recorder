@@ -17,6 +17,7 @@ import { isShortcutEvent } from '../core/keyboard.js';
  * @property {{ yaw: number, pitch: number, distance: number }} camera   degrees, degrees, world units
  * @property {import('../pipeline/Composer.js').ComposeState} compose
  * @property {{ app: string }} screen
+ * @property {{ id: string, muted: boolean }} voice
  */
 
 /** @param {number} deg */
@@ -36,9 +37,9 @@ const GEAR_SVG = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" str
  */
 export class Hud {
   /**
-   * @param {{ root: HTMLElement, store: import('../core/store.js').Store<HudState>, bus: import('../core/eventBus.js').EventBus, version: string, finishes: Record<string, { label: string }>, deck: import('./components/GestureDeck.js').GestureDeck }} deps
+   * @param {{ root: HTMLElement, store: import('../core/store.js').Store<HudState>, bus: import('../core/eventBus.js').EventBus, version: string, finishes: Record<string, { label: string }>, voices: Array<{ id: string, label: string, note: string }>, deck: import('./components/GestureDeck.js').GestureDeck }} deps
    */
-  constructor({ root, store, bus, version, finishes, deck }) {
+  constructor({ root, store, bus, version, finishes, voices, deck }) {
     this.root = root;
     this.store = store;
     this.bus = bus;
@@ -60,6 +61,26 @@ export class Hud {
         onClick: () => store.update((s) => ({ ...s, watch: { ...s.watch, mannequin: !s.watch.mannequin } })),
       })
     );
+    // voice picker (moves into the settings panel in Phase 5): click cycles the voices
+    this.voiceChip = /** @type {HTMLButtonElement} */ (
+      h('button', {
+        class: 'chip chamfer label',
+        type: 'button',
+        onClick: () =>
+          store.update((s) => {
+            const i = voices.findIndex((v) => v.id === s.voice.id);
+            return { ...s, voice: { ...s.voice, id: voices[(i + 1) % voices.length].id } };
+          }),
+      })
+    );
+    this.muteChip = /** @type {HTMLButtonElement} */ (
+      h('button', {
+        class: 'chip chamfer label',
+        type: 'button',
+        title: 'Mute or unmute the voice (M)',
+        onClick: () => store.update((s) => ({ ...s, voice: { ...s.voice, muted: !s.voice.muted } })),
+      })
+    );
 
     root.append(this.#topbar(version), this.#leftRail(), this.#stage(), this.#rightRail(), this.#dock());
 
@@ -79,6 +100,13 @@ export class Hud {
     store.watch((s) => s.watch.mannequin, (on) => {
       this.armToggle.textContent = on ? 'ON' : 'OFF';
       this.armToggle.setAttribute('aria-pressed', String(on));
+    });
+    store.watch((s) => s.voice, (v) => {
+      const current = voices.find((x) => x.id === v.id);
+      this.voiceChip.textContent = current?.label ?? v.id;
+      this.voiceChip.title = `${current?.note ?? v.id}. Click for the next voice.`;
+      this.muteChip.textContent = v.muted ? 'MUTED' : 'ON';
+      this.muteChip.setAttribute('aria-pressed', String(!v.muted));
     });
     store.watch((s) => s.camera, (cam) => {
       this.cameraReadout.textContent = `YAW ${signedDeg(cam.yaw)}  PITCH ${signedDeg(cam.pitch)}  DIST ${cam.distance.toFixed(2)}`;
@@ -299,6 +327,13 @@ export class Hud {
         { class: 'stage__view' },
         this.finishPicker.el,
         h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Arm' }, h('span', { class: 'label dim' }, 'ARM'), this.armToggle),
+        h(
+          'div',
+          { class: 'view-toggle', role: 'group', 'aria-label': 'Voice' },
+          h('span', { class: 'label dim' }, 'VOICE'),
+          this.voiceChip,
+          this.muteChip,
+        ),
       ),
       h(
         'div',

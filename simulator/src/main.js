@@ -37,6 +37,9 @@ import lexiconExclude from '../tools/lexicon_exclude.txt?raw';
 import { Pipeline, stagesWith } from './pipeline/Pipeline.js';
 import { Composer, emptyCompose } from './pipeline/Composer.js';
 import { describeError } from './pipeline/registry.js';
+import { VoiceEngine } from './voice/VoiceEngine.js';
+import { DEFAULT_VOICE, KOKORO, VOICES } from './config/voice.js';
+import { isShortcutEvent } from './core/keyboard.js';
 
 /* global __APP_VERSION__ */
 /** `0.1.0` → `0.1`, as shown in the top bar. */
@@ -65,6 +68,58 @@ const STAND_IN_NOTES = {
 };
 const BADGE_LABELS = { classifier: 'CLS', decoder: 'DEC' };
 
+/** `?break=voice`: the voice code can't be fetched, like a first run with no internet. */
+const UNREACHABLE_KOKORO = 'https://kokoro.invalid/kokoro.web.js';
+
+/**
+ * The VOICE badge for an engine state (spec §9: LOADING 42% → NEURAL, SYSTEM, MUTED).
+ * @param {import('./voice/VoiceEngine.js').VoiceState} s
+ * @returns {import('./ui/components/StageBadge.js').BadgeState}
+ */
+function voiceBadge(s) {
+  const v = VOICES.find((x) => x.id === s.voice);
+  const voiceName = `${v?.label ?? s.voice} (${s.voice})`;
+  const base = { label: 'VOICE' };
+  if (s.muted) return { ...base, value: 'MUTED', tone: 'stand-in', reason: 'Muted. Press M to unmute. Committed words are not spoken.' };
+  switch (s.engine) {
+    case 'standby':
+      return {
+        ...base,
+        value: 'STANDBY',
+        tone: 'pending',
+        reason: `The neural voice (Kokoro) starts loading on your first key press or click: about ${KOKORO.downloadMb.webgpu} MB the first time with WebGPU (${KOKORO.downloadMb.wasm} MB without), then cached by the browser. Until it's ready the system voice speaks.`,
+      };
+    case 'loading':
+      return {
+        ...base,
+        value: `LOADING ${Math.round(s.progress * 100)}%`,
+        tone: 'pending',
+        reason: `Downloading Kokoro-82M from Hugging Face, once; the browser caches it. Until it's ready, words are spoken by the system voice (${s.systemVoice}).`,
+      };
+    case 'neural':
+      return {
+        ...base,
+        value: 'NEURAL',
+        tone: 'project',
+        reason: `Kokoro-82M v1.0, voice ${voiceName}, ${s.device === 'webgpu' ? 'WebGPU fp32' : 'WASM q8'}, in a Web Worker. Each word is synthesized once, then replayed from memory.`,
+      };
+    case 'system':
+      return {
+        ...base,
+        value: 'SYSTEM',
+        tone: 'stand-in',
+        reason: `System voice: ${s.systemVoice} (Web Speech API). The neural voice is unavailable: ${s.error ?? 'unknown error'}. Reload with internet to try again.`,
+      };
+    default:
+      return {
+        ...base,
+        value: 'NONE',
+        tone: 'error',
+        reason: `No voice: the neural voice failed (${s.error ?? 'unknown error'}) and this browser has no speech synthesis.`,
+      };
+  }
+}
+
 /** @returns {import('./ui/Hud.js').HudState} */
 function initialState() {
   /** @type {(label: string, value: string, reason: string) => import('./ui/components/StageBadge.js').BadgeState} */
@@ -77,7 +132,11 @@ function initialState() {
       bins: pending('BINS', 'LOADING', 'Gesture-to-phoneme bin config loading.'),
       lexicon: pending('LEX', 'LOADING', 'Lexicon loading.'),
       decoder: pending('DEC', 'LOADING', 'Decoder stage loading.'),
-      voice: pending('VOICE', 'OFFLINE', 'Voice engine not built yet (Phase 4). Committed words are not spoken.'),
+      voice: pending('VOICE', 'LOADING', 'Voice engine starting.'),
+    },
+    voice: {
+      id: readPref('voice', DEFAULT_VOICE, (v) => VOICES.some((x) => x.id === v)),
+      muted: readPref('muted', false, (v) => typeof v === 'boolean'),
     },
     perf: { fps: 0, dpr: 1, gl: 'PENDING' },
     watch: {
@@ -173,7 +232,7 @@ async function boot() {
   await bootScreen.step(
     'HUD',
     () => {
-      hud = new Hud({ root: el('hud'), store, bus, version: VERSION, finishes: FINISHES, deck });
+      hud = new Hud({ root: el('hud'), store, bus, version: VERSION, finishes: FINISHES, voices: VOICES, deck });
       const toaster = createToaster(hud.toastRoot);
       bus.on('toast', ({ message, ...options }) => toaster.show(message, options));
       scene?.setFocusElement(hud.stageEl);
@@ -252,6 +311,20 @@ async function boot() {
 
   await bootScreen.step('DECODER', async () => stageLine((await pipeline.loadStage('decoder')).status));
 
+  // ---- voice (spec §9) ----
+  const voice = new VoiceEngine({
+    voice: store.get().voice.id,
+    muted: store.get().voice.muted,
+    moduleUrl: breakName === 'voice' ? UNREACHABLE_KOKORO : KOKORO.module,
+    onChange: (state) => setBadge('voice', voiceBadge(state)),
+    onNotice: (message, detail) => bus.emit('toast', { message, tone: 'error', detail, ms: 6000 }),
+  });
+  screen.voice = { level: () => voice.level(), activity: () => voice.activity };
+  await bootScreen.step('VOICE', () => {
+    setBadge('voice', voiceBadge(voice.state));
+    return { value: voice.state.muted ? 'MUTED' : 'STANDBY', tone: 'muted' };
+  });
+
   const composer = new Composer({ pipeline, store, bus, sinceStart: (t) => clock.sinceStart(t) });
 
   // A fired gesture: the arm and tile show the physical input right away; the
@@ -264,8 +337,27 @@ async function boot() {
     sounds.tick();
     composer.push(raw);
   });
-  bus.on('compose:commit', () => sounds.commit());
+  bus.on('compose:commit', ({ word }) => {
+    sounds.commit();
+    voice.speak(word); // spoken on commit only, never per gesture
+  });
   bus.on('compose:noword', () => sounds.buzz());
+
+  // speculative synthesis: the word Space would commit right now is prepared ahead of time
+  store.watch((s) => s.compose, (compose) => {
+    const next = compose.result?.exact[compose.selected]?.word;
+    if (next) voice.prefetch(next);
+  });
+
+  store.watch((s) => s.voice.id, (id) => {
+    voice.setVoice(id);
+    writePref('voice', id);
+  });
+  store.watch((s) => s.voice.muted, (muted, prev) => {
+    voice.setMuted(muted);
+    writePref('muted', muted);
+    if (prev !== undefined) bus.emit('toast', { message: muted ? 'Voice muted' : 'Voice on', detail: 'Press M to toggle.' });
+  });
 
   store.watch((s) => s.watch.finish, (finish) => {
     watch?.setFinish(/** @type {any} */ (finish));
@@ -325,6 +417,12 @@ async function boot() {
   }
   keyboard.start((raw) => bus.emit('input', raw));
   new ComposeKeys(composer).start();
+  voice.armOnFirstInteraction();
+  window.addEventListener('keydown', (e) => {
+    if (e.code !== 'KeyM' || e.repeat || !isShortcutEvent(e)) return;
+    e.preventDefault();
+    store.update((s) => ({ ...s, voice: { ...s.voice, muted: !s.voice.muted } }));
+  });
 
   for (const { label, error } of bootScreen.errors) {
     bus.emit('toast', { message: `${label} failed at boot`, tone: 'error', detail: error.message, ms: 6000 });
@@ -333,7 +431,7 @@ async function boot() {
 
   if (import.meta.env.DEV) {
     // Handy in the devtools console while building later phases.
-    Object.assign(window, { __tactura: { bus, store, clock, scene, watch, screen, sounds, pipeline, composer } });
+    Object.assign(window, { __tactura: { bus, store, clock, scene, watch, screen, sounds, pipeline, composer, voice } });
   }
 }
 

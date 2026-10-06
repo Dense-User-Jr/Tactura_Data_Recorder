@@ -12,7 +12,8 @@
  * @property {import('../core/eventBus.js').EventBus} bus
  * @property {number} size            480
  * @property {() => void} invalidate   request a redraw
- * @property {() => number} voiceLevel current speech output level 0..1 (0 until the voice exists)
+ * @property {() => number} voiceLevel current speech output level 0..1
+ * @property {() => 'idle'|'preparing'|'speaking'} voiceActivity  whether the voice is synthesizing or speaking
  * @interface
  */
 export class ScreenApp {

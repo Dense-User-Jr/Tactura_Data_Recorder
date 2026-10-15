@@ -4,24 +4,7 @@
             "outputFile": "com.gesturedatarecorder.wear-mergeDebugResources-42:/values-hu/values-hu.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\2862f13a1e373b4099de8fccb0fa3787\\transformed\\foundation-release\\res\\values-hu\\values-hu.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,144",
-                        "endColumns": "88,96",
-                        "endOffsets": "139,236"
-                    },
-                    "to": {
-                        "startLines": "27,28",
-                        "startColumns": "4,4",
-                        "startOffsets": "2387,2476",
-                        "endColumns": "88,96",
-                        "endOffsets": "2471,2568"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\428f0b98babcf542ddc646b017c88653\\transformed\\ui-release\\res\\values-hu\\values-hu.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\bd3e0432becd91fd88a7cdbf53510800\\transformed\\ui-release\\res\\values-hu\\values-hu.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -38,7 +21,24 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\22f4d98c177a2eb387390a3da5bfa3f9\\transformed\\core-1.12.0\\res\\values-hu\\values-hu.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\40f1c225995185e2c13f24f8240a3741\\transformed\\foundation-release\\res\\values-hu\\values-hu.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,144",
+                        "endColumns": "88,96",
+                        "endOffsets": "139,236"
+                    },
+                    "to": {
+                        "startLines": "27,28",
+                        "startColumns": "4,4",
+                        "startOffsets": "2387,2476",
+                        "endColumns": "88,96",
+                        "endOffsets": "2471,2568"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\feb4c90409b83ef597eddc8190a734aa\\transformed\\core-1.12.0\\res\\values-hu\\values-hu.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",

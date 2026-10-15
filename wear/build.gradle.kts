@@ -30,5 +30,6 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.core.ktx)
     implementation(libs.coroutines.android)
+    implementation(libs.onnxruntime.android)
     debugImplementation(libs.wear.compose.ui.tooling)
 }

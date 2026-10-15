@@ -13,6 +13,7 @@ enum class RecordingPhase {
     IDLE,
     COUNTDOWN,
     RECORDING,
+    CLASSIFYING,
     SAVING,
     COMPLETE,
     ERROR

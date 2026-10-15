@@ -14,6 +14,7 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.Environment
 import android.os.IBinder
+import android.util.Log
 import android.provider.MediaStore
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +24,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -38,12 +40,16 @@ class RecordingService : Service(), SensorEventListener {
         const val EXTRA_SAMPLES = "samples"
         const val EXTRA_FILE = "file"
         const val EXTRA_MESSAGE = "message"
+        const val EXTRA_PREDICTION = "prediction"
+        const val EXTRA_CONFIDENCE = "confidence"
         const val COMMAND_START = "start"
+        const val COMMAND_CLASSIFY = "classify"
         const val COMMAND_CANCEL = "cancel"
         const val CHANNEL_ID = "recording_service"
         private const val NOTIFICATION_ID = 7
         private const val PREPARE_SECONDS = 3
         private const val CAPTURE_MS = 3_000L
+        private const val CLASSIFY_WINDOW_MS = 3_500L
 
         fun start(context: Context, gesture: Gesture) {
             val intent = Intent(context, RecordingService::class.java).apply {
@@ -61,6 +67,14 @@ class RecordingService : Service(), SensorEventListener {
             }
             context.startForegroundService(intent)
         }
+
+        fun classify(context: Context) {
+            val intent = Intent(context, RecordingService::class.java).apply {
+                action = ACTION_COMMAND
+                putExtra(EXTRA_COMMAND, COMMAND_CLASSIFY)
+            }
+            context.startForegroundService(intent)
+        }
     }
 
     private lateinit var sensorManager: SensorManager
@@ -74,6 +88,11 @@ class RecordingService : Service(), SensorEventListener {
     private var recordingStartNs = 0L
     private var recordingStartWallMs = 0L
     private var sampleCount = 0
+    private var classificationInFlight = false
+    private var lastClassificationMs = 0L
+    private var classifier: OnWatchGestureClassifier? = null
+    private var classifierError: String? = null
+    private var classificationPrediction: GesturePrediction? = null
     private var latestAccel = floatArrayOf(0f, 0f, 0f)
     private var latestGyro = floatArrayOf(0f, 0f, 0f)
     private val csvRows = StringBuilder()
@@ -86,6 +105,13 @@ class RecordingService : Service(), SensorEventListener {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         vibrator = getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
+        classifier = try {
+            OnWatchGestureClassifier(assets)
+        } catch (error: Exception) {
+            classifierError = error.message ?: error.javaClass.simpleName
+            Log.e("RecordingService", "Could not load gesture model", error)
+            null
+        }
         accelerometer?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
         gyroscope?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
     }
@@ -95,20 +121,30 @@ class RecordingService : Service(), SensorEventListener {
             COMMAND_START -> intent.getStringExtra(EXTRA_GESTURE)
                 ?.let { runCatching { Gesture.valueOf(it) }.getOrNull() }
                 ?.let(::beginCountdown)
+            COMMAND_CLASSIFY -> beginClassification()
             COMMAND_CANCEL -> cancelRecording()
         }
         return START_STICKY
     }
 
     override fun onSensorChanged(event: SensorEvent) {
-        if (phase != RecordingPhase.RECORDING) return
+        if (phase != RecordingPhase.RECORDING && phase != RecordingPhase.CLASSIFYING) return
         if (recordingStartNs == 0L) recordingStartNs = event.timestamp
         val values = event.values
         if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
             latestAccel = values.copyOf()
+            if (phase == RecordingPhase.CLASSIFYING) classifier?.addAccelerometer(event.timestamp / 1_000_000L, values)
         } else if (event.sensor.type == Sensor.TYPE_GYROSCOPE) {
             latestGyro = values.copyOf()
+            if (phase == RecordingPhase.CLASSIFYING) classifier?.addGyroscope(event.timestamp / 1_000_000L, values)
         } else {
+            return
+        }
+
+        if (phase == RecordingPhase.CLASSIFYING) {
+            sampleCount++
+            maybeClassify(event.timestamp / 1_000_000L)
+            if (sampleCount % 20 == 0) broadcastStatus("Collecting sensor window", phase)
             return
         }
 
@@ -155,6 +191,77 @@ class RecordingService : Service(), SensorEventListener {
         countdownJob = scope.launch {
             delay(CAPTURE_MS)
             finishRecording()
+        }
+    }
+
+    private fun beginClassification() {
+        if (phase == RecordingPhase.COUNTDOWN || phase == RecordingPhase.RECORDING || phase == RecordingPhase.CLASSIFYING) return
+        val activeClassifier = classifier
+        if (activeClassifier == null) {
+            broadcastStatus("Model unavailable: ${classifierError ?: "unknown error"}", RecordingPhase.ERROR)
+            return
+        }
+        countdownJob?.cancel()
+        selectedGesture = null
+        sampleCount = 0
+        recordingStartNs = 0L
+        lastClassificationMs = 0L
+        classificationInFlight = false
+        classificationPrediction = null
+        activeClassifier.reset()
+        phase = RecordingPhase.CLASSIFYING
+        vibrate(180)
+        broadcastStatus("Move now; collecting 3 seconds", phase)
+        countdownJob = scope.launch {
+            delay(CLASSIFY_WINDOW_MS)
+            finishClassification()
+        }
+    }
+
+    private fun maybeClassify(timestampMs: Long) {
+        if (classificationInFlight || timestampMs - lastClassificationMs < 500L) return
+        val features = classifier?.featuresIfReady() ?: return
+        classificationInFlight = true
+        lastClassificationMs = timestampMs
+        scope.launch(Dispatchers.Default) {
+            runCatching { classifier?.predict(features) }
+                .onSuccess { prediction ->
+                    withContext(Dispatchers.Main.immediate) {
+                        classificationInFlight = false
+                        if (phase == RecordingPhase.CLASSIFYING && prediction != null) {
+                            classificationPrediction = prediction
+                            broadcastStatus(
+                                "${prediction.label.replace('_', ' ')}  ${(prediction.confidence * 100).toInt()}%",
+                                phase,
+                                prediction = prediction.label,
+                                confidence = prediction.confidence
+                            )
+                        }
+                    }
+                }
+                .onFailure {
+                    withContext(Dispatchers.Main.immediate) {
+                        classificationInFlight = false
+                        if (phase == RecordingPhase.CLASSIFYING) broadcastStatus("Classification failed", RecordingPhase.ERROR)
+                    }
+                }
+        }
+    }
+
+    private fun finishClassification() {
+        if (phase != RecordingPhase.CLASSIFYING) return
+        phase = RecordingPhase.COMPLETE
+        vibrateStopCue()
+        val prediction = classificationPrediction
+        if (prediction == null) {
+            broadcastStatus("No prediction; collected $sampleCount samples", phase)
+        } else {
+            broadcastStatus(
+                "Predicted ${prediction.label.replace('_', ' ')}  ${(prediction.confidence * 100).toInt()}%",
+                phase,
+                prediction = prediction.label,
+                confidence = prediction.confidence
+            )
         }
     }
 
@@ -231,11 +338,19 @@ class RecordingService : Service(), SensorEventListener {
 
     private fun cancelRecording() {
         countdownJob?.cancel()
+        classificationInFlight = false
         phase = RecordingPhase.IDLE
         broadcastStatus("Cancelled", phase)
     }
 
-    private fun broadcastStatus(message: String, currentPhase: RecordingPhase, countdown: Int = 0, file: String? = null) {
+    private fun broadcastStatus(
+        message: String,
+        currentPhase: RecordingPhase,
+        countdown: Int = 0,
+        file: String? = null,
+        prediction: String? = null,
+        confidence: Float = 0f
+    ) {
         val intent = Intent(ACTION_STATUS).apply {
             `package` = packageName
             putExtra(EXTRA_PHASE, currentPhase.name)
@@ -244,6 +359,8 @@ class RecordingService : Service(), SensorEventListener {
             putExtra(EXTRA_SAMPLES, sampleCount)
             putExtra(EXTRA_FILE, file)
             putExtra(EXTRA_MESSAGE, message)
+            putExtra(EXTRA_PREDICTION, prediction)
+            putExtra(EXTRA_CONFIDENCE, confidence)
         }
         sendBroadcast(intent)
         startForeground(NOTIFICATION_ID, buildNotification(message))
@@ -286,6 +403,7 @@ class RecordingService : Service(), SensorEventListener {
         countdownJob?.cancel()
         scope.cancel()
         sensorManager.unregisterListener(this)
+        classifier?.close()
         super.onDestroy()
     }
 

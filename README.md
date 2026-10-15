@@ -9,7 +9,7 @@ A Wear OS data-collection app for training a gesture-classification model. It re
 - Shake
 - Double Tap
 
-The app does not classify the movement. The selected gesture is stored as the training label in the filename and in every CSV row; the user performs the gesture during the capture window.
+The app can record labeled sensor data and classify gestures directly on the watch. The selected gesture is stored as the training label in the filename and in every CSV row; the user performs the gesture during the capture window.
 
 ## Requirements
 
@@ -110,6 +110,39 @@ The number is based on the highest numbered CSV currently in the watch folder, w
 To stop a countdown or recording early, tap **Cancel**. A cancelled recording is not saved.
 
 For training data, use the same watch position, orientation, gesture definition, and capture timing for every label. Record multiple examples per gesture and include examples from different sessions so the model does not learn one accidental motion or one exact starting pose.
+
+## Classify gestures on the watch
+
+The app includes a fully watch-native **Classify** mode. It does not require a phone, computer, network connection, or Python runtime while running. The app collects a rolling 3-second window from the accelerometer and gyroscope, extracts the same 192 features used by the training script, and runs the bundled ONNX model on the watch.
+
+To use it:
+
+1. Open **Gesture Data Recorder** and grant **Body Sensors** permission.
+2. Tap **Classify**.
+3. Perform one gesture during the 3.5-second sensor window.
+4. Wait for the stop vibration, then read the predicted gesture and confidence percentage.
+5. Tap **Cancel** only if you need to stop the window early.
+
+The current model recognizes the five classes represented in the training data: Flick Up, Flick Down, Twist Right, Twist Left, and Shake. Double Tap is not recognized until examples are collected and the model is retrained.
+
+The deployed model is `wear/src/main/assets/gesture_random_forest.onnx`. The Python `.joblib` file remains the training artifact and is not loaded by the watch.
+
+### Export a refreshed watch model
+
+After collecting additional CSVs and retraining the Random Forest, install the ML requirements and export the model:
+
+```powershell
+python -m pip install -r .\ML\requirements.txt
+python .\ML\train_gesture_classifier.py
+python .\ML\export_gesture_model.py
+```
+
+The export script writes the deployable ONNX file to `wear/src/main/assets`. Rebuild and reinstall the APK after exporting:
+
+```powershell
+.\gradlew.bat :wear:assembleDebug
+adb install -r .\wear\build\outputs\apk\debug\wear-debug.apk
+```
 
 ## Pull CSV files off the watch
 

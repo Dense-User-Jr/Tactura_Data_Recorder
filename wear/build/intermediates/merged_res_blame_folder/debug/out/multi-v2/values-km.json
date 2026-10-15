@@ -4,7 +4,24 @@
             "outputFile": "com.gesturedatarecorder.wear-mergeDebugResources-42:/values-km/values-km.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\428f0b98babcf542ddc646b017c88653\\transformed\\ui-release\\res\\values-km\\values-km.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\40f1c225995185e2c13f24f8240a3741\\transformed\\foundation-release\\res\\values-km\\values-km.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,146",
+                        "endColumns": "90,91",
+                        "endOffsets": "141,233"
+                    },
+                    "to": {
+                        "startLines": "27,28",
+                        "startColumns": "4,4",
+                        "startOffsets": "2360,2451",
+                        "endColumns": "90,91",
+                        "endOffsets": "2446,2538"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\bd3e0432becd91fd88a7cdbf53510800\\transformed\\ui-release\\res\\values-km\\values-km.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -21,7 +38,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\22f4d98c177a2eb387390a3da5bfa3f9\\transformed\\core-1.12.0\\res\\values-km\\values-km.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\feb4c90409b83ef597eddc8190a734aa\\transformed\\core-1.12.0\\res\\values-km\\values-km.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -35,23 +52,6 @@
                         "startOffsets": "105,200,303,401,501,602,714,1991",
                         "endColumns": "94,102,97,99,100,111,111,100",
                         "endOffsets": "195,298,396,496,597,709,821,2087"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\2862f13a1e373b4099de8fccb0fa3787\\transformed\\foundation-release\\res\\values-km\\values-km.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,146",
-                        "endColumns": "90,91",
-                        "endOffsets": "141,233"
-                    },
-                    "to": {
-                        "startLines": "27,28",
-                        "startColumns": "4,4",
-                        "startOffsets": "2360,2451",
-                        "endColumns": "90,91",
-                        "endOffsets": "2446,2538"
                     }
                 }
             ]

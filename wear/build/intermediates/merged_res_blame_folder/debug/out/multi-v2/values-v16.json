@@ -4,7 +4,7 @@
             "outputFile": "com.gesturedatarecorder.wear-mergeDebugResources-42:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\22f4d98c177a2eb387390a3da5bfa3f9\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\feb4c90409b83ef597eddc8190a734aa\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

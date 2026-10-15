@@ -104,7 +104,9 @@ private fun RecorderScreen(bodySensorsGranted: Boolean) {
                     countdown = intent.getIntExtra(RecordingService.EXTRA_COUNTDOWN, 0),
                     samples = intent.getIntExtra(RecordingService.EXTRA_SAMPLES, 0),
                     message = intent.getStringExtra(RecordingService.EXTRA_MESSAGE).orEmpty(),
-                    fileName = intent.getStringExtra(RecordingService.EXTRA_FILE)
+                    fileName = intent.getStringExtra(RecordingService.EXTRA_FILE),
+                    prediction = intent.getStringExtra(RecordingService.EXTRA_PREDICTION),
+                    confidence = intent.getFloatExtra(RecordingService.EXTRA_CONFIDENCE, 0f)
                 )
             }
         }
@@ -119,7 +121,8 @@ private fun RecorderScreen(bodySensorsGranted: Boolean) {
         }
     }
 
-    val busy = status.phase == RecordingPhase.COUNTDOWN || status.phase == RecordingPhase.RECORDING || status.phase == RecordingPhase.SAVING
+    val busy = status.phase == RecordingPhase.COUNTDOWN || status.phase == RecordingPhase.RECORDING ||
+        status.phase == RecordingPhase.CLASSIFYING || status.phase == RecordingPhase.SAVING
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(Color(0xFF101418)),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -148,6 +151,21 @@ private fun RecorderScreen(bodySensorsGranted: Boolean) {
         if (status.phase == RecordingPhase.RECORDING) {
             item { Text("Samples: ${status.samples}", color = Color(0xFF80CBC4), fontSize = 10.sp) }
         }
+        if (status.phase == RecordingPhase.CLASSIFYING || status.phase == RecordingPhase.COMPLETE) {
+            item { Text("Live classification", color = Color(0xFF80CBC4), fontSize = 10.sp) }
+            item { Text("Samples: ${status.samples}", color = Color(0xFF90A4AE), fontSize = 9.sp) }
+            status.prediction?.let { prediction ->
+                item {
+                    Text(
+                        "${prediction.replace('_', ' ')} ${(status.confidence * 100).toInt()}%",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
         status.fileName?.let { fileName ->
             item { Text(fileName, color = Color(0xFF80CBC4), fontSize = 8.sp, textAlign = TextAlign.Center) }
         }
@@ -165,10 +183,16 @@ private fun RecorderScreen(bodySensorsGranted: Boolean) {
             if (busy) {
                 Button(onClick = { RecordingService.cancel(context) }) { Text("Cancel", fontSize = 11.sp) }
             } else {
-                Button(
-                    onClick = { RecordingService.start(context, selectedGesture) },
-                    enabled = bodySensorsGranted
-                ) { Text("Record", fontSize = 11.sp) }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Button(
+                        onClick = { RecordingService.start(context, selectedGesture) },
+                        enabled = bodySensorsGranted
+                    ) { Text("Record", fontSize = 10.sp) }
+                    Button(
+                        onClick = { RecordingService.classify(context) },
+                        enabled = bodySensorsGranted
+                    ) { Text("Classify", fontSize = 10.sp) }
+                }
             }
         }
     }
@@ -193,5 +217,7 @@ private data class RecordingUiState(
     val countdown: Int = 0,
     val samples: Int = 0,
     val message: String = "Select a gesture",
-    val fileName: String? = null
+    val fileName: String? = null,
+    val prediction: String? = null,
+    val confidence: Float = 0f
 )

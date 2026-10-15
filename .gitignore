@@ -1,0 +1,17 @@
+# Local machine and IDE state
+.gradle/
+.idea/caches/
+.idea/deploymentTargetSelector.xml
+.venv/
+local.properties
+
+# Temporary device diagnostics
+.watch-*.png
+.watch-*.xml
+
+# Gradle outputs
+build/
+*/build/
+
+# Local generated plots
+Accessory Software/Graphs/

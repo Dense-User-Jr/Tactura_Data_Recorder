@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gesture Data Recorder</string>
+    <style name="Theme.GestureDataRecorder" parent="android:style/Theme.DeviceDefault"/>
+</resources>

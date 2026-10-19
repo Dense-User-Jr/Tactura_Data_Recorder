@@ -1,0 +1,60 @@
+# Words the simulator drops from the lexicon (spec section 8.6): acronyms,
+# spelled-out letters, letter possessives and non-word fragments that happen
+# to be spellable with the current bins. Single letters are dropped by rule
+# and don't need listing. Crude words are a separate, toggleable filter
+# (src/config/lexicon.js). One word per line, lowercase; # starts a comment.
+
+# acronyms
+bbc
+bbc's
+bc
+bp
+cb
+cbc
+cc
+ccs
+pc
+pc's
+pcs
+ip
+ib
+sci
+ths
+uzi
+
+# letter names, possessives and fragments
+b's
+c's
+e's
+g's
+p's
+z's
+ce
+cie
+chu
+ee
+ich
+ichi
+isu
+je
+jee
+ji
+jie
+joo
+ju
+ou
+pu
+si
+sie
+siu
+su
+sui
+suu
+thi
+tse
+tsui
+xie
+xu
+xue
+ze
+zi

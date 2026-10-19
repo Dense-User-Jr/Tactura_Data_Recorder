@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.vite/
+tools/.venv/
+__pycache__/

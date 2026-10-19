@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "source": "Tactura Gesture-to-Phoneme Bin Assignment (6 gestures / 12 phonemes)",
+  "bins": [
+    { "gesture": "FLICK_UP",    "bin": "Dental fricative",  "phonemes": ["TH", "DH"], "score": 0.00000 },
+    { "gesture": "FLICK_DOWN",  "bin": "Bilabial stop",     "phonemes": ["P", "B"],   "score": 0.00052 },
+    { "gesture": "TWIST_RIGHT", "bin": "High vowel (front-tense / back-lax)", "phonemes": ["IY", "UH"], "score": 0.00072 },
+    { "gesture": "TWIST_LEFT",  "bin": "High vowel (front-lax / back-tense)", "phonemes": ["IH", "UW"], "score": 0.00210 },
+    { "gesture": "SHAKE",       "bin": "Sibilant fricative","phonemes": ["S", "Z"],   "score": 0.00256 },
+    { "gesture": "DOUBLE_TAP",  "bin": "Affricate",         "phonemes": ["CH", "JH"], "score": 0.00001 }
+  ]
+}

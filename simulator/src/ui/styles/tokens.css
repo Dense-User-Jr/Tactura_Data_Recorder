@@ -1,0 +1,45 @@
+/* Design tokens. The first block is SPEC.md §7.2 verbatim; keep it that way. */
+:root {
+  --bg:            #0A0A0B;
+  --surface:       rgba(17, 17, 19, 0.72);   /* translucent panels over the viewport */
+  --surface-solid: #111113;
+  --surface-2:     #18181B;
+  --line:          #2A2A2F;   /* 1px hairlines */
+  --line-strong:   #3D3D44;
+  --text:          #F4F4F1;
+  --text-muted:    #8C8C93;
+  --text-dim:      #55555C;
+  --accent:        #FF3B2F;   /* signal red: ONLY for "something just happened" and errors */
+  --accent-soft:   rgba(255, 59, 47, 0.14);
+  --ok:            #F4F4F1;   /* success is white, not green */
+
+  --font-display: "Doto", ui-monospace, monospace;
+  --font-label:   "Space Mono", ui-monospace, monospace;
+  --font-body:    "Space Grotesk", system-ui, sans-serif;
+
+  --radius: 0px;              /* sharp */
+  --chamfer: 10px;            /* signature 45° corner cut */
+  --grid: 8px;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-fast: 120ms;
+  --t-med: 180ms;
+  --t-flash: 300ms;
+}
+
+/* Layout and derived tokens (not in the spec table; tune freely). */
+:root {
+  --chamfer-sm: 6px;          /* badges and small buttons */
+  --blur: 12px;
+
+  --topbar-h: 48px;
+  --rail-left-w: 248px;
+  --rail-right-w: 304px;
+  --rail-collapsed-w: 28px;
+
+  --dotgrid-pitch: calc(var(--grid) * 2);
+  --dotgrid-alpha: 0.07;      /* per dot; the grid as a whole reads at ~3% */
+  --glow-alpha: 0.05;         /* radial falloff behind the watch */
+
+  --t-reveal: 420ms;
+}

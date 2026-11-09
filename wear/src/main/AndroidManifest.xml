@@ -17,7 +17,7 @@
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
-        <activityx
+        <activity
             android:name=".ui.MainActivity"
             android:exported="true"
             android:taskAffinity=""
@@ -26,7 +26,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activityx>
+        </activity>
         <service
             android:name=".recording.RecordingService"
             android:exported="false"

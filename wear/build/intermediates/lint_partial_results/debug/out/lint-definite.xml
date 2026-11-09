@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.2.2" type="incidents">
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.wear.compose:compose-material than 1.3.0 is available: 1.7.1">
+        <fix-replace
+            description="Change to 1.7.1"
+            family="Update versions"
+            oldString="1.3.0"
+            replacement="1.7.1"/>
+        <location
+            file="$HOME/Tactura/Phrasing Prototype/v4.1/GestureDataRecorder/gradle/libs.versions.toml"
+            line="4"
+            column="15"
+            startOffset="57"
+            endLine="4"
+            endColumn="22"
+            endOffset="64"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.wear.compose:compose-foundation than 1.3.0 is available: 1.7.1">
+        <fix-replace
+            description="Change to 1.7.1"
+            family="Update versions"
+            oldString="1.3.0"
+            replacement="1.7.1"/>
+        <location
+            file="$HOME/Tactura/Phrasing Prototype/v4.1/GestureDataRecorder/gradle/libs.versions.toml"
+            line="4"
+            column="15"
+            startOffset="57"
+            endLine="4"
+            endColumn="22"
+            endOffset="64"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.wear.compose:compose-ui-tooling than 1.3.0 is available: 1.7.1">
+        <fix-replace
+            description="Change to 1.7.1"
+            family="Update versions"
+            oldString="1.3.0"
+            replacement="1.7.1"/>
+        <location
+            file="$HOME/Tactura/Phrasing Prototype/v4.1/GestureDataRecorder/gradle/libs.versions.toml"
+            line="4"
+            column="15"
+            startOffset="57"
+            endLine="4"
+            endColumn="22"
+            endOffset="64"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.core:core-ktx than 1.12.0 is available: 1.19.1">
+        <fix-replace
+            description="Change to 1.19.1"
+            family="Update versions"
+            oldString="1.12.0"
+            replacement="1.19.1"/>
+        <location
+            file="$HOME/Tactura/Phrasing Prototype/v4.1/GestureDataRecorder/gradle/libs.versions.toml"
+            line="5"
+            column="11"
+            startOffset="75"
+            endLine="5"
+            endColumn="19"
+            endOffset="83"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.activity:activity-compose than 1.8.2 is available: 1.13.0">
+        <fix-replace
+            description="Change to 1.13.0"
+            family="Update versions"
+            oldString="1.8.2"
+            replacement="1.13.0"/>
+        <location
+            file="$HOME/Tactura/Phrasing Prototype/v4.1/GestureDataRecorder/gradle/libs.versions.toml"
+            line="6"
+            column="19"
+            startOffset="102"
+            endLine="6"
+            endColumn="26"
+            endOffset="109"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of com.android.application than 8.2.2 is available: 9.5.1">
+        <fix-replace
+            description="Change to 9.5.1"
+            family="Update versions"
+            oldString="8.2.2"
+            replacement="9.5.1"/>
+        <location
+            file="$HOME/Tactura/Phrasing Prototype/v4.1/GestureDataRecorder/gradle/libs.versions.toml"
+            line="2"
+            column="7"
+            startOffset="17"
+            endLine="2"
+            endColumn="14"
+            endOffset="24"/>
+    </incident>
+
+</incidents>

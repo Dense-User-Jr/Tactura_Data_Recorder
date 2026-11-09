@@ -4,7 +4,6 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature android:name="android.hardware.type.watch" />
@@ -14,7 +13,11 @@
         android:icon="@android:drawable/ic_menu_save"
         android:theme="@style/Theme.GestureDataRecorder"
         android:allowBackup="true">
-        <activity
+        <!-- Runs fully on the watch; no companion phone app. -->
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+        <activityx
             android:name=".ui.MainActivity"
             android:exported="true"
             android:taskAffinity=""
@@ -23,7 +26,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activityx>
         <service
             android:name=".recording.RecordingService"
             android:exported="false"

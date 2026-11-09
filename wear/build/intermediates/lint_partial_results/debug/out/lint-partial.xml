@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.2.2" type="partial_results">
+    <map id="UnsafeIntentLaunch">
+            <map id="unprotected">
+                <entry
+                    name="com.gesturedatarecorder.ui.MainActivity"
+                    boolean="true"/>
+            </map>
+    </map>
+    <map id="NotificationPermission">
+        <entry
+            name="source"
+            boolean="true"/>
+    </map>
+    <map id="UnsafeImplicitIntentLaunch">
+            <map id="actionsSent">
+                    <map id="android.settings.APPLICATION_DETAILS_SETTINGS (used to start an activity)">
+                        <location id="0"
+                            file="${:wear*debug*MAIN*sourceProvider*0*javaDir*2}/com/gesturedatarecorder/ui/MainActivity.kt"
+                            line="78"
+                            column="17"
+                            startOffset="2774"
+                            endLine="78"
+                            endColumn="114"
+                            endOffset="2871"/>
+                    </map>
+            </map>
+    </map>
+    <map id="UnusedResources">
+        <entry
+            name="model"
+            string="string[app_name(U)],style[Theme_GestureDataRecorder(U)];;;;"/>
+    </map>
+
+</incidents>

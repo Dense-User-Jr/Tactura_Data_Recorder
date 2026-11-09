@@ -20,139 +20,145 @@
 14    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
 14-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:6:5-84
 14-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:6:22-81
-15    <uses-permission android:name="android.permission.WAKE_LOCK" />
-15-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:7:5-68
-15-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:7:22-65
-16    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-16-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:8:5-77
-16-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:8:22-74
-17
-18    <uses-feature android:name="android.hardware.type.watch" />
-18-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:10:5-64
-18-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:10:19-61
-19
-20    <permission
-20-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\c516952b122e4249eecfe8ec2c0d048e\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
-21        android:name="com.gesturedatarecorder.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-21-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\c516952b122e4249eecfe8ec2c0d048e\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
-22        android:protectionLevel="signature" />
-22-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\c516952b122e4249eecfe8ec2c0d048e\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
-23
-24    <uses-permission android:name="com.gesturedatarecorder.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-24-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\c516952b122e4249eecfe8ec2c0d048e\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
-24-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\c516952b122e4249eecfe8ec2c0d048e\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
-25
-26    <application
-26-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:12:5-31:19
-27        android:allowBackup="true"
-27-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:16:9-35
-28        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-28-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\c516952b122e4249eecfe8ec2c0d048e\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
-29        android:debuggable="true"
-30        android:extractNativeLibs="false"
-31        android:icon="@android:drawable/ic_menu_save"
-31-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:14:9-54
-32        android:label="@string/app_name"
-32-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:13:9-41
-33        android:testOnly="true"
-34        android:theme="@style/Theme.GestureDataRecorder" >
-34-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:15:9-57
-35        <activity
-35-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:17:9-26:20
-36            android:name="com.gesturedatarecorder.ui.MainActivity"
-36-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:18:13-44
-37            android:exported="true"
-37-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:19:13-36
-38            android:launchMode="singleInstance"
-38-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:21:13-48
-39            android:taskAffinity="" >
-39-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:20:13-36
-40            <intent-filter>
-40-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:22:13-25:29
-41                <action android:name="android.intent.action.MAIN" />
-41-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:23:17-69
-41-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:23:25-66
-42
-43                <category android:name="android.intent.category.LAUNCHER" />
-43-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:24:17-77
-43-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:24:27-74
-44            </intent-filter>
-45        </activity>
-46
-47        <service
-47-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:27:9-30:54
-48            android:name="com.gesturedatarecorder.recording.RecordingService"
-48-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:28:13-55
-49            android:exported="false"
-49-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:29:13-37
-50            android:foregroundServiceType="health" />
-50-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:30:13-51
+15    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+15-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:7:5-77
+15-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:7:22-74
+16
+17    <uses-feature android:name="android.hardware.type.watch" />
+17-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:9:5-64
+17-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:9:19-61
+18
+19    <permission
+19-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\e46f98055c5c9dc515820d7fc87543b1\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+20        android:name="com.gesturedatarecorder.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+20-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\e46f98055c5c9dc515820d7fc87543b1\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+21        android:protectionLevel="signature" />
+21-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\e46f98055c5c9dc515820d7fc87543b1\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+22
+23    <uses-permission android:name="com.gesturedatarecorder.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+23-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\e46f98055c5c9dc515820d7fc87543b1\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+23-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\e46f98055c5c9dc515820d7fc87543b1\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+24
+25    <application
+25-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:11:5-34:19
+26        android:allowBackup="true"
+26-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:15:9-35
+27        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+27-->[androidx.core:core:1.12.0] C:\Users\dhruv\.gradle\caches\transforms-3\e46f98055c5c9dc515820d7fc87543b1\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+28        android:debuggable="true"
+29        android:extractNativeLibs="false"
+30        android:icon="@android:drawable/ic_menu_save"
+30-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:13:9-54
+31        android:label="@string/app_name"
+31-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:12:9-41
+32        android:testOnly="true"
+33        android:theme="@style/Theme.GestureDataRecorder" >
+33-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:14:9-57
+34
+35        <!-- Runs fully on the watch; no companion phone app. -->
+36        <meta-data
+36-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:17:9-19:36
+37            android:name="com.google.android.wearable.standalone"
+37-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:18:13-66
+38            android:value="true" />
+38-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:19:13-33
+39
+40        <activity
+40-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:20:9-29:20
+41            android:name="com.gesturedatarecorder.ui.MainActivity"
+41-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:21:13-44
+42            android:exported="true"
+42-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:22:13-36
+43            android:launchMode="singleInstance"
+43-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:24:13-48
+44            android:taskAffinity="" >
+44-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:23:13-36
+45            <intent-filter>
+45-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:25:13-28:29
+46                <action android:name="android.intent.action.MAIN" />
+46-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:26:17-69
+46-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:26:25-66
+47
+48                <category android:name="android.intent.category.LAUNCHER" />
+48-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:27:17-77
+48-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:27:27-74
+49            </intent-filter>
+50        </activity>
 51
-52        <provider
-52-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\be4be6496f46bf8170579b6ee9132a29\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
-53            android:name="androidx.startup.InitializationProvider"
-53-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\be4be6496f46bf8170579b6ee9132a29\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
-54            android:authorities="com.gesturedatarecorder.androidx-startup"
-54-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\be4be6496f46bf8170579b6ee9132a29\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
-55            android:exported="false" >
-55-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\be4be6496f46bf8170579b6ee9132a29\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
-56            <meta-data
-56-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\be4be6496f46bf8170579b6ee9132a29\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
-57                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-57-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\be4be6496f46bf8170579b6ee9132a29\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
-58                android:value="androidx.startup" />
-58-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\be4be6496f46bf8170579b6ee9132a29\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
-59            <meta-data
-59-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\dhruv\.gradle\caches\transforms-3\bd4c9f1ce57b5b1bdf328cd13ac1dbc4\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:29:13-31:52
-60                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-60-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\dhruv\.gradle\caches\transforms-3\bd4c9f1ce57b5b1bdf328cd13ac1dbc4\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:30:17-78
-61                android:value="androidx.startup" />
-61-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\dhruv\.gradle\caches\transforms-3\bd4c9f1ce57b5b1bdf328cd13ac1dbc4\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:31:17-49
-62            <meta-data
-62-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
-63                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-63-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
-64                android:value="androidx.startup" />
-64-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
-65        </provider>
-66
-67        <receiver
-67-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
-68            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-68-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
-69            android:directBootAware="false"
-69-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
-70            android:enabled="true"
-70-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
-71            android:exported="true"
-71-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
-72            android:permission="android.permission.DUMP" >
-72-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
-73            <intent-filter>
-73-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
-74                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-74-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
-74-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
-75            </intent-filter>
-76            <intent-filter>
-76-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
-77                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-77-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
-77-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
-78            </intent-filter>
-79            <intent-filter>
-79-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
-80                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-80-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
-80-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
-81            </intent-filter>
-82            <intent-filter>
-82-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
-83                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-83-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
-83-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\d8cbde85789c99c24c361e48f0078dec\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
-84            </intent-filter>
-85        </receiver>
-86    </application>
-87
-88</manifest>
+52        <service
+52-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:30:9-33:54
+53            android:name="com.gesturedatarecorder.recording.RecordingService"
+53-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:31:13-55
+54            android:exported="false"
+54-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:32:13-37
+55            android:foregroundServiceType="health" />
+55-->C:\Users\dhruv\Tactura\Phrasing Prototype\v4.1\GestureDataRecorder\wear\src\main\AndroidManifest.xml:33:13-51
+56
+57        <provider
+57-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\8c63e75cbf0a89a0b153a724d0bc7b1c\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+58            android:name="androidx.startup.InitializationProvider"
+58-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\8c63e75cbf0a89a0b153a724d0bc7b1c\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+59            android:authorities="com.gesturedatarecorder.androidx-startup"
+59-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\8c63e75cbf0a89a0b153a724d0bc7b1c\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+60            android:exported="false" >
+60-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\8c63e75cbf0a89a0b153a724d0bc7b1c\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+61            <meta-data
+61-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\8c63e75cbf0a89a0b153a724d0bc7b1c\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+62                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+62-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\8c63e75cbf0a89a0b153a724d0bc7b1c\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+63                android:value="androidx.startup" />
+63-->[androidx.emoji2:emoji2:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\8c63e75cbf0a89a0b153a724d0bc7b1c\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+64            <meta-data
+64-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\dhruv\.gradle\caches\transforms-3\6f78228ae34d7860490620c3ada2551b\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:29:13-31:52
+65                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+65-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\dhruv\.gradle\caches\transforms-3\6f78228ae34d7860490620c3ada2551b\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:30:17-78
+66                android:value="androidx.startup" />
+66-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\dhruv\.gradle\caches\transforms-3\6f78228ae34d7860490620c3ada2551b\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:31:17-49
+67            <meta-data
+67-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+68                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+68-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+69                android:value="androidx.startup" />
+69-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+70        </provider>
+71
+72        <receiver
+72-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+73            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+73-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+74            android:directBootAware="false"
+74-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+75            android:enabled="true"
+75-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+76            android:exported="true"
+76-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+77            android:permission="android.permission.DUMP" >
+77-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+78            <intent-filter>
+78-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+79                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+79-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+79-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+80            </intent-filter>
+81            <intent-filter>
+81-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+82                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+82-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+82-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+83            </intent-filter>
+84            <intent-filter>
+84-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+85                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+85-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+85-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+86            </intent-filter>
+87            <intent-filter>
+87-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+88                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+88-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+88-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\dhruv\.gradle\caches\transforms-3\da2c7df595539a81b0ba7421fc6608cb\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+89            </intent-filter>
+90        </receiver>
+91    </application>
+92
+93</manifest>

@@ -85,13 +85,13 @@ After installation, open **Gesture Data Recorder** on the watch and grant **Body
 ## Record a gesture
 
 1. Open **Gesture Data Recorder** on the watch.
-2. Grant the requested **Body Sensors** permission. Recording is disabled until this permission is granted.
-3. Scroll the screen if necessary. Select one of the six gesture labels.
+2. Grant the requested **Body Sensors** permission. Recording is disabled until this permission is granted. If it was denied, tap **Grant permission** (or **Open Settings** if the system no longer shows the prompt) on the home screen.
+3. Scroll with the crown or by swiping, and select one of the six gestures under **Gesture to record**. The **Record** chip shows the selected gesture.
 4. Tap **Record**.
 5. The watch vibrates once for each second of a 3-second preparation countdown. Do not perform the gesture yet.
-6. A stronger vibration marks the beginning of the 3-second capture window. Perform the selected gesture during this window.
+6. A stronger vibration marks the beginning of the 3-second capture window, and a ring fills around the screen edge. Perform the selected gesture during this window.
 7. A double vibration marks the end of capture.
-8. Wait for the status to change to **Saved** before starting another recording.
+8. The result screen shows the saved file name, the sample count and the measured sensor rates. Tap **Record again** to record the same gesture again, or **Done** to return to the list. Each gesture in the list shows how many recordings you've saved this session.
 
 Each recording is saved as a separate CSV in the watch's shared storage at:
 
@@ -107,21 +107,33 @@ Filenames begin with a persistent recording number, followed by the selected lab
 
 The number is based on the highest numbered CSV currently in the watch folder, which makes files easy to identify and sort. If the folder is emptied, the next recording starts at `0001`. If numbered files remain, the next recording uses the next highest number.
 
-To stop a countdown or recording early, tap **Cancel**. A cancelled recording is not saved.
+To stop a countdown or recording early, tap **Cancel** or press the back button. Leaving the app also cancels. A cancelled recording is not saved.
 
 For training data, use the same watch position, orientation, gesture definition, and capture timing for every label. Record multiple examples per gesture and include examples from different sessions so the model does not learn one accidental motion or one exact starting pose.
 
 ## Classify gestures on the watch
 
-The app includes a fully watch-native **Classify** mode. It does not require a phone, computer, network connection, or Python runtime while running. The app collects a rolling 3-second window from the accelerometer and gyroscope, extracts the same 192 features used by the training script, and runs the bundled ONNX model on the watch.
+The app includes a fully watch-native **Classify** mode. It does not require a phone, computer, network connection, or Python runtime while running. Classify captures exactly like Record (the same 3-second countdown and 3-second window), so the model sees the same kind of window it was trained on. It then extracts the same 192 features as the training script and runs the bundled ONNX model on the watch. The Kotlin feature code is checked against the Python code by a unit test (see [Feature parity test](#feature-parity-test)).
 
 To use it:
 
 1. Open **Gesture Data Recorder** and grant **Body Sensors** permission.
 2. Tap **Classify**.
-3. Perform one gesture during the 3.5-second sensor window.
-4. Wait for the stop vibration, then read the predicted gesture and confidence percentage.
-5. Tap **Cancel** only if you need to stop the window early.
+3. Wait through the 3-second countdown, then perform one gesture after the strong vibration, during the 3-second window.
+4. After the double vibration, read the predicted gesture, its confidence, the inference time and the measured sensor rates. The first Classify after the app starts also shows how long the model took to load.
+5. Tap **Classify again** or **Done**. Tap **Cancel** only if you need to stop early.
+
+Each classified window is also saved, in the same CSV format, to a separate folder for diagnostics:
+
+```text
+/sdcard/Download/GestureClassify/0003_classify_pred-twist_left-87_20261108_201500.csv
+```
+
+The name holds the predicted label and confidence percentage; the `gesture_label` column holds the predicted label, **not** the true gesture. Never copy these files into the training folder. Their purpose is to re-run the exact window through the `.joblib` model on a PC and compare its answer with the watch's ONNX answer:
+
+```powershell
+adb pull /sdcard/Download/GestureClassify .\classify_logs
+```
 
 The current model recognizes the five classes represented in the training data: Flick Up, Flick Down, Twist Right, Twist Left, and Shake. Double Tap is not recognized until examples are collected and the model is retrained.
 
@@ -142,6 +154,23 @@ The export script writes the deployable ONNX file to `wear/src/main/assets`. Reb
 ```powershell
 .\gradlew.bat :wear:assembleDebug
 adb install -r .\wear\build\outputs\apk\debug\wear-debug.apk
+```
+
+If the set of trained classes changes (for example, when Double Tap is added), also update `MODEL_LABELS` in `wear/src/main/kotlin/com/gesturedatarecorder/recording/OnWatchGestureClassifier.kt` to match `model.classes_` (alphabetical). The app shows an error at model load if the counts don't match.
+
+### Feature parity test
+
+The watch computes features with a Kotlin port (`GestureFeatures.kt`) of `recording_features()` in `ML/train_gesture_classifier.py`. A JVM unit test checks that both produce identical values on real recordings, and that the watch's CSV writer reproduces existing recordings byte for byte:
+
+```powershell
+.\gradlew.bat :wear:testDebugUnitTest
+```
+
+If you change `recording_features()`, port the change to `GestureFeatures.kt`, then regenerate the reference values and re-run the test:
+
+```powershell
+python .\ML\dump_reference_features.py
+.\gradlew.bat :wear:testDebugUnitTest
 ```
 
 ## Pull CSV files off the watch

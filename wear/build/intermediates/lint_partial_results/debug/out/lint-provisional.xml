@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.2.2" type="conditional_incidents">
+
+    <incident
+        id="NotificationPermission"
+        severity="error"
+        message="When targeting Android 13 or higher, posting a permission requires holding the `POST_NOTIFICATIONS` permission">
+        <fix-data missing="android.permission.POST_NOTIFICATIONS"/>
+        <location
+            file="${:wear*debug*MAIN*sourceProvider*0*javaDir*2}/com/gesturedatarecorder/recording/RecordingService.kt"
+            line="310"
+            column="13"
+            startOffset="13857"
+            endLine="310"
+            endColumn="91"
+            endOffset="13935"/>
+    </incident>
+
+</incidents>

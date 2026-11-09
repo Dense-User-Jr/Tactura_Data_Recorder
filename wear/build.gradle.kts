@@ -32,4 +32,5 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.onnxruntime.android)
     debugImplementation(libs.wear.compose.ui.tooling)
+    testImplementation(libs.junit)
 }

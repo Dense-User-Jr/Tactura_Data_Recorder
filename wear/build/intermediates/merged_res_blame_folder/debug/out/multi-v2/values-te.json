@@ -4,24 +4,7 @@
             "outputFile": "com.gesturedatarecorder.wear-mergeDebugResources-42:/values-te/values-te.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\c516952b122e4249eecfe8ec2c0d048e\\transformed\\core-1.12.0\\res\\values-te\\values-te.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,157,265,367,468,574,681,805",
-                        "endColumns": "101,107,101,100,105,106,123,100",
-                        "endOffsets": "152,260,362,463,569,676,800,901"
-                    },
-                    "to": {
-                        "startLines": "2,3,4,5,6,7,8,23",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,207,315,417,518,624,731,2078",
-                        "endColumns": "101,107,101,100,105,106,123,100",
-                        "endOffsets": "202,310,412,513,619,726,850,2174"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\7f953847d25d79b9d50f1e1e80a96807\\transformed\\foundation-release\\res\\values-te\\values-te.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\c7d61477f0d8ef43e0fe831cdeea59a3\\transformed\\foundation-release\\res\\values-te\\values-te.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -38,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\12dd535005bf8feff177c95f60188a4e\\transformed\\ui-release\\res\\values-te\\values-te.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\8117c519e4a3e30f91a79ccbd55b23b1\\transformed\\ui-release\\res\\values-te\\values-te.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -52,6 +35,23 @@
                         "startOffsets": "855,951,1038,1135,1235,1324,1413,1509,1597,1681,1754,1827,1911,2001,2179,2256,2325",
                         "endColumns": "95,86,96,99,88,88,95,87,83,72,72,83,89,76,76,68,116",
                         "endOffsets": "946,1033,1130,1230,1319,1408,1504,1592,1676,1749,1822,1906,1996,2073,2251,2320,2437"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\e46f98055c5c9dc515820d7fc87543b1\\transformed\\core-1.12.0\\res\\values-te\\values-te.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,157,265,367,468,574,681,805",
+                        "endColumns": "101,107,101,100,105,106,123,100",
+                        "endOffsets": "152,260,362,463,569,676,800,901"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,23",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,207,315,417,518,624,731,2078",
+                        "endColumns": "101,107,101,100,105,106,123,100",
+                        "endOffsets": "202,310,412,513,619,726,850,2174"
                     }
                 }
             ]

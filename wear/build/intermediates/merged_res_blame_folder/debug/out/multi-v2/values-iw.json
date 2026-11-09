@@ -4,24 +4,24 @@
             "outputFile": "com.gesturedatarecorder.wear-mergeDebugResources-42:/values-iw/values-iw.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\7f953847d25d79b9d50f1e1e80a96807\\transformed\\foundation-release\\res\\values-iw\\values-iw.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\e46f98055c5c9dc515820d7fc87543b1\\transformed\\core-1.12.0\\res\\values-iw\\values-iw.xml",
                     "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,142",
-                        "endColumns": "86,87",
-                        "endOffsets": "137,225"
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,149,251,348,445,546,646,752",
+                        "endColumns": "93,101,96,96,100,99,105,100",
+                        "endOffsets": "144,246,343,440,541,641,747,848"
                     },
                     "to": {
-                        "startLines": "27,28",
-                        "startColumns": "4,4",
-                        "startOffsets": "2299,2386",
-                        "endColumns": "86,87",
-                        "endOffsets": "2381,2469"
+                        "startLines": "2,3,4,5,6,7,8,23",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,199,301,398,495,596,696,1934",
+                        "endColumns": "93,101,96,96,100,99,105,100",
+                        "endOffsets": "194,296,393,490,591,691,797,2030"
                     }
                 },
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\12dd535005bf8feff177c95f60188a4e\\transformed\\ui-release\\res\\values-iw\\values-iw.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\8117c519e4a3e30f91a79ccbd55b23b1\\transformed\\ui-release\\res\\values-iw\\values-iw.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -38,20 +38,20 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\c516952b122e4249eecfe8ec2c0d048e\\transformed\\core-1.12.0\\res\\values-iw\\values-iw.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\c7d61477f0d8ef43e0fe831cdeea59a3\\transformed\\foundation-release\\res\\values-iw\\values-iw.xml",
                     "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,149,251,348,445,546,646,752",
-                        "endColumns": "93,101,96,96,100,99,105,100",
-                        "endOffsets": "144,246,343,440,541,641,747,848"
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,142",
+                        "endColumns": "86,87",
+                        "endOffsets": "137,225"
                     },
                     "to": {
-                        "startLines": "2,3,4,5,6,7,8,23",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,199,301,398,495,596,696,1934",
-                        "endColumns": "93,101,96,96,100,99,105,100",
-                        "endOffsets": "194,296,393,490,591,691,797,2030"
+                        "startLines": "27,28",
+                        "startColumns": "4,4",
+                        "startOffsets": "2299,2386",
+                        "endColumns": "86,87",
+                        "endOffsets": "2381,2469"
                     }
                 }
             ]

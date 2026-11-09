@@ -4,24 +4,7 @@
             "outputFile": "com.gesturedatarecorder.wear-mergeDebugResources-42:/values-fa/values-fa.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\c516952b122e4249eecfe8ec2c0d048e\\transformed\\core-1.12.0\\res\\values-fa\\values-fa.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,154,256,355,455,556,662,779",
-                        "endColumns": "98,101,98,99,100,105,116,100",
-                        "endOffsets": "149,251,350,450,551,657,774,875"
-                    },
-                    "to": {
-                        "startLines": "2,3,4,5,6,7,8,23",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,204,306,405,505,606,712,1996",
-                        "endColumns": "98,101,98,99,100,105,116,100",
-                        "endOffsets": "199,301,400,500,601,707,824,2092"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\7f953847d25d79b9d50f1e1e80a96807\\transformed\\foundation-release\\res\\values-fa\\values-fa.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\c7d61477f0d8ef43e0fe831cdeea59a3\\transformed\\foundation-release\\res\\values-fa\\values-fa.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -38,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\12dd535005bf8feff177c95f60188a4e\\transformed\\ui-release\\res\\values-fa\\values-fa.xml",
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\8117c519e4a3e30f91a79ccbd55b23b1\\transformed\\ui-release\\res\\values-fa\\values-fa.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -52,6 +35,23 @@
                         "startOffsets": "829,916,995,1089,1187,1273,1355,1458,1543,1626,1693,1759,1840,1922,2097,2172,2239",
                         "endColumns": "86,78,93,97,85,81,102,84,82,66,65,80,81,73,74,66,116",
                         "endOffsets": "911,990,1084,1182,1268,1350,1453,1538,1621,1688,1754,1835,1917,1991,2167,2234,2351"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\dhruv\\.gradle\\caches\\transforms-3\\e46f98055c5c9dc515820d7fc87543b1\\transformed\\core-1.12.0\\res\\values-fa\\values-fa.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,154,256,355,455,556,662,779",
+                        "endColumns": "98,101,98,99,100,105,116,100",
+                        "endOffsets": "149,251,350,450,551,657,774,875"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,23",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,204,306,405,505,606,712,1996",
+                        "endColumns": "98,101,98,99,100,105,116,100",
+                        "endOffsets": "199,301,400,500,601,707,824,2092"
                     }
                 }
             ]

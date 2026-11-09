@@ -29,7 +29,6 @@
         android:extractNativeLibs="false"
         android:icon="@android:drawable/ic_menu_save"
         android:label="@string/app_name"
-        android:testOnly="true"
         android:theme="@style/Theme.GestureDataRecorder" >
 
         <!-- Runs fully on the watch; no companion phone app. -->

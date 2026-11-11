@@ -23,8 +23,11 @@ object GestureBlueprints {
      * "Close enough" rule: a clip counts as a gesture only if it misses that gesture's blueprint
      * by no more than this fraction of the blueprint's own size. Measuring the miss against the
      * size of the gesture keeps "close" meaning the same thing for a small flick and a big twist.
+     *
+     * It has to stay below 100%: a clip of almost no motion is exactly 100% away from every
+     * blueprint, so at 100% a faint twitch could pass as the smallest gesture.
      */
-    const val LIMIT_PERCENT = 1.0
+    const val LIMIT_PERCENT = 0.9
 
     /**
      * One person's typical version of one gesture.
@@ -39,6 +42,9 @@ object GestureBlueprints {
 
     /** The decision for one clip. [gesture] is null when it is no known gesture. */
     class Match(val gesture: String?, val distance: Double)
+
+    /** The rep that looks least like the others: its [index], and its [miss] as a fraction of size. */
+    class RepCheck(val index: Int, val miss: Double)
 
     /**
      * The clip moved later by [shift] readings (earlier when negative). Readings that slide in
@@ -108,6 +114,30 @@ object GestureBlueprints {
             reference = average(aligned)
         }
         return Blueprint(reference, clips.size, size(reference))
+    }
+
+    /**
+     * Calibration check: which rep looks least like the others?
+     *
+     * For each rep, builds a blueprint from the other reps and measures how far the rep misses it,
+     * as a fraction of that blueprint's size. Returns the rep with the largest miss; the earliest
+     * rep wins a tie. A miss above [LIMIT_PERCENT] means that rep would not be recognised from the
+     * others. Needs at least 3 clips.
+     */
+    fun worstRep(clips: List<Array<DoubleArray>>): RepCheck {
+        require(clips.size >= 3) { "The calibration check needs at least 3 clips" }
+        var worstIndex = 0
+        var worstMiss = -1.0
+        for (index in clips.indices) {
+            val others = clips.filterIndexed { other, _ -> other != index }
+            val blueprint = build(others)
+            val miss = distance(clips[index], blueprint.mean).distance / blueprint.size
+            if (miss > worstMiss) {
+                worstMiss = miss
+                worstIndex = index
+            }
+        }
+        return RepCheck(worstIndex, worstMiss)
     }
 
     /** Folds one more confirmed rep into a blueprint (learning over time). */

@@ -150,6 +150,9 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
                     onCalibrate = { RecordingService.startCalibration(context) },
                     onResetCalibration = {
                         scope.launch(Dispatchers.IO) { BlueprintStore.clear(context.applicationContext) }
+                    },
+                    onRedoGesture = { gesture ->
+                        scope.launch(Dispatchers.IO) { BlueprintStore.clear(context.applicationContext, gesture) }
                     }
                 )
                 Screen.COUNTDOWN -> CountdownScreen(shown)
@@ -219,7 +222,8 @@ private fun HomeScreen(
     calibration: Map<Gesture, Int>,
     nextToCalibrate: Gesture?,
     onCalibrate: () -> Unit,
-    onResetCalibration: () -> Unit
+    onResetCalibration: () -> Unit,
+    onRedoGesture: (Gesture) -> Unit
 ) {
     val calibrateHint = if (nextToCalibrate == null) {
         "All gestures done"
@@ -300,6 +304,17 @@ private fun HomeScreen(
         }
         if (calibration.values.any { it > 0 }) {
             item { ListHeader { Text("Calibration", color = Muted) } }
+            if ((calibration[selectedGesture] ?: 0) > 0) {
+                item {
+                    Chip(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onRedoGesture(selectedGesture) },
+                        label = { Text("Redo ${selectedGesture.displayName}") },
+                        secondaryLabel = { Text("Forget its reps") },
+                        colors = ChipDefaults.secondaryChipColors()
+                    )
+                }
+            }
             item {
                 Chip(
                     modifier = Modifier.fillMaxWidth(),
@@ -314,6 +329,15 @@ private fun HomeScreen(
 }
 
 // ---------------------------------------------------------------- session screens
+
+/**
+ * How to perform a gesture, shown while calibrating so every rep is done the same way.
+ * Empty until the team has agreed a definition for that gesture.
+ */
+private fun Gesture.calibrationHint(): String = when (this) {
+    Gesture.SHAKE -> "3 quick wiggles"
+    else -> ""
+}
 
 private fun RecordingStatus.sessionTitle(): String = when (mode) {
     SessionMode.CLASSIFY -> "Classify"
@@ -342,7 +366,8 @@ private fun CountdownScreen(status: RecordingStatus) {
     CenteredScreen {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(status.sessionTitle(), color = Amber, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Text("Get ready", color = Muted, fontSize = 13.sp)
+            val hint = if (status.mode == SessionMode.CALIBRATE) status.gesture?.calibrationHint().orEmpty() else ""
+            Text(hint.ifEmpty { "Get ready" }, color = Muted, fontSize = 13.sp)
             AnimatedContent(
                 targetState = status.countdownSeconds,
                 transitionSpec = { (fadeIn(tween(150)) + scaleIn(tween(250), initialScale = 1.4f)) togetherWith fadeOut(tween(100)) },

@@ -39,7 +39,7 @@ THRESHOLD = 1.0                   # rad/s; below this the wrist is "quiet"
 HALF = 30                         # readings kept on each side of the peak
 CLIP_LEN = 2 * HALF               # 60 readings = 1.2 s
 SLIDE = 5                         # try shifts of -5..+5 readings (100 ms)
-LIMIT_PERCENT = 1.0               # "close enough" = within 100% of the blueprint's own size
+LIMIT_PERCENT = 0.9               # "close enough" = within 90% of the blueprint's own size
 
 GYRO = "gyroscope"
 
@@ -270,6 +270,27 @@ def update_blueprint(blueprint, clip):
     return Blueprint(mean=mean, count=count, size=blueprint_size(mean))
 
 
+def worst_rep(clips):
+    """Calibration check: which rep looks least like the others?
+
+    For each rep, build a blueprint from the other reps and measure how far the
+    rep misses it, as a fraction of that blueprint's size. Returns (index, miss)
+    for the rep with the largest miss; the earliest rep wins a tie. A miss above
+    LIMIT_PERCENT means that rep would not be recognised from the others, so
+    calibration drops it and asks for one more. Needs at least 3 clips.
+    """
+    worst_index = 0
+    worst_miss = -1.0
+    for index in range(len(clips)):
+        others = [clip for other, clip in enumerate(clips) if other != index]
+        blueprint = build_blueprint(others)
+        miss = distance(clips[index], blueprint.mean)[0] / blueprint.size
+        if miss > worst_miss:
+            worst_miss = miss
+            worst_index = index
+    return worst_index, worst_miss
+
+
 # ---- step 6: decide ---------------------------------------------------------
 
 def classify(clip, blueprints, use_limit=True):
@@ -280,6 +301,10 @@ def classify(clip, blueprints, use_limit=True):
     the clip misses the closest blueprint by more than LIMIT_PERCENT of that
     blueprint's own size. Measuring the miss against the size of the gesture
     keeps "close" meaning the same thing for a small flick and a big twist.
+
+    The limit has to stay below 100%: a clip of almost no motion is exactly
+    100% away from every blueprint, so at 100% a faint twitch could pass as
+    the smallest gesture.
     """
     if clip is None or not blueprints:
         return None, float("inf")

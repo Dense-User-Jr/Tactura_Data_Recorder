@@ -39,8 +39,7 @@ THRESHOLD = 1.0                   # rad/s; below this the wrist is "quiet"
 HALF = 30                         # readings kept on each side of the peak
 CLIP_LEN = 2 * HALF               # 60 readings = 1.2 s
 SLIDE = 5                         # try shifts of -5..+5 readings (100 ms)
-LIMIT_FACTOR = 2.0                # "close enough" = this x worst calibration rep
-MIN_LIMIT = 1.0                   # rad/s; a blueprint is never stricter than this
+LIMIT_PERCENT = 1.0               # "close enough" = within 100% of the blueprint's own size
 
 GYRO = "gyroscope"
 
@@ -230,7 +229,16 @@ def distance(clip, mean):
 class Blueprint:
     mean: np.ndarray   # shape (3, CLIP_LEN): the typical clip
     count: int         # how many reps went into the mean
-    limit: float       # rad/s: a clip farther than this is "not this gesture"
+    size: float        # rad/s: how big the gesture is (RMS of the mean)
+
+
+def blueprint_size(mean):
+    """How big a gesture is: the root of the mean square of its typical clip, in rad/s."""
+    total = 0.0
+    for axis in range(mean.shape[0]):
+        for i in range(mean.shape[1]):
+            total += mean[axis, i] * mean[axis, i]
+    return math.sqrt(total / (mean.shape[0] * mean.shape[1]))
 
 
 def _average(clips):
@@ -251,10 +259,7 @@ def build_blueprint(clips):
     for _ in range(2):
         aligned = [shifted(clip, distance(clip, reference)[1]) for clip in clips]
         reference = _average(aligned)
-    worst = 0.0
-    for clip in clips:
-        worst = max(worst, distance(clip, reference)[0])
-    return Blueprint(mean=reference, count=len(clips), limit=max(LIMIT_FACTOR * worst, MIN_LIMIT))
+    return Blueprint(mean=reference, count=len(clips), size=blueprint_size(reference))
 
 
 def update_blueprint(blueprint, clip):
@@ -262,7 +267,7 @@ def update_blueprint(blueprint, clip):
     aligned = shifted(clip, distance(clip, blueprint.mean)[1])
     count = blueprint.count + 1
     mean = blueprint.mean + (aligned - blueprint.mean) / count
-    return Blueprint(mean=mean, count=count, limit=blueprint.limit)
+    return Blueprint(mean=mean, count=count, size=blueprint_size(mean))
 
 
 # ---- step 6: decide ---------------------------------------------------------
@@ -272,7 +277,9 @@ def classify(clip, blueprints, use_limit=True):
 
     blueprints maps a gesture name to a Blueprint. Returns (name, distance).
     name is None when clip is None (quiet wrist), or when use_limit is on and
-    the closest blueprint is farther away than its own limit.
+    the clip misses the closest blueprint by more than LIMIT_PERCENT of that
+    blueprint's own size. Measuring the miss against the size of the gesture
+    keeps "close" meaning the same thing for a small flick and a big twist.
     """
     if clip is None or not blueprints:
         return None, float("inf")
@@ -283,6 +290,6 @@ def classify(clip, blueprints, use_limit=True):
         if value < best:
             best = value
             best_name = name
-    if use_limit and best > blueprints[best_name].limit:
+    if use_limit and best > LIMIT_PERCENT * blueprints[best_name].size:
         return None, best
     return best_name, best

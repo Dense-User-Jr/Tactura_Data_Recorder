@@ -225,7 +225,7 @@ def main():
         parser.error("no data found")
 
     print(f"Settings: smoothing {B.SMOOTH} readings, threshold {B.THRESHOLD} rad/s, clip {B.CLIP_LEN} readings, "
-          f"slide +-{B.SLIDE}, limit {B.LIMIT_FACTOR} x worst calibration rep (at least {B.MIN_LIMIT})")
+          f"slide +-{B.SLIDE}, close enough = within {100 * B.LIMIT_PERCENT:.0f}% of the blueprint's size")
     print(f"Data: {len(training)} training recordings, {len(watch)} labeled watch-test windows\n")
 
     print("1. Motion gate")

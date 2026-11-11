@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Tactura mark, matching simulator/public/favicon.svg: a watch-face ring and a signal-red dot. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M24,54a30,30 0,1 1,60 0a30,30 0,1 1,-60 0"
+        android:strokeColor="#3D3D44"
+        android:strokeWidth="3" />
+    <path
+        android:pathData="M46,54a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"
+        android:fillColor="#FF3B2F" />
+</vector>

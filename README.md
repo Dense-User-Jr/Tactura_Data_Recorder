@@ -80,11 +80,11 @@ Install or update the debug build with:
 adb install -r .\wear\build\outputs\apk\debug\wear-debug.apk
 ```
 
-After installation, open **Gesture Data Recorder** on the watch and grant **Body Sensors** permission when prompted.
+After installation, open **Tactura** on the watch and grant **Body Sensors** permission when prompted.
 
 ## Record a gesture
 
-1. Open **Gesture Data Recorder** on the watch.
+1. Open **Tactura** on the watch.
 2. Grant the requested **Body Sensors** permission. Recording is disabled until this permission is granted. If it was denied, tap **Grant permission** (or **Open Settings** if the system no longer shows the prompt) on the home screen.
 3. Scroll with the crown or by swiping, and select one of the six gestures under **Gesture to record**. The **Record** chip shows the selected gesture.
 4. Tap **Record**.
@@ -117,7 +117,7 @@ The app includes a fully watch-native **Classify** mode. It does not require a p
 
 To use it:
 
-1. Open **Gesture Data Recorder** and grant **Body Sensors** permission.
+1. Open **Tactura** and grant **Body Sensors** permission.
 2. Tap **Classify**.
 3. Wait through the 3-second countdown, then perform one gesture after the strong vibration, during the 3-second window.
 4. After the double vibration, read the predicted gesture, its confidence, the inference time and the measured sensor rates. The first Classify after the app starts also shows how long the model took to load.
@@ -179,7 +179,7 @@ The app can also learn your personal version of each gesture and use that instea
 
 To calibrate:
 
-1. Open **Gesture Data Recorder** and tap **Calibrate**. The chip always shows what it will ask for next, for example `Twist Left 3 of 5`.
+1. Open **Tactura** and tap **Calibrate**. The chip always shows what it will ask for next, for example `Twist Left 3 of 5`.
 2. Wait through the countdown and do that gesture once after the strong vibration.
 3. Read the result. `Rep 3 of 5` means it was counted. `Not counted` means the wrist barely moved; tap **Try again**.
 4. Tap **Next rep** until every gesture has 5 reps (Flick Up, Flick Down, Twist Right, Twist Left, Shake; 25 reps, about 3 minutes).

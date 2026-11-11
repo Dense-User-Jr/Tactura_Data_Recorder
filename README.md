@@ -173,6 +173,41 @@ python .\ML\dump_reference_features.py
 .\gradlew.bat :wear:testDebugUnitTest
 ```
 
+## Calibrate your own gestures (blueprints)
+
+The app can also learn your personal version of each gesture and use that instead of the bundled model. This is the v2 recipe: it looks only at the gyroscope, finds the moment the wrist moves the most, cuts a short clip around it, and compares that clip with the average of your own calibration reps (your "blueprints"). The math lives in `ML/blueprint_reference.py`; the watch code in `MotionClip.kt` and `GestureBlueprints.kt` is a line-by-line port, checked by unit tests.
+
+To calibrate:
+
+1. Open **Gesture Data Recorder** and tap **Calibrate**. The chip always shows what it will ask for next, for example `Twist Left 3 of 5`.
+2. Wait through the countdown and do that gesture once after the strong vibration.
+3. Read the result. `Rep 3 of 5` means it was counted. `Not counted` means the wrist barely moved; tap **Try again**.
+4. Tap **Next rep** until every gesture has 5 reps (Flick Up, Flick Down, Twist Right, Twist Left, Shake; 25 reps, about 3 minutes).
+
+Once all five gestures are calibrated, **Classify** switches from the old model to your blueprints (its chip says `Your blueprints`). A result can now be **No gesture**: either the wrist stayed still, or the movement did not match any blueprint closely enough. The percentage shown is how close the movement came to your blueprint, where 100% is a perfect fit.
+
+Every calibration rep is also saved as a raw CSV, labeled with the gesture you were asked to do:
+
+```text
+/sdcard/Download/GestureCalibration/0007_calib_twist_left_20261110_223000.csv
+```
+
+**Reset calibration**, at the bottom of the home screen, forgets all reps so you can start over. The CSVs already saved are kept.
+
+To score the recipe on the recordings in this repository:
+
+```powershell
+python .\ML\evaluate_blueprints.py
+```
+
+If you change the recipe in `ML/blueprint_reference.py`, port the change to Kotlin, regenerate the reference values and re-run the tests:
+
+```powershell
+python .\ML\dump_reference_clips.py
+python .\ML\dump_reference_blueprints.py
+.\gradlew.bat :wear:testDebugUnitTest
+```
+
 ## Pull CSV files off the watch
 
 First confirm that the watch is connected:

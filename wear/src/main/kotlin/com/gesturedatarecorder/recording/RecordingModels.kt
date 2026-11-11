@@ -24,7 +24,10 @@ enum class SessionMode {
     RECORD,
 
     /** Classify the capture with the on-watch model and save it as a diagnostics CSV. */
-    CLASSIFY
+    CLASSIFY,
+
+    /** Capture one rep of a gesture for the user's blueprints, and save it as a labeled CSV. */
+    CALIBRATE
 }
 
 enum class RecordingPhase {
@@ -43,6 +46,15 @@ enum class RecordingPhase {
 data class GesturePrediction(val label: String, val confidence: Float) {
     val displayName: String
         get() = Gesture.fromLabel(label)?.displayName ?: label.replace('_', ' ')
+}
+
+/** Which model answered a Classify session. */
+enum class PredictionSource {
+    /** The user's own calibrated blueprints (GestureBlueprints). */
+    BLUEPRINTS,
+
+    /** The bundled random forest (OnWatchGestureClassifier), used until calibration is complete. */
+    FOREST
 }
 
 /** Measurements gathered during a session, for feasibility diagnostics. */
@@ -65,6 +77,15 @@ data class RecordingStatus(
     val sampleCount: Int = 0,
     val fileName: String? = null,
     val prediction: GesturePrediction? = null,
+    /** Which model produced [prediction], or decided there was no gesture. */
+    val source: PredictionSource? = null,
+    /** Classify with blueprints concluded that no known gesture happened. */
+    val noGesture: Boolean = false,
+    /** Calibrate: whether this rep was accepted. */
+    val repCounted: Boolean = false,
+    /** Calibrate: how many reps [gesture] now has, out of [repsNeeded]. */
+    val repNumber: Int = 0,
+    val repsNeeded: Int = 0,
     val metrics: SessionMetrics = SessionMetrics(),
     val message: String = "",
     /** Recordings saved per gesture since the app process started. */

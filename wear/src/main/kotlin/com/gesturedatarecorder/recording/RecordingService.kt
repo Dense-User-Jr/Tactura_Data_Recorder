@@ -40,9 +40,9 @@ import java.util.Locale
 
 /**
  * Foreground service that runs one session at a time: countdown, 3.0 s sensor capture, then
- * either saving a labeled training CSV (Record) or classifying the window and saving it as a
- * diagnostics CSV (Classify). Both modes capture identically, so Classify sees exactly the kind
- * of window the model was trained on.
+ * saving a labeled training CSV (Record), classifying the window and saving it as a diagnostics
+ * CSV (Classify), or storing the window as one calibration rep (Calibrate). All modes capture
+ * identically, so every model sees exactly the kind of window it learned from.
  *
  * The service lives only for the duration of a session. Sensors are registered only during a
  * session and deliver events on a background thread. State is published to [RecordingRepository].
@@ -63,6 +63,9 @@ class RecordingService : Service(), SensorEventListener {
         fun startRecording(context: Context, gesture: Gesture) = start(context, SessionMode.RECORD, gesture)
 
         fun startClassification(context: Context) = start(context, SessionMode.CLASSIFY, null)
+
+        /** Captures one calibration rep. With no [gesture], the next one that still needs reps is used. */
+        fun startCalibration(context: Context, gesture: Gesture? = null) = start(context, SessionMode.CALIBRATE, gesture)
 
         private fun start(context: Context, mode: SessionMode, gesture: Gesture?) {
             if (RecordingRepository.status.value.phase.isBusy) return
@@ -143,6 +146,14 @@ class RecordingService : Service(), SensorEventListener {
             endService()
             return@coroutineScope
         }
+        // Calibrate and Classify both need the user's saved calibration reps.
+        if (mode != SessionMode.RECORD) withContext(Dispatchers.IO) { BlueprintStore.load(applicationContext) }
+        val target = if (mode == SessionMode.CALIBRATE) gesture ?: BlueprintStore.nextToCalibrate() else gesture
+        if (mode == SessionMode.CALIBRATE && target == null) {
+            publishError("Every gesture is already calibrated")
+            endService()
+            return@coroutineScope
+        }
         // Load the model during the countdown so it is ready when the window closes.
         val model = if (mode == SessionMode.CLASSIFY) {
             async { runCatching { ModelStore.get(applicationContext) } }
@@ -157,7 +168,7 @@ class RecordingService : Service(), SensorEventListener {
 
             for (seconds in PREPARE_SECONDS downTo 1) {
                 vibrate(60)
-                publish { RecordingStatus(RecordingPhase.COUNTDOWN, mode, gesture, seconds, message = "Get ready", sessionTally = it.sessionTally) }
+                publish { RecordingStatus(RecordingPhase.COUNTDOWN, mode, target, seconds, message = "Get ready", sessionTally = it.sessionTally) }
                 delay(1_000)
             }
 
@@ -197,8 +208,9 @@ class RecordingService : Service(), SensorEventListener {
             }
 
             when (mode) {
-                SessionMode.RECORD -> saveRecording(requireNotNull(gesture), events, startedAtWallMs)
+                SessionMode.RECORD -> saveRecording(requireNotNull(target), events, startedAtWallMs)
                 SessionMode.CLASSIFY -> classify(requireNotNull(model).await(), events, startedAtWallMs, metrics)
+                SessionMode.CALIBRATE -> calibrate(requireNotNull(target), events, startedAtWallMs)
             }
         } catch (cancelled: CancellationException) {
             publish { RecordingStatus(RecordingPhase.IDLE, message = "Cancelled", sessionTally = it.sessionTally) }
@@ -242,6 +254,11 @@ class RecordingService : Service(), SensorEventListener {
         captureMetrics: SessionMetrics
     ) {
         publish { it.copy(phase = RecordingPhase.CLASSIFYING, message = "Classifying") }
+        // Once every gesture is calibrated, the user's own blueprints answer instead of the forest.
+        if (BlueprintStore.isComplete()) {
+            classifyWithBlueprints(model, events, startedAtWallMs, captureMetrics)
+            return
+        }
         val (loaded, loadedNow) = model.getOrElse { error ->
             Log.e(TAG, "Could not load gesture model", error)
             publishError("Model unavailable: ${error.message ?: error.javaClass.simpleName}")
@@ -282,9 +299,116 @@ class RecordingService : Service(), SensorEventListener {
             it.copy(
                 phase = RecordingPhase.COMPLETE,
                 prediction = prediction,
+                source = PredictionSource.FOREST,
                 metrics = metrics,
                 fileName = fileName,
                 message = if (fileName == null) "Diagnostics CSV not saved" else "Classified"
+            )
+        }
+    }
+
+    /**
+     * Classify with the user's blueprints: find the action, crop around it, and pick the closest
+     * blueprint, or decide that no known gesture happened. The forest's answer is only logged, so
+     * the two can be compared later.
+     */
+    private suspend fun classifyWithBlueprints(
+        model: Result<Pair<ModelStore.Loaded, Boolean>>,
+        events: List<SensorEventRecord>,
+        startedAtWallMs: Long,
+        captureMetrics: SessionMetrics
+    ) {
+        val started = SystemClock.elapsedRealtimeNanos()
+        val (extraction, match) = withContext(Dispatchers.Default) {
+            val found = MotionClip.extract(events)
+            found to GestureBlueprints.classify(found.clip, BlueprintStore.blueprints())
+        }
+        val inferenceMs = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000f
+        val forest = withContext(Dispatchers.Default) {
+            val classifier = model.getOrNull()?.first?.classifier
+            val features = GestureFeatures.extract(events)
+            if (classifier == null || features == null) null else runCatching { classifier.predict(features) }.getOrNull()
+        }
+
+        // "Match" is how close the clip came, as a share of the gesture's own size: 100% is a perfect fit.
+        val prediction = match.gesture?.let { name ->
+            val size = BlueprintStore.blueprints().getValue(name).size
+            GesturePrediction(name, (1.0 - match.distance / size).coerceIn(0.0, 1.0).toFloat())
+        }
+        val message = when {
+            prediction != null -> "Classified"
+            extraction.clip == null -> "Wrist stayed still"
+            else -> "Did not match a blueprint"
+        }
+        val metrics = captureMetrics.copy(inferenceMs = inferenceMs)
+
+        val fileName = withContext(Dispatchers.IO) {
+            CsvStorage.save(
+                applicationContext,
+                CsvStorage.CLASSIFY_DIR,
+                { number ->
+                    if (prediction != null) CsvStorage.classifyName(number, prediction, startedAtWallMs)
+                    else CsvStorage.classifyNoneName(number, startedAtWallMs)
+                },
+                CaptureCsv.build(prediction?.label ?: "NONE", events)
+            )
+        }
+        Log.i(
+            TAG,
+            "Blueprints: ${prediction?.label ?: "NONE"} distance=${match.distance} peak=${extraction.peakLevel} " +
+                "in $inferenceMs ms; forest said ${forest?.label} ${forest?.confidence}; file=$fileName"
+        )
+        publish {
+            it.copy(
+                phase = RecordingPhase.COMPLETE,
+                prediction = prediction,
+                noGesture = prediction == null,
+                source = PredictionSource.BLUEPRINTS,
+                metrics = metrics,
+                fileName = fileName,
+                message = message
+            )
+        }
+    }
+
+    /**
+     * Calibrate: turn the window into a clip and keep it as one rep of [gesture]. A window where
+     * the wrist never moved enough is not counted. The raw window is also saved as a CSV labeled
+     * with the gesture the user was asked to do.
+     */
+    private suspend fun calibrate(gesture: Gesture, events: List<SensorEventRecord>, startedAtWallMs: Long) {
+        publish { it.copy(phase = RecordingPhase.SAVING, message = "Checking the rep") }
+        val clip = withContext(Dispatchers.Default) { MotionClip.extract(events).clip }
+        if (clip == null) {
+            publish {
+                it.copy(
+                    phase = RecordingPhase.COMPLETE,
+                    repCounted = false,
+                    repNumber = BlueprintStore.reps(gesture),
+                    repsNeeded = BlueprintStore.REPS_NEEDED,
+                    message = "Didn't catch that. Try a bigger move."
+                )
+            }
+            return
+        }
+        val (fileName, count) = withContext(Dispatchers.IO) {
+            val name = CsvStorage.save(
+                applicationContext,
+                CsvStorage.CALIBRATION_DIR,
+                { number -> CsvStorage.calibrationName(number, gesture, startedAtWallMs) },
+                CaptureCsv.build(gesture.name, events)
+            )
+            name to BlueprintStore.addRep(applicationContext, gesture, clip)
+        }
+        Log.i(TAG, "Calibration rep $count of ${BlueprintStore.REPS_NEEDED} for ${gesture.name}, file=$fileName")
+        publish {
+            it.copy(
+                phase = RecordingPhase.COMPLETE,
+                repCounted = true,
+                repNumber = count,
+                repsNeeded = BlueprintStore.REPS_NEEDED,
+                fileName = fileName,
+                message = if (fileName == null) "Rep counted, CSV not saved" else "Saved"
             )
         }
     }

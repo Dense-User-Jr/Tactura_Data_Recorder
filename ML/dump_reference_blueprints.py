@@ -2,12 +2,13 @@
 
 Runs steps 4 to 6 of ML/blueprint_reference.py (blueprint, distance, decide) and
 the "learning over time" update on real recordings, and writes
-wear/src/test/resources/reference_blueprints.csv with four kinds of line:
+wear/src/test/resources/reference_blueprints.csv with five kinds of line:
 
     F,<gesture>,<file>;<file>;...                   the reps each blueprint is built from
     B,<gesture>,<count>,<size>,<180 mean values>    the blueprint Python built from them
     T,<file>,<gesture or NONE>,<distance>           what Python decided for a test file
     U,<gesture>,<file>,<count>,<size>,<180 values>  the blueprint after folding in one more rep
+    W,<gesture>,<index>,<miss>                      the rep in the F set least like the others
 
 The JVM test GestureBlueprintsParityTest rebuilds everything from the same files
 with the watch code and checks the numbers agree.
@@ -72,6 +73,11 @@ def main():
     for gesture in sorted(blueprints):
         made = blueprints[gesture]
         lines.append(",".join(["B", gesture, str(made.count), number(made.size)] + flat(made.mean)))
+
+    # Calibration check: the rep in each set that looks least like the others, and by how much.
+    for gesture in sorted(by_gesture):
+        index, miss = B.worst_rep([clip_of(path) for path in by_gesture[gesture][:REPS]])
+        lines.append(",".join(["W", gesture, str(index), number(miss)]))
 
     # Test files: later training recordings, plus every labeled watch-test window (still arm included).
     tests = []

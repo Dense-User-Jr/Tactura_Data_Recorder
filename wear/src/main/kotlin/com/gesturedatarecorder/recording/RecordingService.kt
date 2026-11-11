@@ -391,7 +391,7 @@ class RecordingService : Service(), SensorEventListener {
             }
             return
         }
-        val (fileName, count) = withContext(Dispatchers.IO) {
+        val (fileName, added) = withContext(Dispatchers.IO) {
             val name = CsvStorage.save(
                 applicationContext,
                 CsvStorage.CALIBRATION_DIR,
@@ -400,15 +400,25 @@ class RecordingService : Service(), SensorEventListener {
             )
             name to BlueprintStore.addRep(applicationContext, gesture, clip)
         }
-        Log.i(TAG, "Calibration rep $count of ${BlueprintStore.REPS_NEEDED} for ${gesture.name}, file=$fileName")
+        Log.i(
+            TAG,
+            "Calibration ${gesture.name}: ${added.count} of ${BlueprintStore.REPS_NEEDED} reps, " +
+                "dropped=${added.dropped}, inconsistent=${added.inconsistent}, file=$fileName"
+        )
+        val message = when {
+            added.dropped -> "One rep didn't match the others, so it was dropped. Do one more, the same way each time."
+            added.inconsistent -> "Saved, but these reps differ a lot. It may not be recognised. Redo it later."
+            fileName == null -> "Rep counted, CSV not saved"
+            else -> "Saved"
+        }
         publish {
             it.copy(
                 phase = RecordingPhase.COMPLETE,
                 repCounted = true,
-                repNumber = count,
+                repNumber = added.count,
                 repsNeeded = BlueprintStore.REPS_NEEDED,
                 fileName = fileName,
-                message = if (fileName == null) "Rep counted, CSV not saved" else "Saved"
+                message = message
             )
         }
     }

@@ -28,6 +28,20 @@ object BlueprintStore {
     const val REPS_NEEDED = 5
 
     /**
+     * How many times calibration will drop a rep that does not match the others and ask for one
+     * more, per gesture. After that it keeps what it has, so an inconsistent gesture cannot trap
+     * the user in an endless loop.
+     */
+    const val MAX_DROPS = 3
+
+    /**
+     * What happened when a rep was added: how many reps the gesture has now, whether the least
+     * typical rep was dropped to make room for a better one, and whether the reps still do not
+     * match each other after [MAX_DROPS] drops.
+     */
+    class AddResult(val count: Int, val dropped: Boolean, val inconsistent: Boolean)
+
+    /**
      * Gestures that calibration covers, in the order it asks for them. Double Tap is left out
      * until it has a definition the gyroscope can see.
      */
@@ -40,6 +54,7 @@ object BlueprintStore {
     )
 
     private val clips = LinkedHashMap<Gesture, MutableList<Array<DoubleArray>>>()
+    private val drops = HashMap<Gesture, Int>()
     private var loaded = false
     private var built: Map<String, GestureBlueprints.Blueprint>? = null
 
@@ -84,16 +99,37 @@ object BlueprintStore {
     @Synchronized
     fun isComplete(): Boolean = GESTURES.all { reps(it) >= REPS_NEEDED }
 
-    /** Saves one more rep of [gesture] and returns how many it now has. */
+    /**
+     * Saves one more rep of [gesture].
+     *
+     * Once the gesture has [REPS_NEEDED] reps, each rep is checked against the others. If the
+     * least typical one would not be recognised from the rest, it is dropped so the user can
+     * replace it, up to [MAX_DROPS] times per gesture.
+     */
     @Synchronized
-    fun addRep(context: Context, gesture: Gesture, clip: Array<DoubleArray>): Int {
+    fun addRep(context: Context, gesture: Gesture, clip: Array<DoubleArray>): AddResult {
         load(context)
         val list = clips.getOrPut(gesture) { ArrayList() }
         list.add(clip)
+        var dropped = false
+        var inconsistent = false
+        if (list.size >= REPS_NEEDED) {
+            val check = GestureBlueprints.worstRep(list)
+            if (check.miss > GestureBlueprints.LIMIT_PERCENT) {
+                val used = drops[gesture] ?: 0
+                if (used < MAX_DROPS) {
+                    list.removeAt(check.index)
+                    drops[gesture] = used + 1
+                    dropped = true
+                } else {
+                    inconsistent = true
+                }
+            }
+        }
         built = null
         save(context)
         publish()
-        return list.size
+        return AddResult(list.size, dropped, inconsistent)
     }
 
     /** One blueprint per fully calibrated gesture, keyed by the gesture's label. */
@@ -109,11 +145,17 @@ object BlueprintStore {
         return result
     }
 
-    /** Forgets every rep, so calibration starts over. */
+    /** Forgets the reps of [gesture], or of every gesture when it is null, so they can be redone. */
     @Synchronized
-    fun clear(context: Context) {
-        loaded = true
-        clips.clear()
+    fun clear(context: Context, gesture: Gesture? = null) {
+        load(context)
+        if (gesture == null) {
+            clips.clear()
+            drops.clear()
+        } else {
+            clips.remove(gesture)
+            drops.remove(gesture)
+        }
         built = null
         save(context)
         publish()

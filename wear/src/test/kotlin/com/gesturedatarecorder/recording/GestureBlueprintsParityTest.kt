@@ -116,6 +116,20 @@ class GestureBlueprintsParityTest {
     }
 
     @Test
+    fun calibrationCheckMatchesPythonReference() {
+        val expected = lines.filter { it[0] == "W" }
+        assertTrue("no reference calibration checks", expected.isNotEmpty())
+        val repsByGesture = lines.filter { it[0] == "F" }.associate { cells ->
+            cells[1] to cells[2].split(';').map { file -> clipOf(file)!! }
+        }
+        for (cells in expected) {
+            val check = GestureBlueprints.worstRep(repsByGesture.getValue(cells[1]))
+            assertEquals("${cells[1]}: least typical rep", cells[2].toInt(), check.index)
+            assertEquals("${cells[1]}: its miss", cells[3].toDouble(), check.miss, TOLERANCE)
+        }
+    }
+
+    @Test
     fun quietWristAndEmptyBlueprintsGiveNoGesture() {
         assertNull(GestureBlueprints.classify(null, blueprints).gesture)
         val anyClip = blueprints.values.first().mean

@@ -1,0 +1,78 @@
+file,truth,note
+0001_classify_pred-flick_down-39_20261110_191347.csv,,practice runs (not scored)
+0002_classify_pred-flick_up-39_20261110_191359.csv,,practice runs (not scored)
+0003_classify_pred-twist_left-42_20261110_191408.csv,,practice runs (not scored)
+0004_classify_pred-flick_up-32_20261110_191513.csv,,practice runs (not scored)
+0005_classify_pred-flick_up-45_20261110_191700.csv,FLICK_UP,
+0006_classify_pred-flick_up-72_20261110_191725.csv,FLICK_UP,
+0007_classify_pred-flick_up-68_20261110_191750.csv,FLICK_UP,
+0008_classify_pred-flick_up-55_20261110_191822.csv,FLICK_UP,
+0009_classify_pred-flick_up-58_20261110_191842.csv,FLICK_UP,
+0010_classify_pred-flick_up-71_20261110_191903.csv,FLICK_UP,
+0011_classify_pred-flick_up-61_20261110_191930.csv,FLICK_UP,
+0012_classify_pred-flick_up-52_20261110_191955.csv,FLICK_UP,
+0013_classify_pred-flick_up-64_20261110_192016.csv,FLICK_UP,
+0014_classify_pred-flick_up-62_20261110_192036.csv,FLICK_UP,
+0015_classify_pred-twist_left-42_20261110_192112.csv,FLICK_DOWN,
+0016_classify_pred-twist_right-37_20261110_192132.csv,FLICK_DOWN,
+0017_classify_pred-flick_up-41_20261110_192148.csv,FLICK_DOWN,
+0018_classify_pred-flick_up-38_20261110_192207.csv,FLICK_DOWN,
+0019_classify_pred-twist_right-52_20261110_192226.csv,FLICK_DOWN,
+0020_classify_pred-flick_up-32_20261110_192241.csv,FLICK_DOWN,
+0021_classify_pred-twist_right-60_20261110_192254.csv,FLICK_DOWN,
+0022_classify_pred-twist_left-44_20261110_192322.csv,FLICK_DOWN,
+0023_classify_pred-flick_up-53_20261110_192341.csv,FLICK_DOWN,
+0024_classify_pred-twist_right-55_20261110_192401.csv,FLICK_DOWN,
+0025_classify_pred-flick_up-43_20261110_192422.csv,TWIST_RIGHT,
+0026_classify_pred-flick_up-45_20261110_192436.csv,TWIST_RIGHT,
+0027_classify_pred-twist_right-39_20261110_192449.csv,TWIST_RIGHT,
+0028_classify_pred-flick_up-28_20261110_192502.csv,TWIST_RIGHT,
+0029_classify_pred-flick_up-34_20261110_192514.csv,TWIST_RIGHT,
+0030_classify_pred-flick_up-51_20261110_192527.csv,TWIST_RIGHT,
+0031_classify_pred-flick_up-29_20261110_192541.csv,TWIST_RIGHT,
+0032_classify_pred-twist_right-47_20261110_192553.csv,TWIST_RIGHT,
+0033_classify_pred-flick_up-53_20261110_192605.csv,TWIST_RIGHT,
+0034_classify_pred-twist_right-81_20261110_192625.csv,TWIST_RIGHT,
+0035_classify_pred-twist_left-52_20261110_192736.csv,TWIST_LEFT,
+0036_classify_pred-twist_left-39_20261110_192749.csv,TWIST_LEFT,
+0037_classify_pred-twist_right-40_20261110_192840.csv,TWIST_LEFT,
+0038_classify_pred-twist_left-50_20261110_192852.csv,TWIST_LEFT,
+0039_classify_pred-twist_left-55_20261110_192902.csv,TWIST_LEFT,
+0040_classify_pred-twist_left-51_20261110_192925.csv,TWIST_LEFT,
+0041_classify_pred-twist_left-46_20261110_192939.csv,TWIST_LEFT,
+0042_classify_pred-twist_left-51_20261110_192951.csv,TWIST_LEFT,
+0043_classify_pred-twist_left-50_20261110_193003.csv,TWIST_LEFT,
+0044_classify_pred-twist_left-49_20261110_193016.csv,TWIST_LEFT,
+0045_classify_pred-flick_up-33_20261110_193028.csv,TWIST_LEFT,
+0046_classify_pred-shake-31_20261110_193112.csv,SHAKE,
+0047_classify_pred-twist_right-41_20261110_193127.csv,SHAKE,
+0048_classify_pred-shake-28_20261110_193139.csv,SHAKE,
+0049_classify_pred-shake-25_20261110_193151.csv,SHAKE,
+0050_classify_pred-twist_left-33_20261110_193202.csv,SHAKE,
+0051_classify_pred-twist_right-42_20261110_193214.csv,SHAKE,
+0052_classify_pred-twist_right-35_20261110_193225.csv,SHAKE,
+0053_classify_pred-twist_right-47_20261110_193237.csv,SHAKE,
+0054_classify_pred-twist_right-46_20261110_193256.csv,SHAKE,
+0055_classify_pred-twist_right-38_20261110_193308.csv,SHAKE,
+0056_classify_pred-twist_right-99_20261110_193344.csv,STILL,arm flat on desk and no motion
+0057_classify_pred-twist_left-43_20261110_193400.csv,STILL,arm flat on desk and no motion
+0058_classify_pred-twist_right-41_20261110_193411.csv,STILL,arm flat on desk and no motion
+0059_classify_pred-twist_left-39_20261110_193423.csv,STILL,arm flat on desk and no motion
+0060_classify_pred-twist_left-40_20261110_193436.csv,STILL,arm flat on desk and no motion
+0061_classify_pred-twist_left-38_20261110_193447.csv,STILL,arm flat on desk and no motion
+0062_classify_pred-twist_right-97_20261110_193502.csv,STILL,arm flat on desk and no motion
+0063_classify_pred-twist_left-39_20261110_193517.csv,STILL,arm flat on desk and no motion
+0064_classify_pred-twist_right-60_20261110_193532.csv,STILL,arm flat on desk and no motion
+0065_classify_pred-twist_left-37_20261110_193545.csv,STILL,arm flat on desk and no motion
+0066_classify_pred-flick_down-38_20261110_193606.csv,STILL,arm tilted as if checking the time and no motion
+0067_classify_pred-flick_down-39_20261110_193622.csv,STILL,arm tilted as if checking the time and no motion
+0068_classify_pred-flick_down-42_20261110_193633.csv,STILL,arm tilted as if checking the time and no motion
+0069_classify_pred-flick_down-41_20261110_193648.csv,STILL,arm tilted as if checking the time and no motion
+0070_classify_pred-flick_down-42_20261110_193700.csv,STILL,arm tilted as if checking the time and no motion
+0071_classify_pred-flick_down-44_20261110_193711.csv,STILL,arm tilted as if checking the time and no motion
+0072_classify_pred-flick_down-41_20261110_193725.csv,STILL,arm tilted as if checking the time and no motion
+0073_classify_pred-flick_down-43_20261110_193736.csv,STILL,arm tilted as if checking the time and no motion
+0074_classify_pred-flick_down-43_20261110_193756.csv,STILL,arm tilted as if checking the time and no motion
+0075_classify_pred-flick_down-42_20261110_193808.csv,STILL,arm tilted as if checking the time and no motion
+0076_classify_pred-twist_right-33_20261110_193832.csv,,extra runs (not on the scorecard)
+0077_classify_pred-twist_right-99_20261110_193846.csv,,extra runs (not on the scorecard)

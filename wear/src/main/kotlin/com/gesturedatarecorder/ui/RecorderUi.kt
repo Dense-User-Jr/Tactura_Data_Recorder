@@ -62,14 +62,18 @@ import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
+import com.gesturedatarecorder.recording.BlueprintStore
 import com.gesturedatarecorder.recording.Gesture
+import com.gesturedatarecorder.recording.PredictionSource
 import com.gesturedatarecorder.recording.RecordingPhase
 import com.gesturedatarecorder.recording.RecordingRepository
 import com.gesturedatarecorder.recording.RecordingService
 import com.gesturedatarecorder.recording.RecordingStatus
 import com.gesturedatarecorder.recording.SessionMetrics
 import com.gesturedatarecorder.recording.SessionMode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 private val Amber = Color(0xFFFFB74D)
@@ -109,6 +113,12 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
     var selectedGesture by rememberSaveable { mutableStateOf(Gesture.FLICK_UP) }
     val context = LocalContext.current
     val canStart = permission == SensorPermission.GRANTED
+    val scope = rememberCoroutineScope()
+
+    // Reps saved per gesture. Loaded once from the watch's storage, then kept current by the store.
+    val calibration by BlueprintStore.progress.collectAsState()
+    LaunchedEffect(Unit) { withContext(Dispatchers.IO) { BlueprintStore.load(context.applicationContext) } }
+    val nextToCalibrate = BlueprintStore.GESTURES.firstOrNull { (calibration[it] ?: 0) < BlueprintStore.REPS_NEEDED }
 
     // Back cancels a running session or dismisses a result instead of leaving the app.
     BackHandler(enabled = status.phase.isBusy) { RecordingRepository.requestCancel() }
@@ -134,16 +144,24 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
                     onPermissionAction = onPermissionAction,
                     onRecord = { RecordingService.startRecording(context, selectedGesture) },
                     onClassify = { RecordingService.startClassification(context) },
-                    canStart = canStart
+                    canStart = canStart,
+                    calibration = calibration,
+                    nextToCalibrate = nextToCalibrate,
+                    onCalibrate = { RecordingService.startCalibration(context) },
+                    onResetCalibration = {
+                        scope.launch(Dispatchers.IO) { BlueprintStore.clear(context.applicationContext) }
+                    }
                 )
                 Screen.COUNTDOWN -> CountdownScreen(shown)
                 Screen.CAPTURE -> CaptureScreen(shown)
                 Screen.WORKING -> WorkingScreen(shown)
                 Screen.RESULT -> ResultScreen(
                     status = shown,
+                    calibrationDone = nextToCalibrate == null,
                     onAgain = {
                         when (shown.mode) {
                             SessionMode.CLASSIFY -> RecordingService.startClassification(context)
+                            SessionMode.CALIBRATE -> RecordingService.startCalibration(context)
                             else -> RecordingService.startRecording(context, shown.gesture ?: selectedGesture)
                         }
                     },
@@ -197,8 +215,17 @@ private fun HomeScreen(
     onPermissionAction: () -> Unit,
     onRecord: () -> Unit,
     onClassify: () -> Unit,
-    canStart: Boolean
+    canStart: Boolean,
+    calibration: Map<Gesture, Int>,
+    nextToCalibrate: Gesture?,
+    onCalibrate: () -> Unit,
+    onResetCalibration: () -> Unit
 ) {
+    val calibrateHint = if (nextToCalibrate == null) {
+        "All gestures done"
+    } else {
+        "${nextToCalibrate.displayName} ${(calibration[nextToCalibrate] ?: 0) + 1} of ${BlueprintStore.REPS_NEEDED}"
+    }
     ScrollingScreen {
         item { ListHeader { Text("Gesture Recorder", color = Amber, fontWeight = FontWeight.SemiBold) } }
         if (permission != SensorPermission.GRANTED) {
@@ -238,7 +265,17 @@ private fun HomeScreen(
                 onClick = onClassify,
                 enabled = canStart,
                 label = { Text("Classify") },
-                secondaryLabel = { Text("On-watch model") },
+                secondaryLabel = { Text(if (nextToCalibrate == null) "Your blueprints" else "Old model") },
+                colors = ChipDefaults.secondaryChipColors()
+            )
+        }
+        item {
+            Chip(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onCalibrate,
+                enabled = canStart && nextToCalibrate != null,
+                label = { Text("Calibrate") },
+                secondaryLabel = { Text(calibrateHint) },
                 colors = ChipDefaults.secondaryChipColors()
             )
         }
@@ -258,6 +295,18 @@ private fun HomeScreen(
                             contentDescription = if (gesture == selectedGesture) "Selected" else null
                         )
                     }
+                )
+            }
+        }
+        if (calibration.values.any { it > 0 }) {
+            item { ListHeader { Text("Calibration", color = Muted) } }
+            item {
+                Chip(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onResetCalibration,
+                    label = { Text("Reset calibration") },
+                    secondaryLabel = { Text("Forget all reps") },
+                    colors = ChipDefaults.secondaryChipColors()
                 )
             }
         }
@@ -348,15 +397,26 @@ private fun WorkingScreen(status: RecordingStatus) {
 }
 
 @Composable
-private fun ResultScreen(status: RecordingStatus, onAgain: () -> Unit, onDone: () -> Unit) {
+private fun ResultScreen(status: RecordingStatus, calibrationDone: Boolean, onAgain: () -> Unit, onDone: () -> Unit) {
     val classify = status.mode == SessionMode.CLASSIFY
+    val calibrate = status.mode == SessionMode.CALIBRATE
+    val header = when {
+        classify -> "Prediction"
+        calibrate -> "Calibration"
+        else -> "Saved"
+    }
+    val againLabel = when {
+        classify -> "Classify again"
+        calibrate -> if (status.repCounted) "Next rep" else "Try again"
+        else -> "Record again"
+    }
     ScrollingScreen {
-        item { ListHeader { Text(if (classify) "Prediction" else "Saved", color = Muted) } }
+        item { ListHeader { Text(header, color = Muted) } }
         if (classify) {
             val prediction = status.prediction
             item {
                 Text(
-                    prediction?.displayName ?: "No prediction",
+                    prediction?.displayName ?: if (status.noGesture) "No gesture" else "No prediction",
                     color = Color.White,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
@@ -366,10 +426,20 @@ private fun ResultScreen(status: RecordingStatus, onAgain: () -> Unit, onDone: (
             if (prediction != null) {
                 item {
                     Text(
-                        "${(prediction.confidence * 100).toInt()}% confidence",
+                        "${(prediction.confidence * 100).toInt()}% " +
+                            if (status.source == PredictionSource.BLUEPRINTS) "match" else "confidence",
                         color = confidenceColor(prediction.confidence),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+            status.source?.let { source ->
+                item {
+                    Text(
+                        if (source == PredictionSource.BLUEPRINTS) "Your blueprints" else "Old model",
+                        color = Muted,
+                        fontSize = 11.sp
                     )
                 }
             }
@@ -382,6 +452,19 @@ private fun ResultScreen(status: RecordingStatus, onAgain: () -> Unit, onDone: (
                     fontWeight = FontWeight.Bold
                 )
             }
+            if (calibrate) {
+                item {
+                    Text(
+                        if (status.repCounted) "Rep ${status.repNumber} of ${status.repsNeeded}" else "Not counted",
+                        color = if (status.repCounted) Teal else Amber,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                if (calibrationDone) {
+                    item { Text("All gestures calibrated", color = Teal, fontSize = 12.sp, textAlign = TextAlign.Center) }
+                }
+            }
         }
         item { MetricsText(status.sampleCount, status.metrics) }
         status.fileName?.let { name ->
@@ -390,13 +473,15 @@ private fun ResultScreen(status: RecordingStatus, onAgain: () -> Unit, onDone: (
         if (status.message.isNotEmpty() && status.message !in setOf("Saved", "Classified")) {
             item { Text(status.message, color = MaterialTheme.colors.error, fontSize = 12.sp, textAlign = TextAlign.Center) }
         }
-        item {
-            Chip(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onAgain,
-                label = { Text(if (classify) "Classify again" else "Record again") },
-                colors = ChipDefaults.primaryChipColors()
-            )
+        if (!(calibrate && calibrationDone)) {
+            item {
+                Chip(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onAgain,
+                    label = { Text(againLabel) },
+                    colors = ChipDefaults.primaryChipColors()
+                )
+            }
         }
         item {
             Chip(

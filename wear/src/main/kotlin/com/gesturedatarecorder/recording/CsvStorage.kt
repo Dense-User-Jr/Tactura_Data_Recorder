@@ -29,6 +29,12 @@ object CsvStorage {
      */
     val CLASSIFY_DIR = Environment.DIRECTORY_DOWNLOADS + "/GestureClassify/"
 
+    /**
+     * Calibration reps: /sdcard/Download/GestureCalibration. The label is what the user was asked
+     * to do, so these are true-label recordings, kept apart from the Record-mode training set.
+     */
+    val CALIBRATION_DIR = Environment.DIRECTORY_DOWNLOADS + "/GestureCalibration/"
+
     fun recordingName(number: Int, gesture: Gesture, startedAtWallMs: Long): String =
         "%04d_%s_%s.csv".format(Locale.US, number, gesture.name.lowercase(Locale.US), timestamp(startedAtWallMs))
 
@@ -40,6 +46,13 @@ object CsvStorage {
             (prediction.confidence * 100).toInt(),
             timestamp(startedAtWallMs)
         )
+
+    /** Name for a Classify window in which no known gesture was found. */
+    fun classifyNoneName(number: Int, startedAtWallMs: Long): String =
+        "%04d_classify_pred-none-0_%s.csv".format(Locale.US, number, timestamp(startedAtWallMs))
+
+    fun calibrationName(number: Int, gesture: Gesture, startedAtWallMs: Long): String =
+        "%04d_calib_%s_%s.csv".format(Locale.US, number, gesture.name.lowercase(Locale.US), timestamp(startedAtWallMs))
 
     /** Saves [content] and returns the file name, or null on failure. Call off the main thread. */
     fun save(context: Context, relativeDir: String, nameForNumber: (Int) -> String, content: String): String? {

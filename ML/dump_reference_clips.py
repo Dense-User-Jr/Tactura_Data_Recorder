@@ -9,6 +9,12 @@ wear/src/test/resources/reference_clips.csv:
 The clip values are left out when the wrist was quiet (no gesture). The JVM test
 MotionClipParityTest checks that the watch code gives the same numbers.
 
+It also writes reference_humps.csv beside it, one line per file:
+
+    <path from the repo root>,<reading of each strong stroke, loudest first, joined by ;>
+
+The second cell is empty when the wrist was quiet.
+
 Re-run after changing the recipe (and port the change to Kotlin):
 
     python ML/dump_reference_clips.py
@@ -39,6 +45,14 @@ def reference_line(path):
     return ",".join(cells)
 
 
+def humps_line(path):
+    _, events = B.read_gyro_events(path)
+    gyro = B.resample(events)
+    level = B.motion_level(gyro)
+    humps = B.find_humps(level) if B.find_action(level)[1] >= B.THRESHOLD else []
+    return path.relative_to(PROJECT_ROOT).as_posix() + "," + ";".join(str(t) for t in humps)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -53,6 +67,12 @@ def main():
     args.output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     quiet = sum(1 for line in lines if line.count(",") == 2)
     print(f"Wrote {len(lines)} reference clips ({quiet} quiet) to {args.output}")
+
+    hump_lines = [humps_line(path) for path in training + watch]
+    hump_output = args.output.with_name("reference_humps.csv")
+    hump_output.write_text("\n".join(hump_lines) + "\n", encoding="utf-8")
+    several = sum(1 for line in hump_lines if ";" in line)
+    print(f"Wrote {len(hump_lines)} hump lists ({several} with more than one strong stroke) to {hump_output}")
 
 
 if __name__ == "__main__":

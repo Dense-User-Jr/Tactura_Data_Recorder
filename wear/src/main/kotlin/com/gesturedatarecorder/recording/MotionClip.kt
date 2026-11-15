@@ -5,7 +5,8 @@ import kotlin.math.sqrt
 /**
  * Kotlin port of steps 0 to 3 of ML/blueprint_reference.py: put the gyroscope readings on an
  * even grid, measure how hard the wrist is turning, find where that peaks, and cut a short clip
- * around the peak.
+ * around the peak. When a second stroke is nearly as loud as the peak, a clip is cut around that
+ * stroke too, and the blueprints decide which clip fits (see [findHumps]).
  *
  * The Python file is the source of truth. Any change there must be mirrored here (and the other
  * way round), or the watch and the laptop stop agreeing. MotionClipParityTest checks them against
@@ -36,13 +37,31 @@ object MotionClip {
     /** Clip length: 60 readings = 1.2 s. */
     const val CLIP_LEN = 2 * HALF
 
+    /** A stroke is "strong" when its motion level reaches this share of the peak. */
+    const val HUMP_SHARE = 0.6
+
+    /** Readings. Strokes closer together than this (160 ms) count as one. */
+    const val HUMP_GAP = 8
+
+    /** At most this many strokes are tried per window. */
+    const val MAX_HUMPS = 3
+
     /**
      * What [extract] found.
      *
      * [clip] is `clip[axis][reading]` with 3 axes and [CLIP_LEN] readings, or null when there was
-     * too little data or the wrist stayed quiet.
+     * too little data or the wrist stayed quiet. It is centred on the loudest stroke.
+     *
+     * [humps] lists the reading of every strong stroke, loudest first, and [clips] holds one clip
+     * per stroke in the same order, so `clips[0]` is [clip]. Both are empty when [clip] is null.
      */
-    class Extraction(val clip: Array<DoubleArray>?, val peakIndex: Int, val peakLevel: Double)
+    class Extraction(
+        val clip: Array<DoubleArray>?,
+        val peakIndex: Int,
+        val peakLevel: Double,
+        val humps: IntArray = IntArray(0),
+        val clips: List<Array<DoubleArray>> = emptyList()
+    )
 
     /** Steps 0 to 3 in one call. */
     fun extract(events: List<SensorEventRecord>): Extraction {
@@ -52,7 +71,9 @@ object MotionClip {
         val peakIndex = findAction(level)
         val peakLevel = level[peakIndex]
         if (peakLevel < THRESHOLD) return Extraction(null, peakIndex, peakLevel)
-        return Extraction(crop(gyro, peakIndex), peakIndex, peakLevel)
+        val humps = findHumps(level)
+        val clips = humps.map { crop(gyro, it) }
+        return Extraction(clips[0], peakIndex, peakLevel, humps, clips)
     }
 
     /**
@@ -131,6 +152,39 @@ object MotionClip {
             }
         }
         return peakIndex
+    }
+
+    /**
+     * The readings where a strong stroke peaks, loudest first.
+     *
+     * The first entry is always the peak that [findAction] returns. Another reading joins the list
+     * when it is the highest within [HUMP_GAP] readings on either side (the earlier reading wins a
+     * tie) and reaches at least [HUMP_SHARE] of the peak. At most [MAX_HUMPS] are returned.
+     *
+     * Why this exists: a clip centred on the single loudest reading works when a gesture has one
+     * dominant stroke (a twist, a flick). A gesture with two strokes of about the same strength
+     * (a shake: left, then right) makes "the loudest" a coin flip, and the clip lands a third of
+     * a second apart from one rep to the next. Instead of guessing, one clip is cut per strong
+     * stroke and the blueprints decide which one fits ([GestureBlueprints.classifyClips]).
+     */
+    fun findHumps(level: DoubleArray): IntArray {
+        val count = level.size
+        if (count == 0) return IntArray(0)
+        val cutoff = HUMP_SHARE * level[findAction(level)]
+        val humps = ArrayList<Int>()
+        for (t in 0 until count) {
+            val value = level[t]
+            if (value < cutoff) continue
+            var highest = true
+            for (k in maxOf(0, t - HUMP_GAP)..minOf(count - 1, t + HUMP_GAP)) {
+                if (k < t && level[k] >= value) highest = false
+                if (k > t && level[k] > value) highest = false
+            }
+            if (highest) humps.add(t)
+        }
+        // Loudest first, and the earlier reading wins a tie, like Python's sort on (-level, index).
+        humps.sortWith(compareByDescending<Int> { level[it] }.thenBy { it })
+        return humps.take(MAX_HUMPS).toIntArray()
     }
 
     /**

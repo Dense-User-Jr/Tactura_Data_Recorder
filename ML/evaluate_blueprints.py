@@ -38,7 +38,8 @@ class Sample:
     def __init__(self, name, truth, events):
         self.name = name
         self.truth = truth
-        self.clip, self.peak = B.extract_clip(events)
+        self.clips, self.peak = B.extract_clips(events)   # one clip per strong stroke
+        self.clip = self.clips[0] if self.clips else None  # the clip centred on the loudest stroke
 
 
 def load_training(folder):
@@ -75,7 +76,10 @@ def blueprints_from(groups):
     """groups maps gesture -> list of samples to learn from (quiet ones are skipped)."""
     result = {}
     for gesture, members in groups.items():
-        clips = [m.clip for m in members if m.clip is not None]
+        clips = []
+        for m in members:  # like calibration on the watch: keep the clip that fits the earlier reps
+            if m.clips:
+                clips.append(m.clips[B.choose_clip(m.clips, clips)])
         if clips:
             result[gesture] = B.build_blueprint(clips)
     return result
@@ -85,7 +89,7 @@ def score(blueprints, tests, use_limit):
     """Return (correct, total, ignored). A real gesture that gets ignored counts as wrong."""
     correct = ignored = 0
     for sample in tests:
-        name, _ = B.classify(sample.clip, blueprints, use_limit=use_limit)
+        name, _ = B.classify_clips(sample.clips, blueprints, use_limit=use_limit)
         if name is None:
             ignored += 1
         elif name == sample.truth:
@@ -156,7 +160,7 @@ def test_other_person(title, teacher, student):
     print(f"  {title}: {correct} of {total} ({percent(correct, total)})")
     per = defaultdict(lambda: [0, 0])
     for sample in tests:
-        name, _ = B.classify(sample.clip, blueprints, use_limit=False)
+        name, _ = B.classify_clips(sample.clips, blueprints, use_limit=False)
         per[sample.truth][1] += 1
         per[sample.truth][0] += name == sample.truth
     print("    " + ", ".join(f"{g} {c}/{n}" for g, (c, n) in sorted(per.items())))
@@ -172,7 +176,7 @@ def test_unknown_movement(title, samples, reps):
         named = defaultdict(int)
         ignored = 0
         for sample in groups[hidden]:
-            name, _ = B.classify(sample.clip, blueprints, use_limit=True)
+            name, _ = B.classify_clips(sample.clips, blueprints, use_limit=True)
             if name is None:
                 ignored += 1
             else:
@@ -196,7 +200,7 @@ def test_per_gesture(title, samples, reps, draws, seed):
             tests += [m for i, m in enumerate(members) if i not in chosen]
         blueprints = blueprints_from(learn)
         for sample in tests:
-            name, _ = B.classify(sample.clip, blueprints, use_limit=False)
+            name, _ = B.classify_clips(sample.clips, blueprints, use_limit=False)
             seen[sample.truth] += 1
             if name == sample.truth:
                 right[sample.truth] += 1

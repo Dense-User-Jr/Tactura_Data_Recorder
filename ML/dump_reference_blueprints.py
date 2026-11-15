@@ -9,6 +9,8 @@ wear/src/test/resources/reference_blueprints.csv with five kinds of line:
     T,<file>,<gesture or NONE>,<distance>           what Python decided for a test file
     U,<gesture>,<file>,<count>,<size>,<180 values>  the blueprint after folding in one more rep
     W,<gesture>,<index>,<miss>                      the rep in the F set least like the others
+    M,<file>,<gesture or NONE>,<distance>           the decision when every strong stroke is tried
+    C,<gesture>,<file>,<clips>,<index>              which of a rep's clips calibration would keep
 
 The JVM test GestureBlueprintsParityTest rebuilds everything from the same files
 with the watch code and checks the numbers agree.
@@ -53,6 +55,11 @@ def clip_of(path):
     return B.extract_clip(events)[0]
 
 
+def clips_of(path):
+    _, events = B.read_gyro_events(path)
+    return B.extract_clips(events)[0]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -93,6 +100,22 @@ def main():
         decided[name or "NONE"] += 1
         lines.append(",".join(["T", relative(path), name or "NONE", number(value)]))
 
+    # The same test files again, trying the clip of every strong stroke.
+    several = 0
+    for path in tests:
+        clips = clips_of(path)
+        several += len(clips) > 1
+        name, value = B.classify_clips(clips, blueprints, use_limit=True)
+        lines.append(",".join(["M", relative(path), name or "NONE", number(value)]))
+
+    # Calibration: for later recordings of each gesture, which clip fits the first REPS reps.
+    for gesture in sorted(by_gesture):
+        earlier = [clip_of(path) for path in by_gesture[gesture][:REPS]]
+        for path in by_gesture[gesture][REPS::9]:
+            clips = clips_of(path)
+            if clips:
+                lines.append(",".join(["C", gesture, relative(path), str(len(clips)), str(B.choose_clip(clips, earlier))]))
+
     # Learning over time: fold the sixth recording of each gesture into its blueprint.
     for gesture in sorted(by_gesture):
         extra = by_gesture[gesture][REPS]
@@ -101,7 +124,8 @@ def main():
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Wrote {len(blueprints)} blueprints, {len(tests)} decisions {dict(decided)} and "
+    print(f"Wrote {len(blueprints)} blueprints, {len(tests)} decisions {dict(decided)} "
+          f"({several} test files have more than one strong stroke) and "
           f"{len(by_gesture)} updates to {args.output}")
 
 

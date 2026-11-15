@@ -10,10 +10,12 @@ The recipe, in the order the functions appear:
   0. resample        put the gyroscope readings on an even 50-per-second grid
   1. motion_level    one number per reading: how hard is the wrist turning
   2. find_action     where the motion level peaks, and is that loud enough
-  3. crop            1.2 s of gyro centred on the peak, called a "clip"
+     find_humps      every stroke nearly as loud as the peak (usually just one)
+  3. crop            1.2 s of gyro centred on a stroke, called a "clip"
   4. build_blueprint average a few clips of one gesture into a blueprint
   5. distance        how much a clip and a blueprint disagree (rad/s)
   6. classify        closest blueprint, or None when nothing is close
+     classify_clips  the same, trying the clip of every strong stroke
 
 Only the gyroscope is used. The accelerometer measures gravity, so it records
 the resting angle of the arm, and the first model learned that angle instead
@@ -39,6 +41,9 @@ THRESHOLD = 1.0                   # rad/s; below this the wrist is "quiet"
 HALF = 30                         # readings kept on each side of the peak
 CLIP_LEN = 2 * HALF               # 60 readings = 1.2 s
 SLIDE = 5                         # try shifts of -5..+5 readings (100 ms)
+HUMP_SHARE = 0.6                  # a stroke is "strong" when it reaches 60% of the peak
+HUMP_GAP = 8                      # readings; strokes closer than this (160 ms) count as one
+MAX_HUMPS = 3                     # try at most this many strokes per window
 LIMIT_PERCENT = 0.9               # "close enough" = within 90% of the blueprint's own size
 
 GYRO = "gyroscope"
@@ -150,6 +155,44 @@ def find_action(level):
     return peak_index, peak_level
 
 
+def find_humps(level):
+    """Return the readings where a strong stroke peaks, loudest first.
+
+    The first entry is always the peak that find_action returns. Another reading
+    joins the list when it is the highest within HUMP_GAP readings on either
+    side (the earlier reading wins a tie) and reaches at least HUMP_SHARE of the
+    peak. At most MAX_HUMPS are returned.
+
+    Why this exists: a clip centred on the single loudest reading works when a
+    gesture has one dominant stroke (a twist, a flick). A gesture with two
+    strokes of about the same strength (a shake: left, then right) makes "the
+    loudest" a coin flip, and the clip lands a third of a second apart from one
+    rep to the next. Instead of guessing, the recipe cuts one clip per strong
+    stroke and lets the blueprints decide which one fits (classify_clips).
+    """
+    count = len(level)
+    if count == 0:
+        return []
+    _, peak_level = find_action(level)
+    cutoff = HUMP_SHARE * peak_level
+    humps = []
+    for t in range(count):
+        value = float(level[t])
+        if value < cutoff:
+            continue
+        highest = True
+        for k in range(max(0, t - HUMP_GAP), min(count, t + HUMP_GAP + 1)):
+            other = float(level[k])
+            if k < t and other >= value:
+                highest = False
+            if k > t and other > value:
+                highest = False
+        if highest:
+            humps.append(t)
+    humps.sort(key=lambda t: (-float(level[t]), t))  # loudest first, earlier wins a tie
+    return humps[:MAX_HUMPS]
+
+
 # ---- step 3: crop -----------------------------------------------------------
 
 def crop(gyro, peak_index):
@@ -180,6 +223,23 @@ def extract_clip(events):
     if peak_level < THRESHOLD:
         return None, peak_level
     return crop(gyro, peak_index), peak_level
+
+
+def extract_clips(events):
+    """Steps 0 to 3, with one clip for every strong stroke.
+
+    Returns (clips, peak_level). clips is a list, loudest stroke first, so
+    clips[0] is the clip extract_clip returns. The list is empty when there is
+    too little data or the wrist stayed quiet.
+    """
+    gyro = resample(events)
+    if gyro.shape[1] < 2:
+        return [], 0.0
+    level = motion_level(gyro)
+    _, peak_level = find_action(level)
+    if peak_level < THRESHOLD:
+        return [], peak_level
+    return [crop(gyro, t) for t in find_humps(level)], peak_level
 
 
 # ---- step 5: distance (used by step 4, so it comes first) -------------------
@@ -291,6 +351,28 @@ def worst_rep(clips):
     return worst_index, worst_miss
 
 
+def choose_clip(clips, earlier):
+    """Calibration: which of a rep's clips to keep. Returns its index in clips.
+
+    clips come from extract_clips for the new rep. earlier holds the clips
+    already kept for the same gesture. With no earlier reps the first clip is
+    kept (the one centred on the loudest stroke). Otherwise the clip closest to
+    the blueprint of the earlier reps is kept, so every rep of a two-stroke
+    gesture ends up centred on the same stroke. The first clip wins a tie.
+    """
+    if not earlier or len(clips) == 1:
+        return 0
+    mean = build_blueprint(earlier).mean
+    best_index = 0
+    best = float("inf")
+    for index, clip in enumerate(clips):
+        value = distance(clip, mean)[0]
+        if value < best:
+            best = value
+            best_index = index
+    return best_index
+
+
 # ---- step 6: decide ---------------------------------------------------------
 
 def classify(clip, blueprints, use_limit=True):
@@ -315,6 +397,31 @@ def classify(clip, blueprints, use_limit=True):
         if value < best:
             best = value
             best_name = name
+    if use_limit and best > LIMIT_PERCENT * blueprints[best_name].size:
+        return None, best
+    return best_name, best
+
+
+def classify_clips(clips, blueprints, use_limit=True):
+    """Pick the closest blueprint, trying the clip of every strong stroke.
+
+    clips comes from extract_clips. Every clip is compared with every
+    blueprint and the single best fit wins. The "close enough" rule is the same
+    as in classify. Returns (name, distance); name is None for an empty list
+    (quiet wrist), for no blueprints, or when nothing is close enough.
+
+    With one clip this gives exactly what classify gives.
+    """
+    if not clips or not blueprints:
+        return None, float("inf")
+    best_name = None
+    best = float("inf")
+    for name in sorted(blueprints):
+        for clip in clips:
+            value = distance(clip, blueprints[name].mean)[0]
+            if value < best:
+                best = value
+                best_name = name
     if use_limit and best > LIMIT_PERCENT * blueprints[best_name].size:
         return None, best
     return best_name, best

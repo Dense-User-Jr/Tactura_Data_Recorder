@@ -309,9 +309,9 @@ class RecordingService : Service(), SensorEventListener {
     }
 
     /**
-     * Classify with the user's blueprints: find the action, crop around it, and pick the closest
-     * blueprint, or decide that no known gesture happened. The forest's answer is only logged, so
-     * the two can be compared later.
+     * Classify with the user's blueprints: find the action, crop around every strong stroke, and
+     * pick the closest blueprint, or decide that no known gesture happened. The forest's answer is
+     * only logged, so the two can be compared later.
      */
     private suspend fun classifyWithBlueprints(
         model: Result<Pair<ModelStore.Loaded, Boolean>>,
@@ -322,7 +322,7 @@ class RecordingService : Service(), SensorEventListener {
         val started = SystemClock.elapsedRealtimeNanos()
         val (extraction, match) = withContext(Dispatchers.Default) {
             val found = MotionClip.extract(events)
-            found to GestureBlueprints.classify(found.clip, BlueprintStore.blueprints())
+            found to GestureBlueprints.classifyClips(found.clips, BlueprintStore.blueprints())
         }
         val inferenceMs = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000f
         val forest = withContext(Dispatchers.Default) {
@@ -379,8 +379,8 @@ class RecordingService : Service(), SensorEventListener {
      */
     private suspend fun calibrate(gesture: Gesture, events: List<SensorEventRecord>, startedAtWallMs: Long) {
         publish { it.copy(phase = RecordingPhase.SAVING, message = "Checking the rep") }
-        val clip = withContext(Dispatchers.Default) { MotionClip.extract(events).clip }
-        if (clip == null) {
+        val clips = withContext(Dispatchers.Default) { MotionClip.extract(events).clips }
+        if (clips.isEmpty()) {
             publish {
                 it.copy(
                     phase = RecordingPhase.COMPLETE,
@@ -399,7 +399,7 @@ class RecordingService : Service(), SensorEventListener {
                 { number -> CsvStorage.calibrationName(number, gesture, startedAtWallMs) },
                 CaptureCsv.build(gesture.name, events)
             )
-            name to BlueprintStore.addRep(applicationContext, gesture, clip)
+            name to BlueprintStore.addRep(applicationContext, gesture, clips)
         }
         Log.i(
             TAG,

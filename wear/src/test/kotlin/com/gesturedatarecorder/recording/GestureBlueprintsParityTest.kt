@@ -53,6 +53,9 @@ class GestureBlueprintsParityTest {
 
     private fun clipOf(file: String): Array<DoubleArray>? = MotionClip.extract(parse(file)).clip
 
+    /** One clip per strong stroke in the window, loudest first. Empty for a quiet wrist. */
+    private fun clipsOf(file: String): List<Array<DoubleArray>> = MotionClip.extract(parse(file)).clips
+
     private fun assertSameBlueprint(
         what: String,
         expectedCount: Int,
@@ -105,6 +108,55 @@ class GestureBlueprintsParityTest {
     }
 
     @Test
+    fun decisionsWithEveryStrongStrokeMatchPythonReference() {
+        val expected = lines.filter { it[0] == "M" }
+        assertTrue("no reference decisions for several clips", expected.isNotEmpty())
+        var several = 0
+        for (cells in expected) {
+            val file = cells[1]
+            val clips = clipsOf(file)
+            if (clips.size > 1) several++
+            val match = GestureBlueprints.classifyClips(clips, blueprints)
+            assertEquals("$file: decision", cells[2], match.gesture ?: "NONE")
+            val distance = cells[3].toDouble()
+            if (distance.isInfinite()) {
+                assertTrue("$file: Python saw a quiet wrist", match.distance.isInfinite())
+            } else {
+                assertEquals("$file: distance", distance, match.distance, TOLERANCE)
+            }
+        }
+        assertTrue("no test file has more than one strong stroke", several > 0)
+    }
+
+    @Test
+    fun chosenCalibrationClipsMatchPythonReference() {
+        val expected = lines.filter { it[0] == "C" }
+        assertTrue("no reference clip choices", expected.isNotEmpty())
+        assertTrue("reference never keeps a clip other than the first", expected.any { it[4] != "0" })
+        val repsByGesture = lines.filter { it[0] == "F" }.associate { cells ->
+            cells[1] to cells[2].split(';').map { file -> clipOf(file)!! }
+        }
+        for (cells in expected) {
+            val clips = clipsOf(cells[2])
+            assertEquals("${cells[2]}: number of clips", cells[3].toInt(), clips.size)
+            val chosen = GestureBlueprints.chooseClip(clips, repsByGesture.getValue(cells[1]))
+            assertEquals("${cells[2]}: clip kept", cells[4].toInt(), chosen)
+        }
+    }
+
+    @Test
+    fun oneClipDecidesLikeClassify() {
+        for (cells in lines.filter { it[0] == "T" }) {
+            val clip = clipOf(cells[1]) ?: continue
+            val single = GestureBlueprints.classify(clip, blueprints)
+            val listed = GestureBlueprints.classifyClips(listOf(clip), blueprints)
+            assertEquals("${cells[1]}: decision", single.gesture, listed.gesture)
+            assertEquals("${cells[1]}: distance", single.distance, listed.distance, 0.0)
+        }
+        assertEquals(0, GestureBlueprints.chooseClip(listOf(blueprints.values.first().mean), emptyList()))
+    }
+
+    @Test
     fun updatesMatchPythonReference() {
         val expected = lines.filter { it[0] == "U" }
         assertTrue("no reference updates", expected.isNotEmpty())
@@ -134,6 +186,8 @@ class GestureBlueprintsParityTest {
         assertNull(GestureBlueprints.classify(null, blueprints).gesture)
         val anyClip = blueprints.values.first().mean
         assertNull(GestureBlueprints.classify(anyClip, emptyMap()).gesture)
+        assertNull(GestureBlueprints.classifyClips(emptyList(), blueprints).gesture)
+        assertNull(GestureBlueprints.classifyClips(listOf(anyClip), emptyMap()).gesture)
     }
 
     @Test

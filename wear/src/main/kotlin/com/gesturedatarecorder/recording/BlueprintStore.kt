@@ -102,15 +102,20 @@ object BlueprintStore {
     /**
      * Saves one more rep of [gesture].
      *
+     * [candidates] holds one clip per strong stroke in the window, loudest first
+     * ([MotionClip.Extraction.clips]), and must not be empty. The clip that best fits the reps
+     * already saved is the one kept, so a gesture with two equally strong strokes is always
+     * centred on the same stroke.
+     *
      * Once the gesture has [REPS_NEEDED] reps, each rep is checked against the others. If the
      * least typical one would not be recognised from the rest, it is dropped so the user can
      * replace it, up to [MAX_DROPS] times per gesture.
      */
     @Synchronized
-    fun addRep(context: Context, gesture: Gesture, clip: Array<DoubleArray>): AddResult {
+    fun addRep(context: Context, gesture: Gesture, candidates: List<Array<DoubleArray>>): AddResult {
         load(context)
         val list = clips.getOrPut(gesture) { ArrayList() }
-        list.add(clip)
+        list.add(candidates[GestureBlueprints.chooseClip(candidates, list)])
         var dropped = false
         var inconsistent = false
         if (list.size >= REPS_NEEDED) {

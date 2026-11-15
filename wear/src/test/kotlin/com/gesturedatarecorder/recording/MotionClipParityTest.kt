@@ -12,7 +12,8 @@ import java.io.File
  * the same peak and the same clip as steps 0 to 3 of ML/blueprint_reference.py, on real recordings
  * (training CSVs and windows pulled from a watch, including still-arm windows).
  *
- * Reference values come from `python ML/dump_reference_clips.py`.
+ * Reference values come from `python ML/dump_reference_clips.py`, which also writes the strong
+ * strokes of each window (reference_humps.csv).
  */
 class MotionClipParityTest {
     private val repoRoot = listOf("..", ".")
@@ -80,6 +81,56 @@ class MotionClipParityTest {
     }
 
     @Test
+    fun strongStrokesMatchPythonReference() {
+        val stream = javaClass.classLoader!!.getResourceAsStream("reference_humps.csv")
+        assertNotNull("reference_humps.csv missing; run python ML/dump_reference_clips.py", stream)
+        val expected = stream!!.bufferedReader().readLines().filter { it.isNotBlank() }.map { line ->
+            val cells = line.split(',')
+            cells[0] to if (cells.size < 2 || cells[1].isEmpty()) emptyList() else cells[1].split(';').map { it.toInt() }
+        }
+        assertTrue("no reference strokes", expected.isNotEmpty())
+        assertTrue("reference has no window with two strong strokes", expected.any { it.second.size > 1 })
+        for ((file, humps) in expected) {
+            val found = MotionClip.extract(parse(file))
+            assertEquals("$file: strong strokes", humps, found.humps.toList())
+            assertEquals("$file: one clip per strong stroke", humps.size, found.clips.size)
+            if (humps.isNotEmpty()) {
+                assertEquals("$file: the loudest stroke comes first", found.peakIndex, found.humps[0])
+                assertTrue("$file: the first clip is the main clip", found.clips[0] === found.clip)
+            }
+        }
+    }
+
+    @Test
+    fun twoEqualStrokesGiveTwoClips() {
+        // A shake: 200 ms turning one way, a pause, then 200 ms turning back just as hard.
+        val events = (0 until 150).map { k ->
+            val x = when (k) {
+                in 40..49 -> -10f
+                in 65..74 -> 10f
+                else -> 0f
+            }
+            SensorEventRecord(SensorKind.GYROSCOPE, 1_000_000_000L + k * MotionClip.STEP_NS, x, 0f, 0f)
+        }
+        val found = MotionClip.extract(events)
+        assertEquals(2, found.humps.size)
+        assertTrue("first stroke at ${found.humps[0]}", found.humps[0] in 40..49)
+        assertTrue("second stroke at ${found.humps[1]}", found.humps[1] in 65..74)
+        assertEquals(2, found.clips.size)
+    }
+
+    @Test
+    fun oneStrokeGivesOneClip() {
+        val events = (0 until 150).map { k ->
+            val x = if (k in 60..69) 8f else 0f
+            SensorEventRecord(SensorKind.GYROSCOPE, 1_000_000_000L + k * MotionClip.STEP_NS, x, 0f, 0f)
+        }
+        val found = MotionClip.extract(events)
+        assertEquals(1, found.humps.size)
+        assertEquals(1, found.clips.size)
+    }
+
+    @Test
     fun stillWristGivesNoClip() {
         // 3 seconds of a gyroscope reading almost nothing, 50 times a second.
         val events = (0 until 150).map { k ->
@@ -87,6 +138,7 @@ class MotionClipParityTest {
         }
         val found = MotionClip.extract(events)
         assertNull(found.clip)
+        assertTrue(found.clips.isEmpty())
         assertTrue(found.peakLevel < MotionClip.THRESHOLD)
     }
 

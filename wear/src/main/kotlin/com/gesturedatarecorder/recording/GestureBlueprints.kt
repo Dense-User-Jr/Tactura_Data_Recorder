@@ -176,6 +176,61 @@ object GestureBlueprints {
         return Match(winner, best)
     }
 
+    /**
+     * Step 6 when a window has more than one strong stroke: picks the closest blueprint, trying
+     * the clip of every stroke.
+     *
+     * [clips] comes from [MotionClip.Extraction.clips]. Every clip is compared with every
+     * blueprint and the single best fit wins. The "close enough" rule is the same as in
+     * [classify]. The result's gesture is null for an empty list (the wrist was quiet), for no
+     * blueprints, or when nothing is close enough. With one clip this gives exactly what
+     * [classify] gives.
+     */
+    fun classifyClips(clips: List<Array<DoubleArray>>, blueprints: Map<String, Blueprint>, useLimit: Boolean = true): Match {
+        if (clips.isEmpty() || blueprints.isEmpty()) return Match(null, Double.POSITIVE_INFINITY)
+        var bestName: String? = null
+        var best = Double.POSITIVE_INFINITY
+        // Sorted names, like Python's sorted(): the first name wins a tie, then the first clip.
+        for (name in blueprints.keys.sorted()) {
+            val mean = blueprints.getValue(name).mean
+            for (clip in clips) {
+                val value = distance(clip, mean).distance
+                if (value < best) {
+                    best = value
+                    bestName = name
+                }
+            }
+        }
+        val winner = bestName ?: return Match(null, best)
+        if (useLimit && best > LIMIT_PERCENT * blueprints.getValue(winner).size) return Match(null, best)
+        return Match(winner, best)
+    }
+
+    /**
+     * Calibration: which of a rep's clips to keep. Returns its index in [clips].
+     *
+     * [clips] comes from [MotionClip.Extraction.clips] for the new rep, and [earlier] holds the
+     * clips already kept for the same gesture. With no earlier reps the first clip is kept (the
+     * one centred on the loudest stroke). Otherwise the clip closest to the blueprint of the
+     * earlier reps is kept, so every rep of a two-stroke gesture ends up centred on the same
+     * stroke. The first clip wins a tie. [clips] must not be empty.
+     */
+    fun chooseClip(clips: List<Array<DoubleArray>>, earlier: List<Array<DoubleArray>>): Int {
+        require(clips.isNotEmpty()) { "A rep needs at least one clip" }
+        if (earlier.isEmpty() || clips.size == 1) return 0
+        val mean = build(earlier).mean
+        var bestIndex = 0
+        var best = Double.POSITIVE_INFINITY
+        for (index in clips.indices) {
+            val value = distance(clips[index], mean).distance
+            if (value < best) {
+                best = value
+                bestIndex = index
+            }
+        }
+        return bestIndex
+    }
+
     /** Adds the clips number by number, in order, then divides by how many there are. */
     private fun average(clips: List<Array<DoubleArray>>): Array<DoubleArray> {
         val total = Array(clips[0].size) { DoubleArray(clips[0][0].size) }

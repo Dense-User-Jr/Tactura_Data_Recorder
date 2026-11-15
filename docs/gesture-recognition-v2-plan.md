@@ -3,6 +3,8 @@
 Russell Mehta. Written Nov 10, 2026. Last updated Nov 15, 2026.
 
 > **Where the build stands (Nov 11).** Phases 0 and 1 are done. Phase 2 runs on the Galaxy Watch 7: calibration, blueprint Classify and the "no gesture" answer all work. The **Wrong?** correction is not built yet, and nothing from phases 3 to 5 is started. The diagrams and formulas in this file render on GitHub.
+>
+> **Update (Nov 15).** A scored run five days after calibration gave 54 of 60 with no recalibration of the flicks and twists. The two wrong names were shakes cropped on the wrong stroke. The recipe now cuts one clip per strong stroke (step 3b) and is waiting for its watch test. See "Working order" near the end.
 
 ## The one-minute version
 
@@ -170,6 +172,20 @@ x = \left(g_{t^{*}-30},\; \dots,\; g_{t^{*}+29}\right) \in \mathbb{R}^{180}
 
 The grey line is the raw rotation. The blue line is the motion level from step 1, and the dot is its peak from step 2. The shaded band is the clip from step 3, and the dashed red line is the motion threshold. Had Russell started 300 ms later, the band would simply sit 300 ms further right, and the clip inside it would look the same. The picture is drawn from the real recording by `python ML\plot_find_the_action.py`.
 
+### Step 3b. One clip per strong stroke
+
+Some gestures have two strokes of about the same strength. A shake is a left stroke and then a right stroke. "The loudest moment" is then a coin flip between them, and the clip lands about a third of a second apart from one rep to the next. The slide in step 5 can only correct a tenth of a second.
+
+So the recipe does not guess. A stroke counts as strong when its motion level reaches 60% of the peak and it is the highest point within 160 ms on either side. Every strong stroke gets its own 1.2 second clip, up to three.
+
+```math
+\text{strong strokes} = \left\{\, t \;:\; m_t \ge 0.6\, m_{t^{*}} \ \text{ and } \ m_t = \max_{|k-t|\le 8} m_k \,\right\}
+```
+
+A twist or a flick has one dominant stroke, so it usually gives one clip that matters and nothing changes. When there are several clips, step 6 compares every clip with every blueprint and keeps the single best fit. During calibration, the clip that best fits the earlier reps of the same gesture is the one saved, so all reps of a two-stroke gesture end up centred on the same stroke.
+
+Measured on the 11/15 run with the blueprints already on the watch: both misnamed shakes became Shake, at 75% and 71% match, and nothing else changed (56 of 60, no wrong names).
+
 ### Step 4. Blueprint
 
 A blueprint is the average of a few clips of the same gesture, number by number. It is your typical version of that gesture.
@@ -247,6 +263,7 @@ It scored 97% in the same test. Its weakness is that a signal and its mirror ima
 | Motion threshold | 1.0 rad/s | Between the loudest still arm (0.44) and the quietest gesture (1.68) |
 | Clip length | 60 readings (1.2 s) | Results held from 0.6 s to 2.0 s |
 | Slide when comparing | 5 readings each way (100 ms) | Gave 96 to 97% with a worst draw of 94% across the smoothing settings tried |
+| Strong stroke | At least 60% of the peak, highest within 8 readings (160 ms) each way, at most 3 per window | First guess, set on 11/15. Not tuned yet |
 | Reps per gesture | 5, with 3 as the minimum | 3 is enough for the average, 5 allows eigengestures |
 | Eigen directions | 2 | Tested once with 5 reps |
 | "Close enough" limit | Within 90% of the blueprint's own size | Russell's rule. Laptop: 88% correct, 12% ignored, 0% misnamed. Watch: 41 of 41 flicks and twists in each of two sittings |
@@ -324,7 +341,7 @@ Calibration is a guided run of Record: the watch names a gesture, you do it, and
 2. The watch shows the first gesture name, for example "Twist Left, rep 1 of 5".
 3. Same three short buzzes, then the strong buzz. Do the gesture once.
 4. The watch checks the rep. If the wrist never moved enough, it says "Didn't catch that" and repeats the rep.
-5. If a rep looks very different from the earlier ones, it asks for one more instead of averaging in a mistake.
+5. If a rep looks very different from the earlier ones, it asks for one more instead of averaging in a mistake. A rep with two equally strong strokes is first lined up with the earlier reps (step 3b), so it is no longer dropped for that reason.
 6. After the last rep of the last gesture, the watch builds and saves the blueprints. Classify now uses them.
 
 With 5 gestures, 5 reps each and about 7 seconds per rep, calibration takes about 3 minutes. With 3 reps it takes under 2.
@@ -449,11 +466,53 @@ The demo target is solid personal gesture recognition with the math front and ce
 
 | Order | Work | Why here |
 | --- | --- | --- |
-| 1 | Scorecard on the current blueprints, then pull the data | An informal check on 11/15 named every gesture correctly using the 11/10 blueprints with no recalibration. It was not scored. A scored run turns that into evidence and brings the redone Shake reps to the laptop. |
-| 2 | Measure, then test fixes on the laptop | See how close each gesture lands to its limit. Flicks are small (about 1 rad/s), so normal variation between reps uses 36 to 67% of their size against the 90% limit. Twists use 9 to 33%. Eigengestures (step 7) get tested here first. |
+| 1, done 11/15 | Scorecard on the current blueprints, then pull the data | An informal check on 11/15 named every gesture correctly using the 11/10 blueprints with no recalibration. It was not scored. A scored run turns that into evidence and brings the redone Shake reps to the laptop. |
+| 2, part A done 11/15 | Measure, then test fixes on the laptop | See how close each gesture lands to its limit. Flicks are small (about 1 rad/s), so normal variation between reps uses 36 to 67% of their size against the 90% limit. Twists use 9 to 33%. Eigengestures (step 7) get tested here first. |
 | 3 | The **Wrong?** correction | Blueprints that learn while worn. `GestureBlueprints.update` already exists and nothing calls it yet. |
 | 4 | Real-time listening | Phase 4 as written. |
 | 5 | Chords with the accelerometer | Parked. See the next section. |
+
+### Scorecard, Nov 15 (step 1, done)
+
+Russell, Galaxy Watch 7, left wrist. Flick Up, Flick Down, Twist Left and Twist Right used the 11/10 blueprints with no recalibration, five days later. Shake was recalibrated a minute before the run. Truth comes from the order he did the gestures in. No "nothing" windows were run this time. All 60 windows gave the same answer on the laptop as on the watch.
+
+| Gesture | Correct | Ignored | Misnamed | Match shown on the watch |
+| --- | --- | --- | --- | --- |
+| Twist Left | 12 of 12 | 0 | 0 | 59 to 83% |
+| Twist Right | 12 of 12 | 0 | 0 | 50 to 81% |
+| Flick Up | 14 of 14 | 0 | 0 | 11 to 55% |
+| Flick Down | 8 of 12 | 4 | 0 | 11 to 39% |
+| Shake | 8 of 10 | 0 | 2, both called Twist Left | 58 to 81% |
+| **Total** | **54 of 60 (90%)** | **4** | **2** | |
+
+**What the data showed**
+
+- **Twists survive five days.** Same match range as on 11/10.
+- **The two misnamed shakes were good shakes, cropped in the wrong place.** Russell's shake is a left stroke then a right stroke, about equally loud. "Find the action" centres the clip on the louder one. Eight times that was the right stroke, as in calibration. Twice it was the left stroke, which moved the clip by about 340 ms. The slide in step 5 only corrects 100 ms. A shake cropped around its left stroke looks like a Twist Left. Allowed to slide further, both clips match the Shake blueprint, missing it by 50% and 38% of its size.
+- **Flicks sit at the limit.** Today's flicks were about 25 to 30% smaller than on 11/10. Today's Flick Down was mostly on the y axis (78%), where the 11/10 calibration was mostly on x (60%). But a blueprint built from the first five of today's reps did not clearly do better on the rest: Flick Down 4 of 7 against 3 of 7 with the old one, Flick Up 7 of 9 against 9 of 9. Today's flicks miss a blueprint built from each other by a median 55% (up) and 69% (down) of its size. So the main issue is variation between reps of a small gesture, more than a stale calibration. This is one split on few windows, so treat it as a pointer.
+- **Arm tremor is measurable but small.** The resting motion level was 0.06 rad/s, against 0.04 on 11/10. A flick is about 0.8.
+
+The pulled files are in `classify_logs_v3/` (files 0117 to 0176) and `calibration_logs_v2/`.
+
+### Alignment fix, Nov 15 (step 2, part A)
+
+The scorecard left two separate problems. A: a clip can be centred on the wrong stroke. B: flicks are barely bigger than the normal variation between reps. Part A is fixed in the code and waits for a watch test. Part B is next.
+
+Three ways of centring the clip were compared. Each number uses 5 random reps per gesture as blueprints and tests on the rest, repeated 12 times, with the 90% limit on.
+
+| Method | Russell, 11/15 | Russell, 11/10 | Dhruv's recordings |
+| --- | --- | --- | --- |
+| Loudest moment (the old way) | 92% correct, 3% misnamed | 89% | 84% |
+| Balance point of the action | 96%, 0% misnamed | 79% | 91% |
+| One clip per strong stroke (chosen) | 96%, 0.5% misnamed | 89% | 91% |
+
+- **The balance point was tried first and rejected.** It is the average time of the loud readings, weighted by loudness. It fixed the shake but dropped Russell's 11/10 Flick Down from 72% to 22%. A flick is a stroke plus a rebound, and the rebound's strength changes from rep to rep, which drags the balance point by up to 180 ms. A second movement later in the window (the arm resettling) drags it into the quiet gap between the two.
+- **One clip per strong stroke was never worse than the old way** on the three data sets, and matched the balance point's gains.
+- **The repo's own evaluation agrees.** `python ML\evaluate_blueprints.py` before and after: Dhruv with 5 reps went from 83% to 88% correct with the limit on, Russell's 11/10 set went from 91% to 90%, and the first-5-then-45-later test went from 214 to 213 of 225.
+- **What it does not fix.** Russell's Shake (left, right, back to centre) and Twist Left (left, then back) are close relatives on the same axis. Once shakes are lined up properly, hiding either blueprint makes the watch call most of that gesture by the other's name. With both blueprints present they were told apart every time in the 11/15 run. A shake that starts to the right, or has more wiggles, would sit further from a twist. That is a gesture design decision for the team.
+- **One thing to watch.** Trying more clips gives every blueprint more chances to fit, including the wrong one. On Russell's 11/10 shake, which had no definition yet, "closest wins" with no limit went from 81% to 72%.
+
+The comparison of the three methods was run from a scratch script and is not in the repo. The chosen method is in `ML/blueprint_reference.py`, so the evaluation script reproduces its numbers.
 
 ## Parked idea: chords (rotation plus translation)
 
@@ -529,7 +588,7 @@ The biggest risk is not the math. It is that the team has not agreed what each g
 | Reading | One sample from a sensor. The watch gives 50 a second. |
 | Window | The 3 seconds the app records after the strong buzz. |
 | Motion level | One number for how hard the wrist is turning right now. |
-| Clip | The 1.2 seconds cut out around the loudest moment of a window. |
+| Clip | The 1.2 seconds cut out around a strong stroke of a window. Most windows give one clip that matters, centred on the loudest moment. |
 | Rep | One performance of a gesture. |
 | Blueprint | The average of a few clips of the same gesture from the same person. |
 | Distance | How much a clip and a blueprint disagree on average, in rad/s. Smaller means more alike. |

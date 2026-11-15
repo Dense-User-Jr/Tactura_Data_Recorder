@@ -1,6 +1,6 @@
 # Tactura gesture recognition v2: implementation plan
 
-Russell Mehta. Written Nov 10, 2026. Last updated Nov 11, 2026.
+Russell Mehta. Written Nov 10, 2026. Last updated Nov 15, 2026.
 
 > **Where the build stands (Nov 11).** Phases 0 and 1 are done. Phase 2 runs on the Galaxy Watch 7: calibration, blueprint Classify and the "no gesture" answer all work. The **Wrong?** correction is not built yet, and nothing from phases 3 to 5 is started. The diagrams and formulas in this file render on GitHub.
 
@@ -442,6 +442,44 @@ The targets are proposals for the team to set. The watch test on 11/10 took abou
 - **Report every gesture separately.** An average hid the fact that Flick Down scored 0 of 10.
 - **Write down the truth as you go.** The watch only saves what it guessed. After phase 3 the context file does this for us.
 - **One knob at a time.** One early result here swung from 80% to 100% with a single smoothing setting. A number that depends on one lucky setting is not a result.
+
+## Working order (Nov 15)
+
+The demo target is solid personal gesture recognition with the math front and center. So the order below makes the current five gestures provably reliable before anything new is added. Where it disagrees with the phase table above, this order wins. It is a working proposal and the team can change it.
+
+| Order | Work | Why here |
+| --- | --- | --- |
+| 1 | Scorecard on the current blueprints, then pull the data | An informal check on 11/15 named every gesture correctly using the 11/10 blueprints with no recalibration. It was not scored. A scored run turns that into evidence and brings the redone Shake reps to the laptop. |
+| 2 | Measure, then test fixes on the laptop | See how close each gesture lands to its limit. Flicks are small (about 1 rad/s), so normal variation between reps uses 36 to 67% of their size against the 90% limit. Twists use 9 to 33%. Eigengestures (step 7) get tested here first. |
+| 3 | The **Wrong?** correction | Blueprints that learn while worn. `GestureBlueprints.update` already exists and nothing calls it yet. |
+| 4 | Real-time listening | Phase 4 as written. |
+| 5 | Chords with the accelerometer | Parked. See the next section. |
+
+## Parked idea: chords (rotation plus translation)
+
+Russell's idea, 11/15. Not started. It comes after everything else in the working order.
+
+**The idea.** Use the accelerometer together with the gyroscope, so a hand translation (up, down, left, right) can be combined with a twist. Russell's pick is a chord: the translation happens at the same moment as the twist, like pressing several keys at once in stenography. He also sees room for doing the two one after another. Two twists times four directions would give eight symbols from moves the user already knows.
+
+**What we know going in**
+
+- **Why the accelerometer was dropped.** It measures gravity, so it records the resting angle of the arm. Gravity has to be removed first. Android has a linear acceleration sensor that does this.
+- **"Up" moves during a twist.** Russell's Twist Left rolls the wrist by roughly 160 degrees (the main stroke of his blueprint, added up). So "up" in the watch's own frame changes in the middle of the gesture. Direction has to be measured in the room's frame, using the rotation vector sensor. We have never used that sensor.
+- **Fast twists strain gravity removal.** His twists peak near 20 rad/s. The gravity estimate can lag at that speed, and the leftover error looks like movement.
+- **A pure twist also shows up as acceleration.** The watch sits a few centimeters off the forearm's axis.
+- **One after another is the easy case.** Translate, then twist, avoids most of the above. A true chord needs the extra frame conversion.
+- **Data.** Every CSV already has the accelerometer columns. There are no recordings of translation gestures yet.
+
+**Open design question, not decided.** One blueprint per combination, or one per ingredient?
+
+| | One blueprint per chord | One blueprint per ingredient |
+| --- | --- | --- |
+| What gets calibrated | 8 chords | 2 twists and 4 directions |
+| Reps at 5 each | 40 | 30 |
+| How it grows | By multiplication | By addition |
+| Risk | Long calibration | Only works if the twist and the translation do not disturb each other's signal |
+
+**First step when we pick this up.** Record a few reps of each candidate with Record mode and look at the accelerometer on the laptop before building anything.
 
 ## Open questions and risks
 

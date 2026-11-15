@@ -512,6 +512,12 @@ Three ways of centring the clip were compared. Each number uses 5 random reps pe
 - **What it does not fix.** Russell's Shake (left, right, back to centre) and Twist Left (left, then back) are close relatives on the same axis. Once shakes are lined up properly, hiding either blueprint makes the watch call most of that gesture by the other's name. With both blueprints present they were told apart every time in the 11/15 run. A shake that starts to the right, or has more wiggles, would sit further from a twist. That is a gesture design decision for the team.
 - **One thing to watch.** Trying more clips gives every blueprint more chances to fit, including the wrong one. On Russell's 11/10 shake, which had no definition yet, "closest wins" with no limit went from 81% to 72%.
 
+**On the watch, 11/15 evening.** The build with one clip per strong stroke compiled, all 18 parity tests passed, and the watch gave the same answer as the laptop on 16 of 16 windows. After recalibrating Shake at his natural pace, Russell did 15 shakes and one Twist Left: 16 of 16 correct, with the shakes at 67 to 88% match. The old recipe would have called 6 of those 15 shakes Twist Left.
+
+**Tempo matters.** An earlier batch of 20 shakes the same evening, on the old build and a slower calibration, scored 17 of 20. The gap between the two strokes was 360 ms in that calibration and 230 to 350 ms in the test, and the match fell from about 55% to about 15% as the gap shrank (correlation 0.91). The comparison can slide a clip in time but it cannot stretch it. Calibrating at the pace the gesture is really done at fixed it for now.
+
+**Not built yet: one ruler.** The winner is picked by raw distance in rad/s but judged by percent of size. A fast shake once missed Shake by 73% of its size and Twist Left by 87%, yet Twist Left won because it is the smaller gesture (3.35 against 3.39 rad/s). Picking the winner by percent too gave 19 of 20 on that batch and helped on Dhruv's data, but turned some ignored windows into wrong names on Russell's 11/10 set (0% to 3.5%).
+
 The comparison of the three methods was run from a scratch script and is not in the repo. The chosen method is in `ML/blueprint_reference.py`, so the evaluation script reproduces its numbers.
 
 ## Parked idea: chords (rotation plus translation)

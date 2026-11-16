@@ -20,6 +20,9 @@ class ListenSession(
 
         /** How many words the Listen screen offers at once. */
         const val WORDS_SHOWN = 3
+
+        /** After the watch's own buzz ends, jolts are ignored for this long while the watch settles. */
+        const val BUZZ_SETTLE_MS = 250L
     }
 
     /**
@@ -48,9 +51,20 @@ class ListenSession(
     private val gate = MotionGate()
     private val cursor = TiltCursor()
     private var cursorAt = -1
+
+    private val fist = FistDetector()
+    private var fistFelt = false
+    private var lastEventNs = 0L
+    private var buzzUntilNs = Long.MIN_VALUE
+
+    /** Gestures named while a jolt was being judged. They are passed on if it was no fist, and dropped if it was. */
+    private val held = ArrayList<Heard>()
+
+    /** Something that happened at a moment of the stream: the watch buzzed, or a jolt was judged. */
+    private class Marker(val what: String, val atNs: Long, val detail: String = "")
     private val events = ArrayList<SensorEventRecord>(4096)
 
-    /** The decisions log, in order: a [Heard] for each burst, a [Spelled] for each finished word. */
+    /** The decisions log, in order: a [Heard] for each burst, a [Spelled] for each chosen word or undo, a [Marker] for each buzz and jolt. */
     private val log = ArrayList<Any>()
 
     /** A finished word: the gesture [digits] that were made, and the [word] found (null for none). */
@@ -66,24 +80,63 @@ class ListenSession(
     var gestureCount = 0
         private set
 
-    /** One gyro event from the watch. Returns what was heard because of it, almost always nothing. */
+    /**
+     * One gyro event from the watch. Returns what was heard because of it, almost always nothing.
+     *
+     * Closing the hand can also look like a small gesture. So a gesture that is named while a
+     * jolt is being judged waits: it is returned later if the jolt was no fist, and dropped if
+     * it was. Ask [takeFist] after each call.
+     */
     @Synchronized
     fun push(event: SensorEventRecord): List<Heard> {
         if (events.size < MAX_EVENTS) events.add(event)
-        val bursts = gate.push(event)
-        if (bursts.isEmpty()) return emptyList()
-        val found = bursts.map { burst ->
+        lastEventNs = event.timestampNs
+        val out = ArrayList<Heard>(0)
+        val since = fist.pendingSince
+        when (fist.gyro(event.timestampNs, event.x.toDouble(), event.y.toDouble(), event.z.toDouble())) {
+            FistDetector.Outcome.FIST -> {
+                fistFelt = true
+                log.add(Marker("FIST", since, "dropped ${held.size}"))
+                held.clear()
+            }
+            FistDetector.Outcome.NOT_A_FIST -> {
+                log.add(Marker("JOLT", since))
+                out.addAll(held)
+                held.clear()
+            }
+            null -> Unit
+        }
+        for (burst in gate.push(event)) {
             val gyro = burst.gyro
-            if (gyro == null) {
+            val heard = if (gyro == null) {
                 Heard(burst.start, burst.last, true, 0, null)
             } else {
                 val clips = MotionClip.clipsOf(gyro)
                 Heard(burst.start, burst.last, false, clips.size, GestureBlueprints.classifyVersions(clips, blueprints, notes = notes))
             }
+            log.add(heard)
+            if (fist.pending && heard.gesture != null) held.add(heard) else out.add(heard)
         }
-        log.addAll(found)
-        gestureCount += found.count { it.gesture != null }
-        return found
+        gestureCount += out.count { it.gesture != null }
+        return out
+    }
+
+    /** True once after the hand closed into a fist. */
+    @Synchronized
+    fun takeFist(): Boolean {
+        val felt = fistFelt
+        fistFelt = false
+        return felt
+    }
+
+    /**
+     * The watch is about to buzz for [durationMs]. Its own buzz shakes the accelerometer about
+     * as hard as a pinch, so jolts are not listened for until a moment after it ends.
+     */
+    @Synchronized
+    fun mute(durationMs: Long) {
+        buzzUntilNs = maxOf(buzzUntilNs, lastEventNs + (durationMs + BUZZ_SETTLE_MS) * 1_000_000L)
+        log.add(Marker("BUZZ", lastEventNs, durationMs.toString()))
     }
 
     /**
@@ -94,7 +147,13 @@ class ListenSession(
     @Synchronized
     fun pushAccel(event: SensorEventRecord, axis: TiltCursor.Axis, options: Int): Int {
         if (events.size < MAX_EVENTS) events.add(event)
+        lastEventNs = event.timestampNs
+        // A fist only means something while there are words to choose, and not right after the watch's own buzz.
+        val armed = options > 0 && event.timestampNs >= buzzUntilNs
+        fist.accel(event.timestampNs, event.x.toDouble(), event.y.toDouble(), event.z.toDouble(), armed)
         cursor.push(event.x.toDouble(), event.y.toDouble(), event.z.toDouble())
+        // Closing the hand tilts the wrist a little. While a jolt is judged the cursor stays on the word it was on.
+        if (fist.pending) return cursorAt
         if (!gate.moving || options <= 0 || axis == TiltCursor.Axis.OFF) cursorAt = cursor.update(axis, options)
         return cursorAt
     }
@@ -126,15 +185,22 @@ class ListenSession(
      * One line per burst: where it was in the stream and what the watch decided. What the user
      * tapped is a line too, in its place among the bursts: `WORD:<word>` for a chosen word, with
      * the gesture digits made for it in `nearest`, and `UNDO` with the digits that were left.
+     * `FIST`, `JOLT` (a jolt that was no fist) and `BUZZ` (the watch's own buzz, with its length
+     * in ms in `nearest`) carry the sensor time they happened at in `at_ns`.
      */
     @Synchronized
     fun decisionsCsv(): String {
-        val out = StringBuilder("start,last,too_long,decision,match_percent,version,nearest,ignored_by_note,clips\n")
+        val out = StringBuilder("start,last,too_long,decision,match_percent,version,nearest,ignored_by_note,clips,at_ns\n")
         for (entry in log) {
             if (entry is Spelled) {
                 out.append("-1,-1,false,")
                     .append(if (entry.word != null) "WORD:${entry.word}" else "UNDO")
-                    .append(",0.0,-1,").append(entry.digits).append(",false,0\n")
+                    .append(",0.0,-1,").append(entry.digits).append(",false,0,\n")
+                continue
+            }
+            if (entry is Marker) {
+                out.append("-1,-1,false,").append(entry.what).append(",0.0,-1,").append(entry.detail)
+                    .append(",false,0,").append(entry.atNs).append('\n')
                 continue
             }
             val item = entry as Heard
@@ -147,7 +213,7 @@ class ListenSession(
                 .append(match?.version ?: -1).append(',')
                 .append(match?.nearest ?: "").append(',')
                 .append(match?.ignoredByNote ?: false).append(',')
-                .append(item.clips).append('\n')
+                .append(item.clips).append(",\n")
         }
         return out.toString()
     }

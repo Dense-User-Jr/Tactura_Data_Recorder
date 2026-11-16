@@ -190,8 +190,24 @@ class RecordingService : Service(), SensorEventListener {
 
         try {
             // Registering at countdown start lets the sensors warm up before the window opens.
-            sensorManager.registerListener(this@RecordingService, accelerometer, SensorManager.SENSOR_DELAY_GAME, sensorHandler)
-            sensorManager.registerListener(this@RecordingService, gyroscope, SensorManager.SENSOR_DELAY_GAME, sensorHandler)
+            // Double Tap recordings ask for the fastest readings the watch gives: a finger tap is a
+            // jolt of a few milliseconds, and nobody knows yet whether 50 readings a second can see it.
+            // Every other gesture keeps the 50 Hz that all existing recordings and blueprints use.
+            val pace = if (mode == SessionMode.RECORD && target == Gesture.DOUBLE_TAP) {
+                SensorManager.SENSOR_DELAY_FASTEST
+            } else {
+                SensorManager.SENSOR_DELAY_GAME
+            }
+            try {
+                sensorManager.registerListener(this@RecordingService, accelerometer, pace, sensorHandler)
+                sensorManager.registerListener(this@RecordingService, gyroscope, pace, sensorHandler)
+            } catch (refused: SecurityException) {
+                // Android refuses the fastest pace to an app without HIGH_SAMPLING_RATE_SENSORS. Record at the usual pace instead of failing.
+                Log.w(TAG, "Fastest sensor pace refused, recording at 50 Hz", refused)
+                sensorManager.unregisterListener(this@RecordingService)
+                sensorManager.registerListener(this@RecordingService, accelerometer, SensorManager.SENSOR_DELAY_GAME, sensorHandler)
+                sensorManager.registerListener(this@RecordingService, gyroscope, SensorManager.SENSOR_DELAY_GAME, sensorHandler)
+            }
 
             for (seconds in PREPARE_SECONDS downTo 1) {
                 vibrate(60)
@@ -338,6 +354,18 @@ class RecordingService : Service(), SensorEventListener {
                 it.spelling((it.heard + label).takeLast(WORD_MAX)).copy(heardCount = it.heardCount + 1, prediction = prediction)
             }
         }
+        if (session.takeFist()) onFist()
+    }
+
+    /**
+     * Sensor thread. The hand closed into a fist: choose the word the cursor is on, or the first
+     * word when the cursor is off. The choice goes the same way as a tap on the word.
+     */
+    private fun onFist() {
+        val status = RecordingRepository.status.value
+        val offered = (status.words + status.wordHints).take(ListenSession.WORDS_SHOWN)
+        if (offered.isEmpty()) return
+        RecordingRepository.chooseWord(offered[status.cursor.coerceIn(0, offered.size - 1)])
     }
 
     /** Sensor thread. One accelerometer event in Listen mode: move the word cursor if the wrist has tilted. */
@@ -641,10 +669,13 @@ class RecordingService : Service(), SensorEventListener {
     }
 
     private fun vibrate(durationMs: Long) {
+        // In Listen mode the buzz is announced first, so its shaking is not taken for a fist.
+        listening?.mute(durationMs)
         vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     private fun vibrateStopCue() {
+        listening?.mute(260)
         vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 80, 100, 80), -1))
     }
 

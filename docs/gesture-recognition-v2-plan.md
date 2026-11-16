@@ -885,7 +885,64 @@ The signs of the two angles were checked against these: roll grows the way a Twi
 
 *Something to feel for.* Most cursor turns are fast enough to open the gate, and the cursor is frozen while the gate is open, so the highlight moves about a quarter of a second after the turn stops and not during it.
 
-**Not done.** Choosing without a tap (pinch or tap detection). **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
+**Choosing without a tap: data first, 11/15.** There are no recordings of a pinch, a tap or a fist. Russell wants to try all three as the "select" movement: one pinch, a double pinch, and closing the hand. Ten recordings of each, made with Record and Double Tap selected, told apart by the order they are made in. With Double Tap selected, Record now asks for the fastest sensor readings the watch gives, so one round of recordings shows both what each movement looks like and whether 50 readings a second would have been enough (by thinning them out on the laptop).
+
+**What a pinch, a double pinch and a fist look like, 11/15 at 11:15 PM.** 35 recordings at 100 readings a second (`recordings_pinch_v1`, files 18 to 52): 10 single pinches, 10 double pinches, 10 fists (close the hand, then open), 5 with the arm still. The measure is the accelerometer's jump from one reading to the next, in m/s2, after thinning to 50 readings a second.
+
+| | Accel jump at 50 Hz | Gyro peak, rad/s | Notes |
+| --- | --- | --- | --- |
+| Arm still | 0.3 to 0.5 | 0.1 to 0.2 | |
+| One pinch | 2.3 to 4.7 | 0.6 to 1.6 | lasts 0.1 to 0.4 s |
+| Double pinch | 3.4 to 6.3 | 0.7 to 1.2 | two jolts about 0.35 s apart in 8 of 10 |
+| Fist | 5.6 to 20 | 1.1 to 1.7 | a big jolt on closing, a smaller one on opening |
+
+*Is 50 readings a second enough?* Yes. Thinning from 100 to 50 lowers a pinch's jump by a third (6.1 to 4.0 at the median) and leaves a fist's unchanged (11.7 to 12.0). The gyro does not change. All three stand far above a still arm at 50.
+
+*The watch shakes itself.* The buzz at the start of each recording shows as accelerometer jumps of 1.3 to 3.1, as big as a pinch. Any detector has to ignore the moment after the app's own buzz, and the cursor buzzes at every step.
+
+*Look-alikes in real use.* The same measure on 267 s of listening with the roll cursor, where no pinch or fist was made: 28 pinch-sized jolts from a calm wrist (6 a minute), and none of fist size under the strictest rule. Some are surely the watch's own buzzes and fingers tapping the screen. The logs do not record when the watch buzzed, so they cannot be removed yet.
+
+*First rules, tried on the laptop.*
+
+| Rule | Found | Fires on the other movements | False in 267 s of listening | False in 81 gesture reps |
+| --- | --- | --- | --- | --- |
+| Fist: a jump of 6 or more from a wrist that is not really moving, no real movement after | 9 of 10 fists | 0 pinches, 1 double pinch | 2 | 0 |
+| The same with a jump of 7 and a calmer wrist before | 7 of 10 | none | 0 | 0 |
+| Double pinch: two jolts 0.2 to 0.55 s apart, calm before and after | 6 of 10 | 3 single pinches | 6 | 0 |
+| One pinch: one jolt of 2 or more, calm before and after | 8 of 10 | everything | 28 | |
+
+The fist is the one a simple rule can pick out: it is the biggest, it is not confused with a pinch, and gestures never look like it. One pinch is too small to tell from ordinary jolts with this measure. These rules are quick first tries, tuned on the same 10 recordings they are scored on, so the real numbers will be worse. They need a run on the watch with the buzz times logged.
+
+**Fist to choose, 11/15 (Russell's pick).** Closing the hand chooses the word the cursor is on.
+
+*The rule* (`FistDetector.kt`). With J the accelerometer's jump between two readings and w the size of the gyro reading:
+
+```math
+\text{fist at } t:\quad J(t) \ge 7, \quad \max_{[t-0.30,\,t-0.04]} w < 1.5, \quad \max_{[t-0.04,\,t+0.50]} w < 2.5, \quad \max_{[t+0.50,\,t+0.65]} w < 0.5
+```
+
+In words: a hard jolt, from a wrist that was not really moving, that does not turn into a real movement, and is calm again right after. The answer comes 0.65 s after the jolt. A jolt followed by fast turning is dropped at once, so the start of a gesture does not wait.
+
+*How the numbers were chosen.* On the 35 recordings and the 267 s of listening, with a shorter wait than the first tries so the choice feels quick:
+
+| Jump needed | Wrist before, under | Decision after | Fists found | Pinches or double pinches taken for one | False in 267 s | False in 81 gesture reps |
+| --- | --- | --- | --- | --- | --- | --- |
+| 6 | 1.5 | 0.55 s | 9 of 10 | 1 | 4 | 0 |
+| 7 | 1.5 | 0.55 s | 9 of 10 | 0 | 2 | 0 |
+| 7 | 1.5 | 0.65 s (built) | 9 of 10 | 0 | 0 | 0 |
+| 7 | 1.0 | 0.65 s | 7 of 10 | 0 | 0 | 0 |
+
+A line-for-line Python copy of the Kotlin detector gives the same result on the same data: 9 of 10 fists, no pinch, nothing in the listening or the gesture reps. It lives in a scratch folder and is not in the repo yet. All of this is tuned and scored on the same ten fists.
+
+*Around the rule.*
+
+- A fist only counts while words are offered.
+- The app's own buzz shakes the accelerometer, so jolts are not listened for during a buzz and for 250 ms after.
+- Closing the hand tilts the wrist, so the cursor is frozen from the jolt until it is judged. The word chosen is the one the cursor was on.
+- One recorded fist in ten was also heard as a soft Flick Down by the gesture listener. A gesture named while a jolt is being judged now waits, and is dropped if the jolt was a fist.
+- The decisions file of a session now has a line for every fist, every jolt that was not one, and every buzz, each with its sensor time, so the next pull shows what really set the detector off.
+
+**Not done.** Running fist to choose on the watch. **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
 
 ## Parked idea: chords (rotation plus translation)
 

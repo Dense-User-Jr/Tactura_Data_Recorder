@@ -190,10 +190,15 @@ class GestureBlueprintsParityTest {
     @Test
     fun aFaintCopyIsNotAGesture() {
         for ((gesture, blueprint) in blueprints) {
-            val faint = Array(3) { axis -> DoubleArray(MotionClip.CLIP_LEN) { i -> 0.3 * blueprint.mean[axis][i] } }
+            // At 5% strength the plain distance is 95% of the blueprint's size, over the limit, so the
+            // clip can only get close through forgiveness, and then it is far too weak to count.
+            val faint = Array(3) { axis -> DoubleArray(MotionClip.CLIP_LEN) { i -> 0.05 * blueprint.mean[axis][i] } }
             val alone = mapOf(gesture to blueprint)
-            assertNull("$gesture at 30% strength", GestureBlueprints.classify(faint, alone).gesture)
-            assertNull("$gesture at 30% strength", GestureBlueprints.classifyClips(listOf(faint), alone).gesture)
+            assertNull("$gesture at 5% strength", GestureBlueprints.classify(faint, alone).gesture)
+            assertNull("$gesture at 5% strength", GestureBlueprints.classifyClips(listOf(faint), alone).gesture)
+            // A soft but honest copy passes the plain test, so the strength rule leaves it alone.
+            val soft = Array(3) { axis -> DoubleArray(MotionClip.CLIP_LEN) { i -> 0.4 * blueprint.mean[axis][i] } }
+            assertEquals("$gesture at 40% strength", gesture, GestureBlueprints.classify(soft, alone).gesture)
             val still = Array(3) { DoubleArray(MotionClip.CLIP_LEN) }
             assertNull("$gesture: no motion at all", GestureBlueprints.classify(still, alone).gesture)
         }

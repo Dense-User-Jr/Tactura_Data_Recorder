@@ -33,10 +33,12 @@ object GestureBlueprints {
     const val LIMIT_PERCENT = 0.9
 
     /**
-     * "Strong enough" rule: a clip counts as a gesture only if its own size is at least this
-     * fraction of the blueprint's size. Eigengestures forgive part of the gap between a clip and
-     * a blueprint, and for a small gesture that can include most of the gap to no motion at all.
-     * Without this rule a faint twitch could pass as the smallest gesture.
+     * "Strong enough" rule. Eigengestures forgive part of the gap between a clip and a blueprint,
+     * and for a small gesture that can include most of the gap to no motion at all, so a faint
+     * twitch could pass as the smallest gesture. A clip that is close enough only thanks to that
+     * forgiveness (its plain distance is over the limit) must therefore also be at least this
+     * fraction of the blueprint's size. A clip that is close enough the plain way is accepted
+     * whatever its strength, so an honest soft rep is not thrown out.
      */
     const val MIN_STRENGTH = 0.6
 
@@ -344,8 +346,8 @@ object GestureBlueprints {
      * [blueprints] maps a gesture name to its blueprint. The result's gesture is null when [clip]
      * is null (the wrist was quiet), when there are no blueprints, or when [useLimit] is on and
      * the clip misses the closest blueprint by more than [LIMIT_PERCENT] of that blueprint's size,
-     * or is weaker than [MIN_STRENGTH] of it. The miss is measured with [eigenDistance], so the
-     * user's usual variation does not count against them.
+     * or needed forgiving to get that close and is weaker than [MIN_STRENGTH] of it. The miss is
+     * measured with [eigenDistance], so the user's usual variation does not count against them.
      */
     fun classify(clip: Array<DoubleArray>?, blueprints: Map<String, Blueprint>, useLimit: Boolean = true): Match {
         if (clip == null || blueprints.isEmpty()) return Match(null, Double.POSITIVE_INFINITY)
@@ -360,10 +362,7 @@ object GestureBlueprints {
             }
         }
         val winner = bestName ?: return Match(null, best)
-        if (useLimit) {
-            val winnerSize = blueprints.getValue(winner).size
-            if (best > LIMIT_PERCENT * winnerSize || size(clip) < MIN_STRENGTH * winnerSize) return Match(null, best)
-        }
+        if (useLimit && !passes(clip, blueprints.getValue(winner), best)) return Match(null, best)
         return Match(winner, best)
     }
 
@@ -396,10 +395,7 @@ object GestureBlueprints {
         }
         val winner = bestName ?: return Match(null, best)
         val winningClip = bestClip ?: return Match(null, best)
-        if (useLimit) {
-            val winnerSize = blueprints.getValue(winner).size
-            if (best > LIMIT_PERCENT * winnerSize || size(winningClip) < MIN_STRENGTH * winnerSize) return Match(null, best)
-        }
+        if (useLimit && !passes(winningClip, blueprints.getValue(winner), best)) return Match(null, best)
         return Match(winner, best)
     }
 
@@ -426,6 +422,14 @@ object GestureBlueprints {
             }
         }
         return bestIndex
+    }
+
+    /** The "close enough" and "strong enough" rules for the winning clip and blueprint. */
+    private fun passes(clip: Array<DoubleArray>, blueprint: Blueprint, eigenMiss: Double): Boolean {
+        val limit = LIMIT_PERCENT * blueprint.size
+        if (eigenMiss > limit) return false // not close enough, even after forgiving the usual variation
+        if (distance(clip, blueprint.mean).distance <= limit) return true // close enough the plain way
+        return size(clip) >= MIN_STRENGTH * blueprint.size // needed forgiving: must be strong enough
     }
 
     /** Adds the clips number by number, in order, then divides by how many there are. */

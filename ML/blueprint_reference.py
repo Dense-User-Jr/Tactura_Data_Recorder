@@ -51,7 +51,7 @@ EIGEN_CAP = 1.5                   # forgive up to this many times the spread see
 EIGEN_FLOOR = 1e-9                # a direction holding less than this share of the variation is noise
 JACOBI_SWEEPS = 30                # passes of the eigenvalue solver; a 5 by 5 table settles in under 10
 LIMIT_PERCENT = 0.9               # "close enough" = within 90% of the blueprint's own size
-MIN_STRENGTH = 0.6                # "strong enough" = at least 60% of the blueprint's own size
+MIN_STRENGTH = 0.6                # "strong enough" = at least 60% of the blueprint's own size (only for clips that needed forgiving)
 
 GYRO = "gyroscope"
 
@@ -516,6 +516,16 @@ def choose_clip(clips, earlier):
 
 # ---- step 6: decide ---------------------------------------------------------
 
+def _passes(clip, blueprint, eigen_miss):
+    """The "close enough" and "strong enough" rules for the winning clip and blueprint."""
+    limit = LIMIT_PERCENT * blueprint.size
+    if eigen_miss > limit:
+        return False  # not close enough, even after forgiving the usual variation
+    if distance(clip, blueprint.mean)[0] <= limit:
+        return True   # close enough the plain way
+    return blueprint_size(clip) >= MIN_STRENGTH * blueprint.size  # needed forgiving: must be strong enough
+
+
 def classify(clip, blueprints, use_limit=True):
     """Pick the closest blueprint.
 
@@ -527,11 +537,14 @@ def classify(clip, blueprints, use_limit=True):
     The miss is measured with eigen_distance, so the user's usual variation
     does not count against them.
 
-    use_limit also applies the "strong enough" rule: the clip's own size must
-    be at least MIN_STRENGTH of the blueprint's size. Eigengestures forgive
+    use_limit also applies the "strong enough" rule. Eigengestures forgive
     part of the gap between a clip and a blueprint, and for a small gesture
-    that can include most of the gap to no motion at all. Without this rule a
-    faint twitch could pass as the smallest gesture.
+    that can include most of the gap to no motion at all, so a faint twitch
+    could pass as the smallest gesture. A clip that is close enough only thanks
+    to that forgiveness (its plain distance is over the limit) must therefore
+    also be at least MIN_STRENGTH of the blueprint's size. A clip that is
+    close enough the plain way is accepted whatever its strength, so an honest
+    soft rep is not thrown out.
 
     The limit has to stay below 100%: a clip of almost no motion is exactly
     100% away from every blueprint, so at 100% a faint twitch could pass as
@@ -546,10 +559,8 @@ def classify(clip, blueprints, use_limit=True):
         if value < best:
             best = value
             best_name = name
-    if use_limit:
-        size = blueprints[best_name].size
-        if best > LIMIT_PERCENT * size or blueprint_size(clip) < MIN_STRENGTH * size:
-            return None, best
+    if use_limit and not _passes(clip, blueprints[best_name], best):
+        return None, best
     return best_name, best
 
 
@@ -576,8 +587,6 @@ def classify_clips(clips, blueprints, use_limit=True):
                 best = value
                 best_name = name
                 best_clip = clip
-    if use_limit:
-        size = blueprints[best_name].size
-        if best > LIMIT_PERCENT * size or blueprint_size(best_clip) < MIN_STRENGTH * size:
-            return None, best
+    if use_limit and not _passes(best_clip, blueprints[best_name], best):
+        return None, best
     return best_name, best

@@ -214,11 +214,13 @@ The closest blueprint wins, but only if it is close enough. Otherwise the watch 
 
 The limit is a percentage of the gesture's own size. A clip must miss its closest blueprint by no more than 90% of that blueprint's size, where size is the root mean square of the blueprint. A fixed limit in rad/s was tried first and failed: 1 rad/s is a tiny miss for a twist, but it is the whole gap between Flick Up and Flick Down. With the percentage rule, wrong names fell from 4% to 0%, 12% of real gestures were ignored, and a gesture with no blueprint was ignored every time. The limit sits below 100% on purpose: a clip of no motion is exactly 100% away from every blueprint, so at 100% a faint twitch once passed as a Flick Up on the watch.
 
-Since 11/15 there is a second rule, "strong enough": the clip's own size must be at least 60% of the winning blueprint's size. It exists because eigengestures (step 7) forgive part of the gap between a clip and a blueprint, and for a small gesture that can include most of the gap to no motion at all.
+Since 11/15 there is a second rule, "strong enough". Eigengestures (step 7) forgive part of the gap between a clip and a blueprint, and for a small gesture that can include most of the gap to no motion at all. So a clip that is close enough only thanks to that forgiveness must also be at least 60% of the winning blueprint's size. A clip that is already close enough the plain way (step 5) is accepted whatever its strength, so an honest soft rep is not thrown out.
 
 ```math
-\text{answer } \hat{g} \text{ only if } \ d_{\text{eig}}(x,\mu_{\hat{g}}) \le 0.9\,\text{size}(\mu_{\hat{g}}) \ \text{ and } \ \text{size}(x) \ge 0.6\,\text{size}(\mu_{\hat{g}})
+\text{answer } \hat{g} \text{ only if } \ d_{\text{eig}} \le 0.9\,s \ \text{ and } \ \left(\, d \le 0.9\,s \ \text{ or } \ \text{size}(x) \ge 0.6\,s \,\right), \qquad s = \text{size}(\mu_{\hat{g}})
 ```
+
+Here d is the plain distance from step 5 and the other one is the forgiving distance from step 7, both measured to the winning blueprint.
 
 ### Step 7. Eigengestures (built 11/15)
 
@@ -281,7 +283,7 @@ It scored 97% in the same test. Its weakness is that a signal and its mirror ima
 | Reps per gesture | 5, with 3 as the minimum | 3 is enough for the average, 5 allows eigengestures |
 | Eigen directions | 2 | Russell's pick on 11/15 after a sweep of 1 to 4. The first helps most inside one sitting, the second on a new sitting. More than 2 kept adding a few points but accepted more odd movements |
 | Eigen cap | 1.5 times the spread seen in calibration | First set to 2, then tightened by Russell on 11/15 after the first real random-movement test. Caps from 1.5 to none changed accuracy by at most 2 points, and a tighter cap leaked less |
-| "Strong enough" limit | A clip must be at least 60% of the blueprint's own size | Added 11/15 as a guard for eigengestures at 50%, raised to 60% the same night. On the watch it stopped 5 of 20 movements that should be ignored |
+| "Strong enough" limit | At least 60% of the blueprint's own size, checked only for clips that needed eigengesture forgiveness to be close enough | Added 11/15 as a guard for eigengestures. Applied to every clip it threw out 4 honest soft Flick Downs in 10, so Russell narrowed it the same night |
 | "Close enough" limit | Within 90% of the blueprint's own size | Russell's rule. Laptop: 88% correct, 12% ignored, 0% misnamed. Watch: 41 of 41 flicks and twists in each of two sittings |
 | Weight of the shared blueprint | Open | Needs data from more people |
 
@@ -632,7 +634,24 @@ Many of the faint copies that still get a name are faint twists that resemble Ru
 
 Russell chose cap 1.5 with strong enough at 60%. This was tuned on two false alarms that were borderline, so it needs more random-movement windows from another day.
 
-**Not done.** Watch test of the retuned build. A test on another day with no recalibration. Keeping one blueprint per sitting.
+**On the watch, 11/15 at 8 PM (cap 1.5, strong enough 60% for every clip).** 60 windows, watch and laptop agree on all 60. Twist Left, Twist Right, Flick Up and Shake were 10 of 10 each, and 10 of 10 random movements were ignored. Flick Down was 6 of 10 with 4 ignored.
+
+All four ignored Flick Downs were good matches in shape (66 to 75% off the blueprint, inside the 90% limit with no forgiveness at all) and were thrown out only for being 41 to 60% as strong as the blueprint. Russell had calibrated Flick Down an hour earlier with energetic flicks. The earlier data had put the cost of 60% at one flick in 71. His flick strength varies more between sittings than that data showed.
+
+**The rule narrowed.** The rule exists to stop movements that only get close through eigengesture forgiveness. These four needed none. So it now applies only to clips whose plain distance is over the limit.
+
+| Option | The 80 real gestures of the two evening rounds | False alarms, of 30 | Flicks in a new sitting |
+| --- | --- | --- | --- |
+| 60% for every clip | 76 right, 4 ignored | 0 | 72% |
+| 50% for every clip | 79 right, 1 wrong name | 0 | 73% |
+| 60% only when forgiveness was needed (chosen) | 79 right, 1 ignored | 0 | 73% |
+| No eigengestures | 79 right, 1 ignored | 0 | 66% |
+
+The one left over is a Flick Down at 41% strength. The cost of the narrower rule shows on the synthetic faint copies: 159 of 480 still get a name, against 114 with 50% for every clip and 132 before eigengestures. The 30 real movements that should be ignored were all ignored.
+
+**Where flicks stand.** In three evening rounds the only failures were flicks, each time because the movement itself had changed: softer, more twist, different from an hour before. The recipe now does about what it can for a gesture this small and this variable. What is left is keeping one blueprint per sitting, or a firmer definition of the flick.
+
+**Not done.** Watch test of this final build. A test on another day with no recalibration. Keeping one blueprint per sitting.
 
 
 ## Parked idea: chords (rotation plus translation)

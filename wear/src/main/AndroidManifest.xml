@@ -8,6 +8,13 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
 
+    <!-- Lets the app find the watch's text-to-speech engine, which says chosen words out loud. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"

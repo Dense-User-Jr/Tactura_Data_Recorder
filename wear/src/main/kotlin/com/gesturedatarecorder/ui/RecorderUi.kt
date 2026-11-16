@@ -518,7 +518,10 @@ private fun ListenScreen(status: RecordingStatus) {
                     }
                 }
                 // The word that was just chosen, until the next gesture.
-                word != null -> Readout(word, sizeSp = readoutSize(word, maxSp = 30f, widthDp = LISTEN_CENTER_DP), color = hot)
+                word != null -> {
+                    Readout(word, sizeSp = readoutSize(word, maxSp = 30f, widthDp = LISTEN_CENTER_DP), color = hot)
+                    if (!status.voiceWorks) Label("No voice on watch", color = Ink.Dim, sizeSp = 9f)
+                }
                 else -> Label("Make a gesture")
             }
             Row(verticalAlignment = Alignment.CenterVertically) {

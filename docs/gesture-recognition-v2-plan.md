@@ -842,7 +842,9 @@ Built: the middle of the Listen screen lists up to three words, first the ones t
 
 *Ordinary wear.* One session was left listening for 3.3 minutes after a word. The gate found 28 bursts of movement. Half were shorter than any real gesture, one was too long, and one was named: a Flick Down at 28%, three seconds before the session was stopped, which is probably the reach for the Stop button. Four more bursts came within 86 to 96% of the small soft Flick Down version, the limit being 90%, and were turned down. The plan's bar for real-time listening was one minute of ordinary movement with at most one false gesture. This is a first pass at it. What Russell was doing during those minutes is not recorded.
 
-**Not done.** Speaking the word aloud. The tilt cursor. **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
+**Speaking the word, 11/15.** A chosen word is said out loud by the text-to-speech engine installed on the watch (`WordVoice.kt`), after the double tick. This is the simulator's fallback tier, the system voice. The simulator's neural voice (Kokoro) runs in a browser and is not on the watch. If the watch has no engine or no English voice, the screen says so under the word. Not yet run on the watch: whether the Galaxy Watch 7 has an engine installed, and how it sounds on the watch speaker, are both unknown.
+
+**Not done.** The tilt cursor. **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
 
 ## Parked idea: chords (rotation plus translation)
 

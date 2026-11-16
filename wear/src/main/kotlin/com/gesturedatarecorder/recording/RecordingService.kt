@@ -111,6 +111,9 @@ class RecordingService : Service(), SensorEventListener {
     private val tick by lazy { TickSound() }
     private val wordTick by lazy { TickSound(pitchHz = 1100.0, pulses = 2) }
 
+    /** Says chosen words out loud. Non-null only while Listen mode runs. */
+    private var voice: WordVoice? = null
+
     /** The words that can be spelled. Read once when Listen mode starts. */
     @Volatile
     private var lexicon: List<Lexicon.Entry> = emptyList()
@@ -269,6 +272,10 @@ class RecordingService : Service(), SensorEventListener {
             publish {
                 RecordingStatus(RecordingPhase.LISTENING, SessionMode.LISTEN, message = "Listening", sessionTally = it.sessionTally)
             }
+            // The voice starts in the background. The screen is told only if the watch turns out to have none.
+            voice = WordVoice(applicationContext) { works ->
+                if (!works) RecordingRepository.update { if (it.phase == RecordingPhase.LISTENING) it.copy(voiceWorks = false) else it }
+            }
             awaitCancellation()
         } catch (cancelled: CancellationException) {
             listening = null
@@ -304,6 +311,8 @@ class RecordingService : Service(), SensorEventListener {
             throw cancelled
         } finally {
             listening = null
+            voice?.shutdown()
+            voice = null
             sensorManager.unregisterListener(this@RecordingService)
             endService()
         }
@@ -345,6 +354,7 @@ class RecordingService : Service(), SensorEventListener {
                 session.logWord(made, command.word)
                 vibrateStopCue()
                 wordTick.play()
+                voice?.speak(command.word)
                 RecordingRepository.update { it.spelling(emptyList()).copy(word = command.word, wordCount = it.wordCount + 1) }
             }
             // Take back the last gesture.

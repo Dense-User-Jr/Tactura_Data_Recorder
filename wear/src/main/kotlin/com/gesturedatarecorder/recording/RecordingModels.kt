@@ -101,6 +101,8 @@ data class RecordingStatus(
     val word: String? = null,
     /** Listen: how many words have been chosen in this session. */
     val wordCount: Int = 0,
+    /** Listen: false once it is known that the watch cannot say words out loud. */
+    val voiceWorks: Boolean = true,
     /** Listen: how many gestures have been named in this session. */
     val heardCount: Int = 0,
     /** Listen: how many bursts of movement were not a gesture. */

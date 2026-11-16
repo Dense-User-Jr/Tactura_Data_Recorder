@@ -21,7 +21,31 @@ object RecordingRepository {
     /** Collected by a running [RecordingService]; emissions with no service running are dropped. */
     internal val cancelRequests: SharedFlow<Unit> = _cancelRequests.asSharedFlow()
 
+    /** What the Listen screen can ask the service to do. */
+    sealed interface ListenCommand {
+        /** The user tapped [word]: it is the word they were spelling. */
+        class Choose(val word: String) : ListenCommand
+
+        /** Take back the last gesture. */
+        object Undo : ListenCommand
+    }
+
+    private val _listenCommands = MutableSharedFlow<ListenCommand>(extraBufferCapacity = 4)
+
+    /** Collected by a running [RecordingService] in Listen mode. */
+    internal val listenCommands: SharedFlow<ListenCommand> = _listenCommands.asSharedFlow()
+
     internal fun update(transform: (RecordingStatus) -> RecordingStatus) = _status.update(transform)
+
+    /** Listen mode: [word] is the word being spelled. Show it and start the next one. */
+    fun chooseWord(word: String) {
+        _listenCommands.tryEmit(ListenCommand.Choose(word))
+    }
+
+    /** Listen mode: take back the last gesture. */
+    fun undoGesture() {
+        _listenCommands.tryEmit(ListenCommand.Undo)
+    }
 
     /** Cancels the running session, if any. Never starts the service. */
     fun requestCancel() {

@@ -30,8 +30,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -65,6 +67,12 @@ class RecordingService : Service(), SensorEventListener {
 
         fun startClassification(context: Context) = start(context, SessionMode.CLASSIFY, null)
 
+        /** Listens with no button until cancelled, naming each gesture as it happens. */
+        fun startListening(context: Context) = start(context, SessionMode.LISTEN, null)
+
+        /** Listen: the longest word, in gestures. More than this and the oldest gesture is dropped. */
+        private const val WORD_MAX = 12
+
         /** Captures one calibration rep. With no [gesture], the next one that still needs reps is used. */
         fun startCalibration(context: Context, gesture: Gesture? = null) = start(context, SessionMode.CALIBRATE, gesture)
 
@@ -97,6 +105,16 @@ class RecordingService : Service(), SensorEventListener {
     @Volatile
     private var capture: SensorCapture? = null
 
+    /** Non-null only while Listen mode runs; written on main, read on the sensor thread. */
+    @Volatile
+    private var listening: ListenSession? = null
+    private val tick by lazy { TickSound() }
+    private val wordTick by lazy { TickSound(pitchHz = 1100.0, pulses = 2) }
+
+    /** The words that can be spelled. Read once when Listen mode starts. */
+    @Volatile
+    private var lexicon: List<Lexicon.Entry> = emptyList()
+
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(SensorManager::class.java)
@@ -112,6 +130,7 @@ class RecordingService : Service(), SensorEventListener {
             NotificationChannel(CHANNEL_ID, "Gesture sessions", NotificationManager.IMPORTANCE_LOW)
         )
         scope.launch { RecordingRepository.cancelRequests.collect { sessionJob?.cancel() } }
+        scope.launch { RecordingRepository.listenCommands.collect { onListenCommand(it) } }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -153,6 +172,10 @@ class RecordingService : Service(), SensorEventListener {
         if (mode == SessionMode.CALIBRATE && target == null) {
             publishError("Every gesture is already calibrated")
             endService()
+            return@coroutineScope
+        }
+        if (mode == SessionMode.LISTEN) {
+            listen(gyroscope)
             return@coroutineScope
         }
         // Load the model during the countdown so it is ready when the window closes.
@@ -212,6 +235,7 @@ class RecordingService : Service(), SensorEventListener {
                 SessionMode.RECORD -> saveRecording(requireNotNull(target), events, startedAtWallMs)
                 SessionMode.CLASSIFY -> classify(requireNotNull(model).await(), events, startedAtWallMs, metrics)
                 SessionMode.CALIBRATE -> calibrate(requireNotNull(target), events, startedAtWallMs)
+                SessionMode.LISTEN -> Unit // handled by listen() before the countdown
             }
         } catch (cancelled: CancellationException) {
             publish { RecordingStatus(RecordingPhase.IDLE, message = "Cancelled", sessionTally = it.sessionTally) }
@@ -220,6 +244,116 @@ class RecordingService : Service(), SensorEventListener {
             capture = null
             sensorManager.unregisterListener(this@RecordingService)
             endService()
+        }
+    }
+
+    /**
+     * Listen mode: no countdown and no window. The gyroscope stays on, every event goes to a
+     * [ListenSession] on the sensor thread, and each gesture it hears ticks, buzzes and shows on
+     * the screen. Runs until the user stops it, then saves the stream and the decisions.
+     */
+    private suspend fun listen(gyroscope: Sensor) {
+        if (!BlueprintStore.isComplete()) {
+            publishError("Calibrate every gesture before listening")
+            endService()
+            return
+        }
+        lexicon = withContext(Dispatchers.IO) { Lexicon.load(applicationContext) }
+        val session = ListenSession(BlueprintStore.blueprints(), BlueprintStore.notes())
+        val startedAtWallMs = System.currentTimeMillis()
+        try {
+            Corrections.forget()
+            listening = session
+            sensorManager.registerListener(this@RecordingService, gyroscope, SensorManager.SENSOR_DELAY_GAME, sensorHandler)
+            vibrate(120)
+            publish {
+                RecordingStatus(RecordingPhase.LISTENING, SessionMode.LISTEN, message = "Listening", sessionTally = it.sessionTally)
+            }
+            awaitCancellation()
+        } catch (cancelled: CancellationException) {
+            listening = null
+            sensorManager.unregisterListener(this@RecordingService)
+            // Leave the Listen screen first. Once the session is cancelled, nothing after the
+            // save below is allowed to run, so the screen must not wait for it.
+            publish {
+                RecordingStatus(
+                    RecordingPhase.IDLE,
+                    message = "Heard ${session.gestureCount} gestures, ${session.wordCount} words",
+                    sessionTally = it.sessionTally
+                )
+            }
+            withContext(NonCancellable + Dispatchers.IO) {
+                val stream = CsvStorage.save(
+                    applicationContext,
+                    CsvStorage.LISTEN_DIR,
+                    { number -> CsvStorage.listenStreamName(number, startedAtWallMs) },
+                    session.streamCsv()
+                )
+                val decisions = CsvStorage.save(
+                    applicationContext,
+                    CsvStorage.LISTEN_DIR,
+                    { number -> CsvStorage.listenDecisionsName(number, startedAtWallMs) },
+                    session.decisionsCsv()
+                )
+                Log.i(
+                    TAG,
+                    "Listen ended: ${session.gestureCount} gestures, ${session.wordCount} words, " +
+                        "logFull=${session.logIsFull()}, files=$stream $decisions"
+                )
+            }
+            throw cancelled
+        } finally {
+            listening = null
+            sensorManager.unregisterListener(this@RecordingService)
+            endService()
+        }
+    }
+
+    /** Sensor thread. One gyro event in Listen mode: buzz, tick and show whatever it completed. */
+    private fun onListenEvent(session: ListenSession, event: SensorEvent) {
+        val values = event.values
+        val found = session.push(SensorEventRecord(SensorKind.GYROSCOPE, event.timestamp, values[0], values[1], values[2]))
+        for (item in found) {
+            val label = item.gesture
+            if (label == null) {
+                RecordingRepository.update { it.copy(ignoredCount = it.ignoredCount + 1) }
+                continue
+            }
+            vibrate(40)
+            tick.play()
+            val prediction = GesturePrediction(label, item.matchShare.toFloat())
+            RecordingRepository.update {
+                it.spelling((it.heard + label).takeLast(WORD_MAX)).copy(heardCount = it.heardCount + 1, prediction = prediction)
+            }
+        }
+    }
+
+    /** The gestures [made] with the words they spell and the words they start, for the Listen screen. */
+    private fun RecordingStatus.spelling(made: List<String>): RecordingStatus {
+        val key = Lexicon.key(made).orEmpty()
+        return copy(heard = made, words = Lexicon.exact(lexicon, key), wordHints = Lexicon.longer(lexicon, key))
+    }
+
+    /** Listen mode, main thread: something was tapped on the Listen screen. */
+    private fun onListenCommand(command: RecordingRepository.ListenCommand) {
+        val session = listening ?: return
+        val made = RecordingRepository.status.value.heard
+        when (command) {
+            // The user tapped the word they were spelling: show it with a double tick and start the next word.
+            is RecordingRepository.ListenCommand.Choose -> {
+                if (made.isEmpty()) return
+                session.logWord(made, command.word)
+                vibrateStopCue()
+                wordTick.play()
+                RecordingRepository.update { it.spelling(emptyList()).copy(word = command.word, wordCount = it.wordCount + 1) }
+            }
+            // Take back the last gesture.
+            RecordingRepository.ListenCommand.Undo -> {
+                if (made.isEmpty()) return
+                session.logUndo(made.dropLast(1))
+                vibrate(20)
+                RecordingRepository.update { it.spelling(it.heard.dropLast(1)) }
+            }
         }
     }
 
@@ -436,6 +570,11 @@ class RecordingService : Service(), SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent) {
+        val session = listening
+        if (session != null) {
+            if (event.sensor.type == Sensor.TYPE_GYROSCOPE) onListenEvent(session, event)
+            return
+        }
         val activeCapture = capture ?: return
         val kind = when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> SensorKind.ACCELEROMETER
@@ -496,6 +635,9 @@ class RecordingService : Service(), SensorEventListener {
         sessionJob?.cancel()
         scope.cancel()
         capture = null
+        listening = null
+        tick.release()
+        wordTick.release()
         sensorManager.unregisterListener(this)
         sensorThread.quitSafely()
         super.onDestroy()

@@ -41,6 +41,18 @@ object CsvStorage {
      */
     val CORRECTIONS_DIR = Environment.DIRECTORY_DOWNLOADS + "/GestureCorrections/"
 
+    /**
+     * Listen-mode sessions: /sdcard/Download/GestureListen. Two files per session: the raw gyro
+     * stream, and one line per burst with what the watch decided.
+     */
+    val LISTEN_DIR = Environment.DIRECTORY_DOWNLOADS + "/GestureListen/"
+
+    fun listenStreamName(number: Int, startedAtWallMs: Long): String =
+        "%04d_listen_stream_%s.csv".format(Locale.US, number, timestamp(startedAtWallMs))
+
+    fun listenDecisionsName(number: Int, startedAtWallMs: Long): String =
+        "%04d_listen_decisions_%s.csv".format(Locale.US, number, timestamp(startedAtWallMs))
+
     /** Name for a correction: what the watch [said] and what the user says it [was]. */
     fun correctionName(number: Int, said: String, was: String, wallMs: Long): String =
         "%04d_correction_said-%s_was-%s_%s.csv".format(

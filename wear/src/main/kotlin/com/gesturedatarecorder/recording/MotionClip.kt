@@ -83,6 +83,17 @@ object MotionClip {
      * assume readings are exactly 20 ms apart. Returns `grid[axis][reading]`, with zero readings
      * when there are fewer than two usable events.
      */
+    /**
+     * Steps 1 to 3 on readings that are already on the even grid: one clip per strong stroke,
+     * loudest first. The same as [extract], for a burst that [MotionGate] cut out of a stream.
+     */
+    fun clipsOf(gyro: Array<DoubleArray>): List<Array<DoubleArray>> {
+        if (gyro[0].size < 2) return emptyList()
+        val level = motionLevel(gyro)
+        if (level[findAction(level)] < THRESHOLD) return emptyList()
+        return findHumps(level).map { crop(gyro, it) }
+    }
+
     fun resample(events: List<SensorEventRecord>): Array<DoubleArray> {
         // sortedBy is stable, like Python's sorted(): events sharing a time keep their order.
         val ordered = events.filter { it.kind == SensorKind.GYROSCOPE }.sortedBy { it.timestampNs }
@@ -205,5 +216,5 @@ object MotionClip {
      * The value as Python reads it from the CSV. The recorder writes floats as text and Python
      * parses that text as a double, so going through the text form gives the identical number.
      */
-    private fun csvValue(value: Float): Double = value.toString().toDouble()
+    internal fun csvValue(value: Float): Double = value.toString().toDouble()
 }

@@ -54,6 +54,9 @@ JACOBI_SWEEPS = 30                # passes of the eigenvalue solver; a 5 by 5 ta
 LIMIT_PERCENT = 0.9               # "close enough" = within 90% of the blueprint's own size
 MIN_STRENGTH = 0.6                # "strong enough" = at least 60% of the blueprint's own size (only for clips that needed forgiving)
 NOTES_NEEDED = 3  # "I did nothing" corrections that must be alike before the watch acts on them
+GATE_QUIET = 12                   # listening: a burst is over after 12 quiet readings in a row (240 ms)
+GATE_PAD = 8                      # listening: readings kept on each side of a burst (160 ms)
+GATE_MAX = 90                     # listening: a burst longer than this (1.8 s) is ordinary movement
 
 GYRO = "gyroscope"
 
@@ -249,6 +252,111 @@ def extract_clips(events):
     if peak_level < THRESHOLD:
         return [], peak_level
     return [crop(gyro, t) for t in find_humps(level)], peak_level
+
+
+def clips_from_gyro(gyro):
+    """Steps 1 to 3 on readings that are already on the even grid.
+
+    The same as extract_clips, for a burst that MotionGate cut out of a stream.
+    """
+    if gyro.shape[1] < 2:
+        return []
+    level = motion_level(gyro)
+    _, peak_level = find_action(level)
+    if peak_level < THRESHOLD:
+        return []
+    return [crop(gyro, t) for t in find_humps(level)]
+
+
+# ---- listening: cut bursts out of a stream ----------------------------------
+
+class MotionGate:
+    """Finds gestures in a gyro stream that never stops, with no button.
+
+    Feed it every gyro event with push(). It puts the events on the even grid
+    as they arrive, tracks the motion level, and returns a burst each time the
+    wrist goes quiet, loud, quiet:
+
+      * a burst starts at the first reading whose level reaches THRESHOLD
+      * it ends once GATE_QUIET readings in a row are below it
+      * a burst longer than GATE_MAX is ordinary movement and is thrown away
+
+    So two gestures need a pause of a little over GATE_QUIET readings between
+    them, or they are heard as one long burst.
+
+    push() returns a list, usually empty, of (start, last, gyro):
+      start, last  first and last loud reading, counted from the first event
+      gyro         the burst with GATE_PAD readings on each side, shape (3, n),
+                   ready for clips_from_gyro. None when the burst was too long.
+
+    The motion level of a reading needs the 3 readings after it, so a burst is
+    reported GATE_QUIET + 3 readings (300 ms) after its last loud reading.
+    """
+
+    def __init__(self):
+        self.previous = None    # the last event: (time, x, y, z)
+        self.next_grid = 0      # time of the next grid reading
+        self.readings = []      # every grid reading so far, as (x, y, z)
+        self.energy = []
+        self.start = None
+        self.last = None
+
+    def push(self, timestamp, x, y, z):
+        if self.previous is None:
+            self.previous = (timestamp, x, y, z)
+            self.next_grid = timestamp
+            return []
+        before = self.previous
+        if timestamp <= before[0]:
+            return []  # same instant twice: keep the first
+        found = []
+        while self.next_grid <= timestamp:
+            fraction = (self.next_grid - before[0]) / (timestamp - before[0])
+            found += self._reading(
+                before[1] + fraction * (x - before[1]),
+                before[2] + fraction * (y - before[2]),
+                before[3] + fraction * (z - before[3]),
+            )
+            self.next_grid += STEP_NS
+        self.previous = (timestamp, x, y, z)
+        return found
+
+    def _reading(self, x, y, z):
+        self.readings.append((x, y, z))
+        self.energy.append(x * x + y * y + z * z)
+        reach = SMOOTH // 2
+        centre = len(self.readings) - 1 - reach   # the newest reading whose level is known
+        if centre < 0:
+            return []
+        total = 0.0
+        for k in range(centre - reach, centre + reach + 1):
+            if k >= 0:
+                total += self.energy[k]
+        return self._step(centre, math.sqrt(total / SMOOTH))
+
+    def _step(self, t, level):
+        loud = level >= THRESHOLD
+        if self.start is None:
+            if loud:
+                self.start = t
+                self.last = t
+            return []
+        if loud:
+            self.last = t
+            return []
+        if t - self.last < GATE_QUIET:
+            return []
+        start, last = self.start, self.last
+        self.start = None
+        self.last = None
+        if last - start + 1 > GATE_MAX:
+            return [(start, last, None)]
+        first = max(0, start - GATE_PAD)
+        gyro = np.zeros((3, last + GATE_PAD - first + 1))
+        for i in range(gyro.shape[1]):
+            for axis in range(3):
+                gyro[axis, i] = self.readings[first + i][axis]
+        return [(start, last, gyro)]
 
 
 # ---- step 5: distance (used by step 4, so it comes first) -------------------

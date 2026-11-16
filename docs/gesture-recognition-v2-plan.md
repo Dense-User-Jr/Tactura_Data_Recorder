@@ -386,7 +386,7 @@ This is the simple, explicit version of learning over time. A quieter version co
 
 ## Real-time mode
 
-Real-time mode removes the button and the countdown: the watch listens all the time and reacts when it sees a burst of motion. It comes after the button version works, and none of it is built or tested yet.
+Real-time mode removes the button and the countdown: the watch listens all the time and reacts when it sees a burst of motion. It comes after the button version works. A first version was built on 11/15: see "Listen mode, Nov 15" near the end. The notes below are the plan it started from.
 
 **How it works**
 
@@ -499,7 +499,7 @@ The demo target is solid personal gesture recognition with the math front and ce
 | 3 | A teammate calibrates and runs the scorecard | Every setting is tuned on one wrist plus Dhruv's October recordings. This is the exit test of phase 2 | A teammate, the watch |
 | 4 | Remember sittings and the **Wrong?** correction (both built 11/15, Wrong? not yet run on the watch) | Flicks change from sitting to sitting. One blueprint per sitting plus eigengestures scored 86% on a new sitting in the laptop test, against 66% for one blueprint. Includes the context file of phase 3 | Design decisions from Russell, then code |
 | 5 | Gesture definitions | Flick is small and variable, Shake and Twist Left are close relatives, Double Tap has no recordings. Written definitions and on-watch hints | Team decision |
-| 6 | Real-time listening | No button. The biggest change in how the demo feels. Needs a false-alarm budget and more random-movement data | Code, the watch |
+| 6 | Real-time listening (first version built 11/15, not yet run on the watch) | No button. The biggest change in how the demo feels. Needs a false-alarm budget and more random-movement data | Code, the watch |
 | 7 | The write-up and demo video | The math story for graduate applications: the diagnosis, blueprints, the alignment fix, what eigengestures found | Russell |
 | 8 | Repo cleanup and merge | About 1000 tracked build files, `local.properties`, merging `blueprints`. Needs a heads-up to Dhruv | Team |
 | Parked | Phoneme bins, word decoder and speech on the watch. Chords with the accelerometer. Pooling data across users, with the consent question for Prof. Nishida | After the recognition demo | |
@@ -757,7 +757,92 @@ Russell's idea: do not try to describe "nothing". Send the movement as a notice 
 
 **In the code.** `active_notes`, `refused_by_notes` and the `notes` argument of `classify_versions` in `ML/blueprint_reference.py`. The same in `GestureBlueprints.kt`, with a parity test (N and X lines of `reference_blueprints.csv`). `Corrections.kt` applies a correction. `BlueprintStore` keeps the corrections and notes of each gesture in `blueprints.json`. Each correction is also saved as a small CSV in `/sdcard/Download/GestureCorrections`.
 
-**Not done.** Compiling and running on the watch. What to keep when a version retires (Russell's "notes of patterns over time" idea). Corrections are not yet used to adjust eigengesture forgiveness, which was the other half of the sculpting idea.
+**On the watch, 11/15 at 9:18 PM.** The build compiled and the parity tests passed. 19 windows, watch and laptop agree on all 19. The laptop rebuilt the corrected version from the pulled files with the same rules as `BlueprintStore.addCorrection`, and the next Classify matched the watch to the percent.
+
+*Corrections.* Russell did very soft Flick Ups. The watch ignored three and called two Flick Down (through the small soft Flick Down version of 8:39 PM, at 29% and 18%). He corrected all five to Flick Up. They became Flick Up version 2: size 0.40, half the size of version 1 (0.82) and 75% away from it. The next soft Flick Up was named Flick Up at 62% through the new version. Two more tries were too soft to register as movement at all (peak under 1.0 rad/s), and nothing can be learned from those.
+
+*Notes.* Not exercised. Russell tried ten times to make the watch name a non-gesture and could not: three were too gentle to register, the other seven were 119 to 299% away from the nearest blueprint. So "it was nothing" has no real false alarm to work on yet.
+
+*Cost of the new version, on the day's data.* 61 movements to ignore (the 51 from before plus these ten): none named, before and after. 181 real gestures against the blueprints now on the watch: 175 right before, 174 after. One Flick Up from 5:30 PM is now nearest to the new soft version, which turns it down.
+
+*Watch out for.* Each flick now has a very small version (Flick Down 0.46, Flick Up 0.40). They make soft flicks work, and they are also what a gentle random movement is most likely to resemble. If false alarms appear, they will come through these two.
+
+**Not done.** A real false alarm to test notes on. What to keep when a version retires (Russell's "notes of patterns over time" idea). Corrections are not yet used to adjust eigengesture forgiveness, which was the other half of the sculpting idea.
+
+## Listen mode, Nov 15 (roadmap 6, first version)
+
+**What Russell asked for.** No button. Several gestures one after another without waiting for each. No big loss of accuracy and no gestures fired by accident. Each gesture stands for a phoneme bin, so it should tick and buzz like the simulator, and words should appear on the screen. The first version listens inside the app with the screen on.
+
+This is built in two parts. Part 1: hear gestures back to back and show each one's phoneme bin. Part 2: turn the bins into words (see the end of this section).
+
+**The gate.** The watch needs to cut a stream that never stops into separate movements. It uses the motion level of step 1.
+
+1. A burst starts when the level reaches 1.0 rad/s.
+2. It ends once the level has stayed under 1.0 for 12 readings in a row (240 ms).
+3. A burst longer than 90 readings (1.8 s) is ordinary movement and is thrown away.
+4. A burst that is kept is cut out with 8 readings (160 ms) on each side and goes through steps 1 to 6 like a Classify window.
+
+The decision arrives 300 ms after the movement ends. Two gestures need a calm pause of a little over 240 ms between them, or they are heard as one burst.
+
+**Where the numbers come from.** Measured on the 182 real gestures and 35 random movements recorded on 11/15, one reading being 20 ms.
+
+| | How long the movement stays loud | Longest quiet dip inside it |
+| --- | --- | --- |
+| Twist Left | median 44, at most 54 | at most 7 |
+| Twist Right | median 43, 90% under 49 | 90% under 5 |
+| Flick Up | median 34, at most 45 | 90% under 4, at most 15 |
+| Flick Down | median 35, at most 44 | at most 8 |
+| Shake | median 59, 90% under 64, at most 86 | 90% under 0, at most 14 |
+| Random movements | median 123. 26 of 35 are over 75 | |
+
+A gesture is one compact burst of about 0.7 to 1.2 s with almost no quiet inside it. Random movement goes on for 2.5 s. So 240 ms of quiet is enough to say "this gesture is over" without cutting a gesture in two, and the 1.8 s limit throws out most random movement before any blueprint is consulted.
+
+**Tested before building.** There are no recordings of gestures done back to back, so real windows were spliced into one long stream with real still-arm readings in between.
+
+| Quiet time to end a burst | Pause between gestures | Right, of 182 | Missed | Wrong or extra |
+| --- | --- | --- | --- | --- |
+| Button mode, for comparison | | 175 | 7 | 0 |
+| 120 ms | 400 ms | 170 | 5 | 7 |
+| 160 ms | 400 ms | 174 | 7 | 1 |
+| 240 ms (built) | 400 ms | 175 | 7 | 0 |
+| 240 ms | 200 ms | 0 | 182 | 0 |
+| 300 ms | 400 ms | 165 | 16 | 1 |
+
+With a 400 ms pause the gate loses nothing against the button. A shorter quiet time cuts some gestures in two. With a pause shorter than the quiet time everything merges into bursts that are too long. The 41 random movements, sent through the gate one at a time, were never named, and about 15 of them were thrown out for length alone.
+
+**What this test cannot show.** Spliced windows are not real back to back gestures: the end of one real gesture runs into the start of the next. And three seconds of deliberate "random movement" is not a day of wearing the watch. Both need the wrist.
+
+**In the code.** `MotionGate` in `ML/blueprint_reference.py` works on events as they arrive and gives exactly what the whole-stream calculation gives. `MotionGate.kt` is its twin, with a parity test on a stream made of 14 real recordings (`ML/dump_reference_gate.py`, `reference_gate.csv`). `ListenSession.kt` classifies each burst and keeps the log. `RecordingService` has a Listen mode. `TickSound.kt` makes the tick in code. Each session saves its raw gyro stream and its decisions to `/sdcard/Download/GestureListen`, so a session can be replayed on the laptop.
+
+**First run on the watch, 11/15 at 9:45 PM: Stop did nothing.** The session did end and its files were saved, but the screen stayed on Listen. Cause: the line that sends the screen back home ran after the files were saved, and once a session is cancelled nothing is allowed to run after that save. Fix: leave the Listen screen first, then save.
+
+**Words, same evening (part 2).** Russell's decisions: a **Finish** button ends a word for now, and a gesture for it can be chosen later. The Listen screen shows the whole map of gestures to phonemes: Twist Left at the top, Twist Right at the bottom, the two flicks on the right with an arrow each, Shake on the left.
+
+The word list is built by `ML/build_lexicon.py` the way the simulator spec describes: the 50,000 most common English words (wordfreq), each pronunciation from CMUdict, kept when every phoneme is in a bin. `Lexicon.kt` offers only words among the 20,000 most common that need no uncalibrated gesture. Today that is 37 words on 21 gesture sequences, for example the, is, this, these, be, see, easy, busy, piece, pieces, says. Seven sequences are shared by more than one word (piece, peace, bees, peas). The lookup is exact and has no language model, as in the simulator's stand-in decoder. Finish shows the most common word and lists the others.
+
+A finished word is written into the session's decisions file, so a session shows what was gestured and what was spelled.
+
+**First words on the watch, 11/15 at 10 PM.** Nine sessions, 57 bursts, watch and laptop agree on all 57. No burst was thrown out for length and no two gestures merged, so the gate does its job. Russell spelled "these" twice.
+
+*Shake.* Of 16 shakes the watch named 8 and ignored 8. The ignored ones are real shakes: the same axis (96 to 100% on x) and the same strength as the named ones. They differ in rhythm, with more reversals or other timing between them, and miss the Shake blueprint by 89 to 146% against a limit of 90%. A blueprint is a tracing in time, so a wiggle that comes at another moment no longer lines up. On the laptop, a second Shake version built from five of the ignored shakes catches the other three at no cost on the day's 182 gestures and 61 movements to ignore. But those five do not agree with each other (the least typical misses the rest by 127%), so this is the gesture where matching a shape in time is weakest. Russell's earlier idea of handling timing with rhythm or the frequency domain is aimed at exactly this.
+
+*Looser in flow.* Gestures made in the middle of a word matched at 12 to 57%, against 60 to 75% for careful reps with the button. Scoring the same movements the button way gives the same numbers, so the cause is the movement and not the listening code.
+
+*The word list feels small.* Five gestures with two phonemes each reach 10 of the 39 phonemes of English, so 17 of the 5,000 most common words can be spelled (28 with Double Tap). Putting all 39 phonemes on few gestures makes every word spellable and makes many share a sequence: with a rough grouping by kind of sound, 5 gestures give about 42% of words as the first suggestion with up to 73 words on one sequence, 8 gestures about 66%, 12 gestures about 78%. More gestures or more phonemes per gesture is a decision for the team. The rough grouping is not the optimised assignment.
+
+**Choosing a word, 11/15 (Russell's decisions).** Words should appear as soon as the gestures made so far could be a word, and choosing one ends the word, so the Finish button goes. For now a word is chosen by tapping it. His longer idea is a cursor in the style of Doublepoint: tilt the wrist to move through the words and close the hand to choose. A slow held tilt and a fast gesture differ in speed, so the gate would not mistake one for the other. Reading tilt and feeling a pinch both need the accelerometer, which is also what chords need.
+
+Built: the middle of the Listen screen lists up to three words, first the ones the gestures spell exactly, then, dimmer, the ones that start with them, each most common first. Tapping one chooses it. **Undo** takes back the last gesture. Offering the words that only start with the gestures is a reading of "potential words" that Russell should confirm: it lets a word be chosen before it is fully spelled.
+
+**On the watch, 11/15 at 10:30 PM.** Russell: "everything looks good". Three more sessions, 44 bursts.
+
+*Choosing words.* "the" was chosen after one gesture and "this" after two, from the words that only start with the gestures. "these" was spelled in full and chosen. Undo was used twice.
+
+*Shake.* Russell recalibrated Shake the way he shakes in the middle of a word, so it has two versions. All three shakes in the new sessions were named, through version 2. With version 1 alone the laptop names one of the three. The calibration files were not pulled, so the laptop cannot rebuild version 2 yet, and those three shake decisions are the only ones it could not reproduce. The other 41 bursts are identical on watch and laptop.
+
+*Ordinary wear.* One session was left listening for 3.3 minutes after a word. The gate found 28 bursts of movement. Half were shorter than any real gesture, one was too long, and one was named: a Flick Down at 28%, three seconds before the session was stopped, which is probably the reach for the Stop button. Four more bursts came within 86 to 96% of the small soft Flick Down version, the limit being 90%, and were turned down. The plan's bar for real-time listening was one minute of ordinary movement with at most one false gesture. This is a first pass at it. What Russell was doing during those minutes is not recorded.
+
+**Not done.** Speaking the word aloud. The tilt cursor. **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
 
 ## Parked idea: chords (rotation plus translation)
 

@@ -8,18 +8,23 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -34,12 +39,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
@@ -68,12 +77,13 @@ import java.util.Locale
 
 // Colors, fonts and the building blocks (Label, Readout, TacturaButton, ...) live in TacturaTheme.kt.
 
-private enum class Screen { HOME, COUNTDOWN, CAPTURE, WORKING, RESULT, ERROR }
+private enum class Screen { HOME, COUNTDOWN, CAPTURE, LISTEN, WORKING, RESULT, ERROR }
 
 private fun RecordingPhase.screen(): Screen = when (this) {
     RecordingPhase.IDLE -> Screen.HOME
     RecordingPhase.COUNTDOWN -> Screen.COUNTDOWN
     RecordingPhase.CAPTURING -> Screen.CAPTURE
+    RecordingPhase.LISTENING -> Screen.LISTEN
     RecordingPhase.CLASSIFYING, RecordingPhase.SAVING -> Screen.WORKING
     RecordingPhase.COMPLETE -> Screen.RESULT
     RecordingPhase.ERROR -> Screen.ERROR
@@ -124,6 +134,7 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
                     onPermissionAction = onPermissionAction,
                     onRecord = { RecordingService.startRecording(context, selectedGesture) },
                     onClassify = { RecordingService.startClassification(context) },
+                    onListen = { RecordingService.startListening(context) },
                     canStart = canStart,
                     calibration = calibration,
                     versions = versions,
@@ -141,6 +152,7 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
                 )
                 Screen.COUNTDOWN -> CountdownScreen(shown)
                 Screen.CAPTURE -> CaptureScreen(shown)
+                Screen.LISTEN -> ListenScreen(shown)
                 Screen.WORKING -> WorkingScreen(shown)
                 Screen.RESULT -> ResultScreen(
                     status = shown,
@@ -204,6 +216,7 @@ private fun HomeScreen(
     onPermissionAction: () -> Unit,
     onRecord: () -> Unit,
     onClassify: () -> Unit,
+    onListen: () -> Unit,
     canStart: Boolean,
     calibration: Map<Gesture, Int>,
     versions: Map<Gesture, Int>,
@@ -267,6 +280,17 @@ private fun HomeScreen(
                 primary = calibrated && nextToCalibrate == null,
                 enabled = canStart
             )
+        }
+        if (calibrated) {
+            item {
+                TacturaButton(
+                    label = "Listen",
+                    detail = "No button",
+                    onClick = onListen,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = canStart
+                )
+            }
         }
         if (calibrated) calibrateAction(calibrateHint, enabled = canStart && nextToCalibrate != null, onCalibrate = onCalibrate)
         item {
@@ -433,6 +457,151 @@ private fun CaptureScreen(status: RecordingStatus) {
                 CancelButton()
             }
         }
+    }
+}
+
+/**
+ * Listen mode: the watch names gestures as they happen and spells words with them.
+ *
+ * Around the edge is the map of which gesture gives which phonemes, laid out the way the team
+ * pictures it: Twist Left at the top, Twist Right at the bottom, the two flicks on the right
+ * with an arrow each, Shake on the left. The one just made lights up red. The middle shows the
+ * gestures made so far and the words they could be. Tapping a word chooses it and starts the next.
+ */
+@Composable
+private fun ListenScreen(status: RecordingStatus) {
+    val latest = Gesture.fromLabel(status.heard.lastOrNull())
+
+    // Every new gesture and every finished word arrives in signal red, then settles to white. 1 = red, 0 = white.
+    val flash = remember { Animatable(0f) }
+    LaunchedEffect(status.heardCount, status.wordCount) {
+        if (status.heardCount + status.wordCount > 0) {
+            flash.snapTo(1f)
+            flash.animateTo(0f, tween(FLASH_MS, delayMillis = FLASH_HOLD_MS))
+        }
+    }
+    val hot = lerp(Ink.Text, Ink.Accent, flash.value)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        BinMark(Gesture.TWIST_LEFT, "Twist L", latest, hot, Modifier.align(Alignment.TopCenter).padding(top = 10.dp))
+        BinMark(Gesture.TWIST_RIGHT, "Twist R", latest, hot, Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp))
+        BinMark(Gesture.SHAKE, "Shake", latest, hot, Modifier.align(Alignment.CenterStart).padding(start = 10.dp))
+        Column(
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            BinMark(Gesture.FLICK_UP, "Flick", latest, hot, arrowUp = true)
+            BinMark(Gesture.FLICK_DOWN, "Flick", latest, hot, arrowUp = false)
+        }
+
+        Column(
+            modifier = Modifier.align(Alignment.Center).width(LISTEN_CENTER_DP.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            val word = status.word
+            when {
+                // Spelling: the first phoneme of each bin so far, then the words to tap.
+                latest != null -> {
+                    Label(
+                        status.heard.takeLast(6).mapNotNull { Gesture.fromLabel(it)?.phonemes?.substringBefore('/') }.joinToString(" "),
+                        color = hot,
+                        sizeSp = 11f,
+                        bold = true
+                    )
+                    // Words these gestures spell come first. Words they only start follow, dimmer.
+                    val offered = (status.words.map { it to true } + status.wordHints.map { it to false }).take(LISTEN_WORDS)
+                    if (offered.isEmpty()) Label("No word", color = Ink.Accent, sizeSp = 12f, bold = true)
+                    offered.forEach { (candidate, whole) ->
+                        WordChoice(candidate, whole) { RecordingRepository.chooseWord(candidate) }
+                    }
+                }
+                // The word that was just chosen, until the next gesture.
+                word != null -> Readout(word, sizeSp = readoutSize(word, maxSp = 30f, widthDp = LISTEN_CENTER_DP), color = hot)
+                else -> Label("Make a gesture")
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (status.heard.isNotEmpty()) TapLabel("Undo", RecordingRepository::undoGesture)
+                TapLabel("Stop", RecordingRepository::requestCancel)
+            }
+        }
+    }
+}
+
+/** How many words the Listen screen offers at once. */
+private const val LISTEN_WORDS = 3
+
+/**
+ * One word the user can tap in Listen mode. [whole] words are spelled exactly by the gestures
+ * made so far. The others only start with them, and are drawn dimmer.
+ */
+@Composable
+private fun WordChoice(word: String, whole: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(ChamferSmall)
+            .border(1.dp, if (whole) Ink.Text else Ink.LineStrong, ChamferSmall)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = 5.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Label(word, color = if (whole) Ink.Text else Ink.Muted, sizeSp = 13f, bold = whole)
+    }
+}
+
+/** A small word to tap, for the things the Listen screen needs less often. */
+@Composable
+private fun TapLabel(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier.clickable(role = Role.Button, onClick = onClick).padding(horizontal = 9.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Label(text, color = Ink.Muted, sizeSp = 10f, bold = true)
+    }
+}
+
+/** Width of the middle of the Listen screen, between Shake on the left and the flicks on the right. */
+private const val LISTEN_CENTER_DP = 104f
+
+/**
+ * One entry of the Listen screen's map: a gesture's phonemes with its name underneath.
+ * It is drawn in [hot] when it is the gesture that was just made ([latest]). [arrowUp] puts a
+ * small arrow above it, pointing up or down, to tell the two flicks apart.
+ */
+@Composable
+private fun BinMark(
+    gesture: Gesture,
+    name: String,
+    latest: Gesture?,
+    hot: Color,
+    modifier: Modifier = Modifier,
+    arrowUp: Boolean? = null
+) {
+    val lit = gesture == latest
+    val ink = if (lit) hot else Ink.Muted
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        if (arrowUp != null) {
+            Canvas(Modifier.size(9.dp)) {
+                val arrow = Path().apply {
+                    if (arrowUp) {
+                        moveTo(size.width / 2f, 0f)
+                        lineTo(size.width, size.height)
+                        lineTo(0f, size.height)
+                    } else {
+                        moveTo(0f, 0f)
+                        lineTo(size.width, 0f)
+                        lineTo(size.width / 2f, size.height)
+                    }
+                    close()
+                }
+                drawPath(arrow, ink)
+            }
+            Spacer(Modifier.height(2.dp))
+        }
+        Label(gesture.phonemes, color = ink, sizeSp = 11f, bold = true)
+        Label(name, color = if (lit) hot else Ink.Dim, sizeSp = 8f)
     }
 }
 

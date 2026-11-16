@@ -194,6 +194,19 @@ Every calibration rep is also saved as a raw CSV, labeled with the gesture you w
 
 **Recalibrating keeps what the watch already knows.** Pick a gesture and tap **Recalibrate** at the bottom of the home screen, then do 5 new reps. The new reps become one more version of that gesture next to the earlier ones, and Classify compares a movement with every version. This is for gestures you do a little differently from one sitting to the next. The watch remembers up to 10 versions of a gesture and then forgets the oldest. Classify keeps working with the earlier versions while you recalibrate.
 
+**Listen** (shown once every gesture is calibrated) needs no button. The watch keeps listening and names each gesture as it happens: the screen shows the gesture's phoneme bin (for example `TH/DH` for Flick Up), the watch buzzes and plays a short tick. Leave a short pause, about a third of a second with the wrist calm, between gestures. Movement that goes on for more than 1.8 seconds is treated as ordinary movement and ignored. Turn the watch's media volume up to hear the tick. Tap **Stop** to end.
+
+The edge of the Listen screen is a map of which gesture gives which phonemes: Twist Left at the top, Twist Right at the bottom, Flick Up and Flick Down on the right with an arrow each, Shake on the left. The gesture you just made lights up red.
+
+Gestures spell words. As you gesture, the middle of the screen lists the words your gestures could be: first the words they spell exactly, then, dimmer, the words that start with them. Tap a word to choose it: the watch shows it and plays a lower double tick, and the next gesture starts a new word. For example, Flick Up, Twist Left, Shake is "this", and "this" is already offered after the Flick Up alone. **Undo** takes back the last gesture. Gestures that match no word show **No word**. The word list is `wear/src/main/assets/lexicon.csv`, built by `python ML/build_lexicon.py`. With the five calibrated gestures it holds 37 words.
+
+Each Listen session saves two files: the raw gyro stream, and one line per burst of movement with what the watch decided.
+
+```text
+/sdcard/Download/GestureListen/0001_listen_stream_20261115_220000.csv
+/sdcard/Download/GestureListen/0002_listen_decisions_20261115_220000.csv
+```
+
 **Wrong?** After a Classify result from your blueprints, tap **Wrong?** and say what the movement really was.
 
 - If it was one of the gestures, the movement is kept as a correction. Five corrections of a gesture become one more version of it.

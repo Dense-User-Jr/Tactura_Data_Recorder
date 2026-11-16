@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -63,6 +64,7 @@ import androidx.wear.compose.material.VignettePosition
 import com.gesturedatarecorder.recording.BlueprintStore
 import com.gesturedatarecorder.recording.Corrections
 import com.gesturedatarecorder.recording.Gesture
+import com.gesturedatarecorder.recording.ListenSession
 import com.gesturedatarecorder.recording.PredictionSource
 import com.gesturedatarecorder.recording.RecordingPhase
 import com.gesturedatarecorder.recording.RecordingRepository
@@ -103,6 +105,8 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
     val nextToCalibrate = BlueprintStore.GESTURES.firstOrNull { (calibration[it] ?: 0) < BlueprintStore.REPS_NEEDED }
     // Finished sets of reps per gesture. A gesture that is being recalibrated still has its earlier ones.
     val versions by BlueprintStore.versions.collectAsState()
+    // Which tilt moves the word cursor in Listen mode.
+    val cursorAxis by RecordingRepository.cursorAxis.collectAsState()
 
     // Keep the screen awake while the app is open. Without this the watch reads a flick or a
     // lowered wrist as "done looking" and swaps the app for a blurred picture with the clock on it.
@@ -135,6 +139,8 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
                     onRecord = { RecordingService.startRecording(context, selectedGesture) },
                     onClassify = { RecordingService.startClassification(context) },
                     onListen = { RecordingService.startListening(context) },
+                    cursorLabel = cursorAxis.label,
+                    onCursor = RecordingRepository::nextCursorAxis,
                     canStart = canStart,
                     calibration = calibration,
                     versions = versions,
@@ -217,6 +223,8 @@ private fun HomeScreen(
     onRecord: () -> Unit,
     onClassify: () -> Unit,
     onListen: () -> Unit,
+    cursorLabel: String,
+    onCursor: () -> Unit,
     canStart: Boolean,
     calibration: Map<Gesture, Int>,
     versions: Map<Gesture, Int>,
@@ -289,6 +297,15 @@ private fun HomeScreen(
                     onClick = onListen,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = canStart
+                )
+            }
+            item {
+                // Tap to switch how the word cursor is moved in Listen mode.
+                TacturaButton(
+                    label = "Cursor",
+                    detail = "Tilt: $cursorLabel",
+                    onClick = onCursor,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -511,10 +528,11 @@ private fun ListenScreen(status: RecordingStatus) {
                         bold = true
                     )
                     // Words these gestures spell come first. Words they only start follow, dimmer.
-                    val offered = (status.words.map { it to true } + status.wordHints.map { it to false }).take(LISTEN_WORDS)
+                    val offered = (status.words.map { it to true } + status.wordHints.map { it to false }).take(ListenSession.WORDS_SHOWN)
                     if (offered.isEmpty()) Label("No word", color = Ink.Accent, sizeSp = 12f, bold = true)
-                    offered.forEach { (candidate, whole) ->
-                        WordChoice(candidate, whole) { RecordingRepository.chooseWord(candidate) }
+                    offered.forEachIndexed { at, (candidate, whole) ->
+                        // The word under the tilt cursor is filled in.
+                        WordChoice(candidate, whole, picked = at == status.cursor) { RecordingRepository.chooseWord(candidate) }
                     }
                 }
                 // The word that was just chosen, until the next gesture.
@@ -532,25 +550,24 @@ private fun ListenScreen(status: RecordingStatus) {
     }
 }
 
-/** How many words the Listen screen offers at once. */
-private const val LISTEN_WORDS = 3
-
 /**
  * One word the user can tap in Listen mode. [whole] words are spelled exactly by the gestures
- * made so far. The others only start with them, and are drawn dimmer.
+ * made so far. The others only start with them, and are drawn dimmer. The word the tilt cursor
+ * is on ([picked]) is filled in.
  */
 @Composable
-private fun WordChoice(word: String, whole: Boolean, onClick: () -> Unit) {
+private fun WordChoice(word: String, whole: Boolean, picked: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(ChamferSmall)
-            .border(1.dp, if (whole) Ink.Text else Ink.LineStrong, ChamferSmall)
+            .background(if (picked) Ink.Text else Color.Transparent)
+            .border(1.dp, if (whole || picked) Ink.Text else Ink.LineStrong, ChamferSmall)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(vertical = 5.dp),
         contentAlignment = Alignment.Center
     ) {
-        Label(word, color = if (whole) Ink.Text else Ink.Muted, sizeSp = 13f, bold = whole)
+        Label(word, color = if (picked) Color.Black else if (whole) Ink.Text else Ink.Muted, sizeSp = 13f, bold = whole || picked)
     }
 }
 

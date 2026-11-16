@@ -56,6 +56,9 @@ class MotionGate {
     private var start = -1L
     private var last = -1L
 
+    /** True from a burst's first loud reading until the burst is reported: the wrist is, or just was, moving fast. */
+    val moving: Boolean get() = start >= 0
+
     /** One gyro event as the watch delivers it. The values go through the same text form as the CSVs. */
     fun push(event: SensorEventRecord): List<Burst> = push(
         event.timestampNs,

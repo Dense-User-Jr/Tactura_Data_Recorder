@@ -30,6 +30,14 @@ object RecordingRepository {
         object Undo : ListenCommand
     }
 
+    private val _cursorAxis = MutableStateFlow(TiltCursor.Axis.NOD)
+
+    /** Which tilt moves the word cursor in Listen mode. Kept until the app is closed. */
+    val cursorAxis: StateFlow<TiltCursor.Axis> = _cursorAxis.asStateFlow()
+
+    /** Switches the word cursor to the next way of tilting: nod, roll, off. */
+    fun nextCursorAxis() = _cursorAxis.update { TiltCursor.Axis.entries[(it.ordinal + 1) % TiltCursor.Axis.entries.size] }
+
     private val _listenCommands = MutableSharedFlow<ListenCommand>(extraBufferCapacity = 4)
 
     /** Collected by a running [RecordingService] in Listen mode. */

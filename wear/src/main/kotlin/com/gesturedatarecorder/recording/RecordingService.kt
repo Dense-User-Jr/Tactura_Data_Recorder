@@ -178,7 +178,7 @@ class RecordingService : Service(), SensorEventListener {
             return@coroutineScope
         }
         if (mode == SessionMode.LISTEN) {
-            listen(gyroscope)
+            listen(accelerometer, gyroscope)
             return@coroutineScope
         }
         // Load the model during the countdown so it is ready when the window closes.
@@ -255,7 +255,7 @@ class RecordingService : Service(), SensorEventListener {
      * [ListenSession] on the sensor thread, and each gesture it hears ticks, buzzes and shows on
      * the screen. Runs until the user stops it, then saves the stream and the decisions.
      */
-    private suspend fun listen(gyroscope: Sensor) {
+    private suspend fun listen(accelerometer: Sensor, gyroscope: Sensor) {
         if (!BlueprintStore.isComplete()) {
             publishError("Calibrate every gesture before listening")
             endService()
@@ -267,6 +267,8 @@ class RecordingService : Service(), SensorEventListener {
         try {
             Corrections.forget()
             listening = session
+            // The gyroscope hears the gestures. The accelerometer feels the tilt that moves the word cursor.
+            sensorManager.registerListener(this@RecordingService, accelerometer, SensorManager.SENSOR_DELAY_GAME, sensorHandler)
             sensorManager.registerListener(this@RecordingService, gyroscope, SensorManager.SENSOR_DELAY_GAME, sensorHandler)
             vibrate(120)
             publish {
@@ -330,11 +332,28 @@ class RecordingService : Service(), SensorEventListener {
             }
             vibrate(40)
             tick.play()
+            session.rezeroCursor()
             val prediction = GesturePrediction(label, item.matchShare.toFloat())
             RecordingRepository.update {
                 it.spelling((it.heard + label).takeLast(WORD_MAX)).copy(heardCount = it.heardCount + 1, prediction = prediction)
             }
         }
+    }
+
+    /** Sensor thread. One accelerometer event in Listen mode: move the word cursor if the wrist has tilted. */
+    private fun onListenAccel(session: ListenSession, event: SensorEvent) {
+        val values = event.values
+        val status = RecordingRepository.status.value
+        val options = minOf(ListenSession.WORDS_SHOWN, status.words.size + status.wordHints.size)
+        val at = session.pushAccel(
+            SensorEventRecord(SensorKind.ACCELEROMETER, event.timestamp, values[0], values[1], values[2]),
+            RecordingRepository.cursorAxis.value,
+            options
+        )
+        if (at == status.cursor) return
+        // A light buzz for each step of the cursor, so it can be felt without looking.
+        if (at >= 0 && status.cursor >= 0) vibrate(15)
+        RecordingRepository.update { it.copy(cursor = at) }
     }
 
     /** The gestures [made] with the words they spell and the words they start, for the Listen screen. */
@@ -352,6 +371,7 @@ class RecordingService : Service(), SensorEventListener {
             is RecordingRepository.ListenCommand.Choose -> {
                 if (made.isEmpty()) return
                 session.logWord(made, command.word)
+                session.rezeroCursor()
                 vibrateStopCue()
                 wordTick.play()
                 voice?.speak(command.word)
@@ -361,6 +381,7 @@ class RecordingService : Service(), SensorEventListener {
             RecordingRepository.ListenCommand.Undo -> {
                 if (made.isEmpty()) return
                 session.logUndo(made.dropLast(1))
+                session.rezeroCursor()
                 vibrate(20)
                 RecordingRepository.update { it.spelling(it.heard.dropLast(1)) }
             }
@@ -582,7 +603,10 @@ class RecordingService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent) {
         val session = listening
         if (session != null) {
-            if (event.sensor.type == Sensor.TYPE_GYROSCOPE) onListenEvent(session, event)
+            when (event.sensor.type) {
+                Sensor.TYPE_GYROSCOPE -> onListenEvent(session, event)
+                Sensor.TYPE_ACCELEROMETER -> onListenAccel(session, event)
+            }
             return
         }
         val activeCapture = capture ?: return

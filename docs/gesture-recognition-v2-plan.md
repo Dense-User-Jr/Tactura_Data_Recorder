@@ -844,7 +844,48 @@ Built: the middle of the Listen screen lists up to three words, first the ones t
 
 **Speaking the word, 11/15.** A chosen word is said out loud by the text-to-speech engine installed on the watch (`WordVoice.kt`), after the double tick. This is the simulator's fallback tier, the system voice. The simulator's neural voice (Kokoro) runs in a browser and is not on the watch. If the watch has no engine or no English voice, the screen says so under the word. Not yet run on the watch: whether the Galaxy Watch 7 has an engine installed, and how it sounds on the watch speaker, are both unknown.
 
-**Not done.** The tilt cursor. **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
+**The tilt cursor, 11/15 (the accelerometer's first job).** Russell's order for the accelerometer: tilt cursor first, then pinch or tap to select, then chords. More words wait until the accelerometer has given more gestures. Which tilt should move the cursor is his to decide by feel, so both are built and a switch on the home screen picks nod, roll or off.
+
+*How it works.* The accelerometer feels gravity, so it tells which way is down even with the wrist still. Its readings are smoothed over about 120 ms, and two angles are read from the result. With gravity as the watch sees it written (gx, gy, gz):
+
+```math
+\text{roll} = \operatorname{atan2}(g_y,\, g_z), \qquad \text{nod} = \operatorname{atan2}(-g_x,\, g_z)
+```
+
+Both are 0 with the watch face up. The cursor counts tilt from where the wrist settled after the last gesture. It starts on the first word, moves to the second at 10 degrees and to the third at 22, and only moves back once the tilt is 3 degrees under the line it crossed. While the gate sees fast movement the cursor is frozen.
+
+*Measured on the calibration recordings before choosing the numbers.*
+
+| | |
+| --- | --- |
+| Rest pose over 25 windows | roll 2 +- 3 degrees, nod 2 +- 1 degrees |
+| Tilt wobble with the arm still | about 0.3 degrees |
+| Where the wrist returns after a gesture, against before it | roll off by 6 degrees on average, nod by 2.5 |
+| Twist Right | roll rises to about +80 degrees |
+| Flick Down, Flick Up | nod goes to about +35 and -35 degrees |
+
+The signs of the two angles were checked against these: roll grows the way a Twist Right turns, nod grows as the hand tips down. The wrist does not come back to quite the same pose after a gesture, which is why the cursor starts again from wherever the wrist settles, and why the first step is 10 degrees and not less.
+
+*Expected to matter.* A nod is the same movement as a flick, only slower, and the flicks have very small soft versions (sizes 0.40 and 0.46). A nod done a little too briskly may be heard as a flick. A roll shares its axis with the twists, but twists are violent (8 to 22 rad/s), so a slow roll should stay clear of them. This is a prediction, not a measurement: there are no recordings of cursor movements yet.
+
+*In the code.* `TiltCursor.kt` with unit tests. Listen mode now registers the accelerometer too and logs its events in the session's stream file, so cursor movements can be replayed on the laptop. There is no Python twin of the cursor yet.
+
+**On the watch, 11/15 at 10:55 PM.** Russell: roll feels better and nod works best, because roll is too sensitive. A minor turn went from the first word to the last. Both axes had the same steps (10 and 12 degrees), which suits a wrist that nods 35 degrees and not a forearm that turns 80. Roll now has its own steps: 20 degrees to leave the first word, 22 for each word after, so the third word is at 42 degrees, and it moves back 5 degrees under a line. Nod is unchanged. No session was pulled, so the roll steps are set by reasoning and still need his wrist.
+
+**Roll with its own steps, 11/15 at 11 PM.** Russell: "much better now". Four sessions with the accelerometer logged, 267 s of listening.
+
+*Do slow turns set off gestures?* The gate found 107 bursts. Seven were named, all gestures Russell made on purpose to spell words. 80 were slow turns of the forearm for the cursor. None was named.
+
+| | Slow turns for the cursor | Twists |
+| --- | --- | --- |
+| How fast the forearm turns | median 2.8 rad/s | 8 to 22 rad/s |
+| How long they last | median 18 readings | about 44 readings |
+
+*What keeps them apart.* It is strength more than shape. A slow turn is the same kind of movement as a twist, and measured against the twist and shake blueprints the turns came within 81% on average, which is inside the 90% limit. They were turned down because they are far too weak for a twist ("strong enough", step 6), or because a small flick version was nearer and refused them. So the roll cursor depends on twists staying big. If a soft version of a twist is ever added, by recalibrating gently or through corrections, slow turns will start to be heard as twists. The flicks already have soft versions, which is the reason to expect trouble from the nod.
+
+*Something to feel for.* Most cursor turns are fast enough to open the gate, and the cursor is frozen while the gate is open, so the highlight moves about a quarter of a second after the turn stops and not during it.
+
+**Not done.** Choosing without a tap (pinch or tap detection). **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
 
 ## Parked idea: chords (rotation plus translation)
 

@@ -198,9 +198,11 @@ Every calibration rep is also saved as a raw CSV, labeled with the gesture you w
 
 The edge of the Listen screen is a map of which gesture gives which phonemes: Twist Left at the top, Twist Right at the bottom, Flick Up and Flick Down on the right with an arrow each, Shake on the left. The gesture you just made lights up red.
 
-Gestures spell words. As you gesture, the middle of the screen lists the words your gestures could be: first the words they spell exactly, then, dimmer, the words that start with them. Tap a word to choose it: the watch shows it, plays a lower double tick and says the word out loud, and the next gesture starts a new word. The voice is the text-to-speech engine installed on the watch and follows the media volume. If the watch has none, the word is shown with "No voice on watch" under it. For example, Flick Up, Twist Left, Shake is "this", and "this" is already offered after the Flick Up alone. **Undo** takes back the last gesture. Gestures that match no word show **No word**. The word list is `wear/src/main/assets/lexicon.csv`, built by `python ML/build_lexicon.py`. With the five calibrated gestures it holds 37 words.
+Gestures spell words. As you gesture, the middle of the screen lists the words your gestures could be: first the words they spell exactly, then, dimmer, the words that start with them. Tap a word to choose it: the watch shows it, plays a lower double tick and says the word out loud, and the next gesture starts a new word. The voice is the text-to-speech engine installed on the watch and follows the media volume. If the watch has none, the word is shown with "No voice on watch" under it. For example, Flick Up, Twist Left, Shake is "this", and "this" is already offered after the Flick Up alone. **Undo** takes back the last gesture. Gestures that match no word show **No word**.
 
-Each Listen session saves two files: the raw gyro stream, and one line per burst of movement with what the watch decided.
+A tilt cursor moves through the offered words: the word it is on is filled in, and the watch gives a light buzz each time it moves. Tilt the wrist slowly. **Cursor** on the home screen switches how: **Nod** (tip the hand down to go down the list), **Roll** (turn the forearm like a dial, the way a Twist Right goes, about 20 degrees per word) or **Off**. The cursor only shows which word is picked. Choosing still takes a tap for now. The word list is `wear/src/main/assets/lexicon.csv`, built by `python ML/build_lexicon.py`. With the five calibrated gestures it holds 37 words.
+
+Each Listen session saves two files: the raw gyro and accelerometer stream, and one line per burst of movement with what the watch decided.
 
 ```text
 /sdcard/Download/GestureListen/0001_listen_stream_20261115_220000.csv

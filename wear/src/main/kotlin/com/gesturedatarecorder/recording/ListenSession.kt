@@ -15,8 +15,11 @@ class ListenSession(
     private val notes: Map<String, List<Array<DoubleArray>>>
 ) {
     companion object {
-        /** Raw events kept for the log: 20 minutes at 50 Hz. Listening goes on after that, unlogged. */
-        const val MAX_EVENTS = 60_000
+        /** Raw events kept for the log: 20 minutes of both sensors at 50 Hz. Listening goes on after that, unlogged. */
+        const val MAX_EVENTS = 120_000
+
+        /** How many words the Listen screen offers at once. */
+        const val WORDS_SHOWN = 3
     }
 
     /**
@@ -43,6 +46,8 @@ class ListenSession(
     }
 
     private val gate = MotionGate()
+    private val cursor = TiltCursor()
+    private var cursorAt = -1
     private val events = ArrayList<SensorEventRecord>(4096)
 
     /** The decisions log, in order: a [Heard] for each burst, a [Spelled] for each finished word. */
@@ -81,6 +86,25 @@ class ListenSession(
         return found
     }
 
+    /**
+     * One accelerometer event from the watch. Moves the tilt cursor among [options] words and
+     * returns the word it is on, or -1 for none. While the wrist is moving fast the cursor
+     * stays where it was: a gesture shakes the accelerometer and must not move it.
+     */
+    @Synchronized
+    fun pushAccel(event: SensorEventRecord, axis: TiltCursor.Axis, options: Int): Int {
+        if (events.size < MAX_EVENTS) events.add(event)
+        cursor.push(event.x.toDouble(), event.y.toDouble(), event.z.toDouble())
+        if (!gate.moving || options <= 0 || axis == TiltCursor.Axis.OFF) cursorAt = cursor.update(axis, options)
+        return cursorAt
+    }
+
+    /** The words on offer changed: the cursor goes back to the first one, measured from the tilt the wrist settles at. */
+    @Synchronized
+    fun rezeroCursor() {
+        cursor.rezero()
+    }
+
     /** Notes in the log that the user chose [word] after making the gestures [labels]. */
     @Synchronized
     fun logWord(labels: List<String>, word: String) {
@@ -94,7 +118,7 @@ class ListenSession(
         log.add(Spelled(Lexicon.key(labels).orEmpty(), null))
     }
 
-    /** The raw gyro events of the session in the recorder's CSV format. */
+    /** The raw gyro and accelerometer events of the session in the recorder's CSV format. */
     @Synchronized
     fun streamCsv(): String = CaptureCsv.build("LISTEN", events)
 

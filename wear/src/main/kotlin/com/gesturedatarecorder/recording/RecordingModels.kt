@@ -97,6 +97,8 @@ data class RecordingStatus(
     val words: List<String> = emptyList(),
     /** Listen: the words that start with the gestures so far and need more, most common first. */
     val wordHints: List<String> = emptyList(),
+    /** Listen: which of the offered words the tilt cursor is on, counted from 0. -1 when the cursor is off or nothing is offered. */
+    val cursor: Int = -1,
     /** Listen: the last word the user chose, or null when there is none yet. */
     val word: String? = null,
     /** Listen: how many words have been chosen in this session. */

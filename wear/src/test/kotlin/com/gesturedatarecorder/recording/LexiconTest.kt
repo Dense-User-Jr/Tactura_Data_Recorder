@@ -63,4 +63,26 @@ class LexiconTest {
         assertNull(Lexicon.key(listOf("FLICK_UP", "NOT_A_GESTURE")))
         assertEquals("15", Lexicon.key(listOf("FLICK_UP", "SHAKE")))
     }
+
+    @Test
+    fun theShovesHaveTheirOwnDigits() {
+        assertEquals("7890", Lexicon.key(listOf("SHOVE_UP", "SHOVE_DOWN", "SHOVE_LEFT", "SHOVE_RIGHT")))
+        assertEquals("every gesture has a different digit", Gesture.entries.size, Gesture.entries.map { Lexicon.digit(it) }.toSet().size)
+    }
+
+    @Test
+    fun theShovesSpellEverydayWords() {
+        val heard = entries(Lexicon.GESTURES)
+        // "to" is T, UW: Shove Left, Twist Left. "do" and "two" share its gestures.
+        val to = Lexicon.exact(heard, key(Gesture.SHOVE_LEFT, Gesture.TWIST_LEFT))
+        assertEquals("to", to.first())
+        assertTrue("do" in to && "two" in to)
+        // "and" is AH, N, D: Shove Right, Shove Down, Shove Left.
+        assertEquals("and", Lexicon.exact(heard, key(Gesture.SHOVE_RIGHT, Gesture.SHOVE_DOWN, Gesture.SHOVE_LEFT)).first())
+        // "people" is P, IY, P, AH, L.
+        val people = key(Gesture.FLICK_DOWN, Gesture.TWIST_RIGHT, Gesture.FLICK_DOWN, Gesture.SHOVE_RIGHT, Gesture.SHOVE_UP)
+        assertTrue("people" in Lexicon.exact(heard, people))
+        assertTrue("far more words than the five gestures alone give", heard.map { it.word }.distinct().size > 1500)
+        assertTrue("still no word needs Double Tap", heard.none { Lexicon.digit(Gesture.DOUBLE_TAP) in it.gestures })
+    }
 }

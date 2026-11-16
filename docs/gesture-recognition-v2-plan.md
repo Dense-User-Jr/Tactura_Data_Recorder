@@ -983,6 +983,106 @@ So the looser rule catches the fists that were being missed and, in ordinary act
 
 **Not done.** Deciding whether words should leave the screen after a while, or some other guard for words left waiting. What to do about the small soft flick versions. **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
 
+## Shoves and chords: first recordings, Nov 16 (the accelerometer's third job)
+
+**Russell's question.** Should a shove of the hand only ever be combined with a twist (a chord), or also be a gesture by itself, and which is the feasible place to start? The order chosen: find out whether the watch can read a shove alone, with a small probe of chords in the same round of recordings.
+
+**The recordings.** 48 at 100 readings a second (`recordings_shove_v1`, files 53 to 100): 8 each of shove up, down, left and right (the whole hand moves a few inches and comes back, watch face up), then 8 of a Twist Right while shoving up and 8 of a Twist Right while shoving right.
+
+**How a shove is read.** The accelerometer feels gravity and the hand's own acceleration added together. Turning the wrist swings gravity around inside the readings, so gravity has to be taken out first. The gyro says how the watch turns, so the watch's orientation R(t) is followed from the moment before the movement, and the hand's own acceleration, in the frame the watch started in, is
+
+```math
+a_{\text{hand}}(t) = R(t)\,a(t) - a_0
+```
+
+with a(t) the accelerometer reading and a0 its value at rest just before. Adding this up over time gives the hand's velocity, corrected so that it starts and ends at zero, since the hand goes out and comes back. The direction of the first push is the direction of the velocity at its first peak.
+
+**Result 1: the four directions are told apart.** Read from the first push, at 50 readings a second:
+
+| Movement | First push, m/s along the watch's x, y, z | Read as |
+| --- | --- | --- |
+| Shove up | 0, 0, +0.33 | up, 8 of 8 |
+| Shove down | 0, 0, -0.53 | down, 8 of 8 |
+| Shove left | -0.1, +0.55, +0.1 | left, 8 of 8 |
+| Shove right | 0, -0.65, 0 | right, 8 of 8 |
+
+**Result 2: a shove survives inside a twist.** With gravity followed through about 80 degrees of twist, a Twist Right while shoving up read as up in 8 of 8, and while shoving right as right in 8 of 8.
+
+**What stands in the way of chords.**
+
+- The gesture listener did not recognise the twist. None of the 16 chord recordings was named Twist Right by the blueprints: a twist made while the hand travels is a different movement from the calibrated one.
+- The five existing gestures push the watch too. By the same measure a plain Twist Right reads as a push down (0.6 m/s) and a Flick Up as a push up. So a Twist Right with a shove down would look like a plain Twist Right. Up and right stood out because a plain twist does not push that way.
+- A softer twist blueprint, which chords would need, is what the roll cursor cannot live with.
+
+**A first shove rule, tried on the laptop.** One clear push along the watch's y or z of at least 0.15 m/s, lasting 0.3 to 1.3 s, with the gyro under 2.2 rad/s, less than 40 degrees of turning, and a calm wrist before.
+
+| Tried on | Result |
+| --- | --- |
+| The 32 plain shoves | 31 found, none in the wrong direction |
+| 81 calibration reps of the five gestures | none taken for a shove |
+| 14.7 minutes of listening (cursor turns, spelling, ordinary activity) | 2 false shoves, about one in seven minutes |
+
+A looser limit on turning (3.5 rad/s) starts taking Flick Downs for shoves. Separately, the gesture listener named 3 of the 8 shoves down as a Flick Down through the small soft version, so a shove and a gesture heard at the same moment need a rule for which one wins.
+
+**Where this points.** Plain shoves are the feasible start: four new gestures, read by a rule with no calibration, nine gestures in all. Chords are possible in principle and need their own way of recognising the twist. Everything here is one person, one sitting, deliberate movements, and a rule scored on the recordings it was shaped on.
+
+**Not done at this point.** Building shove detection into Listen mode. Deciding which phonemes the four shoves stand for. Whether to pursue chords after that.
+
+### Shoves in Listen mode, built Nov 16
+
+**Decisions (Russell).** Plain shoves first, chords later. The four shoves stand for T/D, M/N, L/R and AH/EH. When the blueprints and the shove rule both name one movement, the shove wins.
+
+**Why those four pairs.** Every sensible set of four pairs was scored by how many of the 5,000 most common words it lets the watch spell (CMUdict and wordfreq, as for the first word list). Before the shoves: 20 words.
+
+| Option | Pairs | Top-5,000 words | What it adds |
+| --- | --- | --- | --- |
+| A, consonant twins as in the team's bin doc | T/D, M/N, K/G, F/V | 223 | to, in, it, me, if, do, get, good |
+| B, most words (chosen) | T/D, M/N, L/R, AH/EH | 674 | to, and, in, that, it, but, people, really, little |
+| C, most of everyday speech by frequency | T/D, M/N, AH/ER, HH/W | 394 | with, was, he, we, his, one, what, when, would |
+
+T/D and M/N are in every strong set: T and N are the second and third most common sounds. AH is the most common sound of all, and the gestures had no way to make it. After leaving out fragments and names, the word list on the watch holds 2,099 words, 648 of them in the top 5,000. This changes the team's bin assignment and is worth telling the team.
+
+**Which shove gets which pair.** The clearest shoves carry the most used sounds: left T/D, right AH/EH, down M/N, up L/R. Up was the faintest shove in the recordings.
+
+**The rule on the watch** (`ML/shove_reference.py`, copied line by line in `ShoveDetector.kt`). It has to work on a stream, so it is not the laptop rule above but a streaming one:
+
+1. A reading is active when the accelerometer is more than 0.8 m/s2 from the average of the 12 readings before it, or the gyro is over 0.6 rad/s. A stretch of movement runs from the first active reading until 12 in a row are not, with 4 readings kept on each side.
+2. Gravity is taken out as above, starting from the resting reading just before the stretch.
+3. The first push is read off the hand's velocity at its first real peak.
+4. It is a shove when the first push is along the watch's y or z with at least 85% of it on that axis, at 0.40 m/s or more for left and right and 0.30 m/s or more for up and down, the stretch lasts 0.3 to 1.6 s, the gyro stays under 2.2 rad/s, the watch turns less than 40 degrees, and the wrist was calm (under 1.0 rad/s) in the 0.3 s before. For 0.6 s after a shove no new one counts: the hand is coming back.
+
+A stretch that cannot be a shove any more (the wrist turns fast) is turned down at once, so real gestures are never kept waiting. The answer for a shove comes about a quarter of a second after the hand stops.
+
+Left and right need the higher speed because ordinary arm movement swings the watch sideways: with one bar of 0.15 m/s for all four, 20 minutes of listening gave 3 false shoves, all sideways at 0.15 to 0.33 m/s. Real shoves left and right were 0.46 to 0.82 m/s.
+
+| Tried on, at 50 readings a second | Result |
+| --- | --- |
+| The 32 plain shoves | 31 found, none in the wrong direction. The one missed is a faint shove up (0.19 m/s) |
+| 81 calibration reps of the five gestures | none taken for a shove |
+| 35 recordings of pinches, fists and a still arm | none taken for a shove |
+| 20.2 minutes of listening (spelling, cursor turns, fists, ordinary activity) | no false shove |
+| The 48 shove recordings through the fist rule | no fist felt |
+| The 16 twists with a shove | turned down at once as turning, so the twist is left to the blueprints |
+
+The 3 shoves down that the blueprints also name Flick Down are all heard as a shove, so "shove wins" settles each of them.
+
+**Shove wins, in the code** (`ListenSession`). A gesture the blueprints name is passed on at once unless the same movement is, or may still become, a shove. If the shove rule is still judging that movement, the gesture waits for its answer, for 0.7 s at most. A shove drops it (logged as `OVERRULED`), anything else lets it through.
+
+Replayed on the laptop with this logic: all 31 shoves come out as shoves, the 4 gestures the blueprints named for them (3 Flick Down, 1 Flick Up) are dropped after waiting 0.16 to 0.38 s, and the 35 gestures of nine listening sessions come out unchanged and in the same order. The cost falls on soft Flick Downs: 4 of the 31 calibration reps and 4 gestures in listening waited 0.1 to 0.6 s before they were let through, because a soft flick keeps the shove rule guessing until the hand is still. A hard gesture is never kept waiting.
+
+**The Listen screen.** The four shoves are drawn in the gaps between the five gestures, each as a thin arrow with its pair: up at the upper left, right at the upper right, down at the lower right, left at the lower left. This placement is a first guess, made without seeing it on the watch.
+
+**The word list has outgrown three places.** More words share one spelling now, and the screen offers three. 112 words sit fourth or lower among exact matches and cannot be chosen, 13 of them in the top 5,000: too and due (behind to, do, two), lead and led (behind let, read, red), pool, pet, tear, sum, ton and a few more.
+
+**What is not known.**
+
+- Everything is one person, one sitting, deliberate shoves, and the rule's numbers were set on the recordings it is scored on. The margins are thin: 0.46 m/s for the slowest real shove left against a bar of 0.40, and 0.34 against 0.30 for down.
+- The directions assume the normal gesture pose, watch face up on the left wrist. Another pose, the other wrist or another person may read differently.
+- A shove tilts the wrist a little and pushes the accelerometer sideways, which is what the tilt cursor reads. The cursor may twitch during a shove. It is put back on the first word when the shove is heard.
+- Nothing has been compiled or run on the watch yet. The Kotlin copy is checked by a parity test on a recorded stream in the Gradle build.
+
+**Not done.** The watch test. More than three words for one spelling. The team's view on the new bins. Chords.
+
 ## Parked idea: chords (rotation plus translation)
 
 Russell's idea, 11/15. Not started. It comes after everything else in the working order.

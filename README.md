@@ -198,13 +198,15 @@ Every calibration rep is also saved as a raw CSV, labeled with the gesture you w
 
 **Listen** (shown once every gesture is calibrated) needs no button. The watch keeps listening and names each gesture as it happens: the screen shows the gesture's phoneme bin (for example `TH/DH` for Flick Up), the watch buzzes and plays a short tick. Leave a short pause, about a third of a second with the wrist calm, between gestures. Movement that goes on for more than 1.8 seconds is treated as ordinary movement and ignored. Turn the watch's media volume up to hear the tick. Tap **Stop** to end.
 
-The edge of the Listen screen is a map of which gesture gives which phonemes: Twist Left at the top, Twist Right at the bottom, Flick Up and Flick Down on the right with an arrow each, Shake on the left. The gesture you just made lights up red.
+The edge of the Listen screen is a map of which gesture gives which phonemes: Twist Left at the top, Twist Right at the bottom, Flick Up and Flick Down on the right with an arrow each, Shake on the left. The four shoves sit in the gaps between them, each as a thin arrow for its direction. The gesture you just made lights up red.
+
+**Shoves** are four more gestures that Listen hears, and they need no calibration. A shove is the whole hand moving a few inches and coming back, quick and deliberate, without turning the wrist: **up** (`L/R`), **down** (`M/N`), **left** (`T/D`) and **right** (`AH/EH`, the vowels of "but" and "bed"). Start from the normal gesture pose with the watch face up and the wrist calm. The watch reads which way the hand first pushed from the accelerometer, after taking gravity out with the gyro. A shove left or right has to be a little faster than one up or down, because ordinary arm movement also pushes the watch sideways. The shoves can be picked under **Gesture** to make labelled recordings of them. Calibrate and Classify do not use them.
 
 Gestures spell words. As you gesture, the middle of the screen lists the words your gestures could be: first the words they spell exactly, then, dimmer, the words that start with them. Tap a word to choose it: the watch shows it, plays a lower double tick and says the word out loud, and the next gesture starts a new word. The voice is the text-to-speech engine installed on the watch and follows the media volume. If the watch has none, the word is shown with "No voice on watch" under it. For example, Flick Up, Twist Left, Shake is "this", and "this" is already offered after the Flick Up alone. **Undo** takes back the last gesture. Gestures that match no word show **No word**.
 
-A tilt cursor moves through the offered words: the word it is on is filled in, and the watch gives a light buzz each time it moves. Tilt the wrist slowly. **Cursor** on the home screen switches how: **Nod** (tip the hand down to go down the list), **Roll** (turn the forearm like a dial, the way a Twist Right goes, about 20 degrees per word) or **Off**. **Close your hand into a fist to choose the word the cursor is on.** The watch feels the jolt of the hand closing. It takes about two thirds of a second to be sure it was a fist and not the start of a gesture, then chooses the word, exactly as a tap would. Keep the wrist fairly still while you do it. A fist only counts while words are on the screen. Tapping a word still works. The word list is `wear/src/main/assets/lexicon.csv`, built by `python ML/build_lexicon.py`. With the five calibrated gestures it holds 37 words.
+A tilt cursor moves through the offered words: the word it is on is filled in, and the watch gives a light buzz each time it moves. Tilt the wrist slowly. **Cursor** on the home screen switches how: **Nod** (tip the hand down to go down the list), **Roll** (turn the forearm like a dial, the way a Twist Right goes, about 20 degrees per word) or **Off**. **Close your hand into a fist to choose the word the cursor is on.** The watch feels the jolt of the hand closing. It takes about two thirds of a second to be sure it was a fist and not the start of a gesture, then chooses the word, exactly as a tap would. Keep the wrist fairly still while you do it. A fist only counts while words are on the screen. Tapping a word still works. The word list is `wear/src/main/assets/lexicon.csv`, built by `python ML/build_lexicon.py`. With the five calibrated gestures and the four shoves it holds about 2,100 words, 648 of them among the 5,000 most common. More words now share one spelling ("to", "do", "two", "too"), and only the first three are offered.
 
-Each Listen session saves two files: the raw gyro and accelerometer stream, and one line per burst of movement with what the watch decided, plus a line for every word chosen, every fist, every jolt that was not a fist, and every time the watch buzzed.
+Each Listen session saves two files: the raw gyro and accelerometer stream, and one line per burst of movement with what the watch decided, plus a line for every word chosen, every fist, every jolt that was not a fist, every shove, every movement the shove rule turned down (`PUSH`, with what it measured and why), and every time the watch buzzed.
 
 ```text
 /sdcard/Download/GestureListen/0001_listen_stream_20261115_220000.csv
@@ -236,6 +238,12 @@ If you change the recipe in `ML/blueprint_reference.py`, port the change to Kotl
 python .\ML\dump_reference_clips.py
 python .\ML\dump_reference_blueprints.py
 .\gradlew.bat :wear:testDebugUnitTest
+```
+
+The shove rule works the same way: `ML/shove_reference.py` is the source of truth, `ShoveDetector.kt` is its copy, and `python .\ML\dump_reference_shove.py` regenerates the stream the parity test replays. To see what the rule makes of any recording or Listen stream:
+
+```powershell
+python .\ML\shove_reference.py .\listen_logs_v6\0049_listen_stream_20261115_234241.csv
 ```
 
 ## Pull CSV files off the watch

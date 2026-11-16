@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.lerp
@@ -511,6 +512,11 @@ private fun ListenScreen(status: RecordingStatus) {
             BinMark(Gesture.FLICK_UP, "Flick", latest, hot, arrowUp = true)
             BinMark(Gesture.FLICK_DOWN, "Flick", latest, hot, arrowUp = false)
         }
+        // The four shoves sit in the gaps between the gestures above, each with an arrow for its direction.
+        ShoveMark(Gesture.SHOVE_UP, latest, hot, Modifier.align(Alignment.TopStart).padding(start = SHOVE_IN_DP.dp, top = SHOVE_DOWN_DP.dp))
+        ShoveMark(Gesture.SHOVE_RIGHT, latest, hot, Modifier.align(Alignment.TopEnd).padding(end = SHOVE_IN_DP.dp, top = SHOVE_DOWN_DP.dp))
+        ShoveMark(Gesture.SHOVE_DOWN, latest, hot, Modifier.align(Alignment.BottomEnd).padding(end = SHOVE_IN_DP.dp, bottom = SHOVE_DOWN_DP.dp))
+        ShoveMark(Gesture.SHOVE_LEFT, latest, hot, Modifier.align(Alignment.BottomStart).padding(start = SHOVE_IN_DP.dp, bottom = SHOVE_DOWN_DP.dp))
 
         Column(
             modifier = Modifier.align(Alignment.Center).width(LISTEN_CENTER_DP.dp),
@@ -584,6 +590,40 @@ private fun TapLabel(text: String, onClick: () -> Unit) {
 
 /** Width of the middle of the Listen screen, between Shake on the left and the flicks on the right. */
 private const val LISTEN_CENTER_DP = 104f
+
+/** Where a shove's mark sits on the Listen screen: this far in from the side and from the top or bottom. Keeps it inside a round screen. */
+private const val SHOVE_IN_DP = 46f
+private const val SHOVE_DOWN_DP = 24f
+
+/**
+ * One shove on the Listen screen's map: an arrow for the way the hand moves, with the shove's
+ * phonemes underneath. The arrow is a thin line with a head, so it cannot be mistaken for the
+ * filled triangles of the two flicks. It is drawn in [hot] when it is the gesture that was just
+ * made ([latest]).
+ */
+@Composable
+private fun ShoveMark(gesture: Gesture, latest: Gesture?, hot: Color, modifier: Modifier = Modifier) {
+    val ink = if (gesture == latest) hot else Ink.Muted
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Canvas(Modifier.size(11.dp)) {
+            val w = size.width
+            val h = size.height
+            // The arrow's tail, its tip, and the two ends of its head.
+            val points = when (gesture) {
+                Gesture.SHOVE_UP -> listOf(Offset(w / 2f, h), Offset(w / 2f, 0f), Offset(w * 0.15f, h * 0.4f), Offset(w * 0.85f, h * 0.4f))
+                Gesture.SHOVE_DOWN -> listOf(Offset(w / 2f, 0f), Offset(w / 2f, h), Offset(w * 0.15f, h * 0.6f), Offset(w * 0.85f, h * 0.6f))
+                Gesture.SHOVE_LEFT -> listOf(Offset(w, h / 2f), Offset(0f, h / 2f), Offset(w * 0.4f, h * 0.15f), Offset(w * 0.4f, h * 0.85f))
+                else -> listOf(Offset(0f, h / 2f), Offset(w, h / 2f), Offset(w * 0.6f, h * 0.15f), Offset(w * 0.6f, h * 0.85f))
+            }
+            val stroke = 1.5.dp.toPx()
+            drawLine(ink, points[0], points[1], strokeWidth = stroke)
+            drawLine(ink, points[1], points[2], strokeWidth = stroke)
+            drawLine(ink, points[1], points[3], strokeWidth = stroke)
+        }
+        Spacer(Modifier.height(2.dp))
+        Label(gesture.phonemes, color = ink, sizeSp = 10f, bold = true)
+    }
+}
 
 /**
  * One entry of the Listen screen's map: a gesture's phonemes with its name underneath.

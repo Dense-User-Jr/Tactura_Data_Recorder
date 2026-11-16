@@ -7,6 +7,12 @@ import java.util.Locale
  * [MotionGate] finds a burst of movement. The burst is classified against the blueprints and
  * notes the session started with, exactly as a Classify window is.
  *
+ * Every accelerometer event goes in too. It moves the word cursor, feels a fist
+ * ([FistDetector]) and feels a shove of the hand ([ShoveDetector]). A shove comes out as a
+ * [Heard] like a gesture does. When the blueprints and the shove rule both name the same
+ * movement, the shove wins: the rule has never fired on a real gesture, while a soft blueprint
+ * does sometimes fit a shove.
+ *
  * The raw events and every decision are kept, so the whole session can be saved and replayed
  * on the laptop through the Python gate.
  */
@@ -20,25 +26,35 @@ class ListenSession(
 
         /** How many words the Listen screen offers at once. */
         const val WORDS_SHOWN = 3
+
+        /**
+         * The longest a named gesture waits to hear whether its movement was a shove. In the
+         * recordings a gesture that lost to a shove had waited 0.38 s at most.
+         */
+        const val SHOVE_WAIT_NS = 700_000_000L
     }
 
     /**
-     * One burst the gate found. [match] is null when the burst was too long to be a gesture.
-     * [clips] is how many strong strokes it had.
+     * One burst the gate found, or one shove. [match] is null when the burst was too long to be
+     * a gesture. [clips] is how many strong strokes it had. For a burst, [start] and [last] are
+     * readings counted as the gate counts them. For a shove, [shove] says which one and [start]
+     * and [last] are sensor times in ns.
      */
     class Heard(
         val start: Long,
         val last: Long,
         val tooLong: Boolean,
         val clips: Int,
-        val match: GestureBlueprints.VersionMatch?
+        val match: GestureBlueprints.VersionMatch?,
+        val shove: Gesture? = null
     ) {
         /** The gesture's label, or null when the burst was not a known gesture. */
-        val gesture: String? get() = match?.gesture
+        val gesture: String? get() = shove?.name ?: match?.gesture
 
-        /** How close it came, as in Classify: 1 is a perfect fit. 0 when it was not a gesture. */
+        /** How close it came, as in Classify: 1 is a perfect fit. 0 when it was not a gesture. A shove is found by a rule, so it counts as 1. */
         val matchShare: Double
             get() {
+                if (shove != null) return 1.0
                 val found = match ?: return 0.0
                 if (found.gesture == null || found.size <= 0.0) return 0.0
                 return (1.0 - found.distance / found.size).coerceIn(0.0, 1.0)
@@ -55,6 +71,24 @@ class ListenSession(
 
     /** Gestures named while a jolt was being judged. They are passed on if it was no fist, and dropped if it was. */
     private val held = ArrayList<Heard>()
+
+    private val shove = ShoveDetector()
+
+    /** When the first gyro event came. The gate counts its readings from there, 50 a second. */
+    private var firstGyroNs = -1L
+
+    /** A gesture that waits for the shove rule, and the sensor time it was named at. */
+    private class Waiting(val heard: Heard, val sinceNs: Long)
+
+    /** Gestures named while the same movement could still turn out to be a shove. They are passed on if it was not, and dropped if it was. */
+    private val waiting = ArrayList<Waiting>()
+
+    /** What the accelerometer side decided since the last gyro event: shoves, and gestures that no longer wait. Handed out by [push]. */
+    private val ready = ArrayList<Heard>()
+
+    /** The sensor times the last shove ran from and to. */
+    private var shoveFromNs = Long.MIN_VALUE
+    private var shoveToNs = Long.MIN_VALUE
 
     /** Something that happened at a moment of the stream: the watch buzzed, or a jolt was judged. */
     private class Marker(val what: String, val atNs: Long, val detail: String = "")
@@ -82,11 +116,16 @@ class ListenSession(
      * Closing the hand can also look like a small gesture. So a gesture that is named while a
      * jolt is being judged waits: it is returned later if the jolt was no fist, and dropped if
      * it was. Ask [takeFist] after each call.
+     *
+     * Shoves are felt on the accelerometer side ([pushAccel]) and come out here, with the next
+     * gyro event. A gesture named for a movement that is, or may still become, a shove gives
+     * way to the shove.
      */
     @Synchronized
     fun push(event: SensorEventRecord): List<Heard> {
         if (events.size < MAX_EVENTS) events.add(event)
         lastEventNs = event.timestampNs
+        if (firstGyroNs < 0) firstGyroNs = event.timestampNs
         val out = ArrayList<Heard>(0)
         val since = fist.pendingSince
         when (fist.gyro(event.timestampNs, event.x.toDouble(), event.y.toDouble(), event.z.toDouble())) {
@@ -102,6 +141,18 @@ class ListenSession(
             }
             null -> Unit
         }
+        shove.gyro(event)
+        for (heard in ready) offer(heard, out)
+        ready.clear()
+        // A gesture does not wait for the shove rule for ever: slow movement can keep a stretch open.
+        val each = waiting.iterator()
+        while (each.hasNext()) {
+            val item = each.next()
+            if (event.timestampNs - item.sinceNs > SHOVE_WAIT_NS) {
+                each.remove()
+                offer(item.heard, out)
+            }
+        }
         for (burst in gate.push(event)) {
             val gyro = burst.gyro
             val heard = if (gyro == null) {
@@ -111,10 +162,48 @@ class ListenSession(
                 Heard(burst.start, burst.last, false, clips.size, GestureBlueprints.classifyVersions(clips, blueprints, notes = notes))
             }
             log.add(heard)
-            if (fist.pending && heard.gesture != null) held.add(heard) else out.add(heard)
+            val label = heard.gesture
+            if (label == null) {
+                out.add(heard)
+                continue
+            }
+            val from = firstGyroNs + burst.start * MotionClip.STEP_NS
+            val to = firstGyroNs + burst.last * MotionClip.STEP_NS
+            if (from <= shoveToNs && to >= shoveFromNs) {
+                // The same movement was already heard as a shove: the shove wins.
+                log.add(Marker("OVERRULED", from, label))
+            } else if (shove.possible && to >= shove.since) {
+                // The movement may still turn out to be a shove: wait for that.
+                waiting.add(Waiting(heard, event.timestampNs))
+            } else {
+                offer(heard, out)
+            }
         }
         gestureCount += out.count { it.gesture != null }
         return out
+    }
+
+    /** Passes [heard] on, unless a jolt is being judged: then a gesture waits for that. */
+    private fun offer(heard: Heard, out: MutableList<Heard>) {
+        if (fist.pending && heard.gesture != null) held.add(heard) else out.add(heard)
+    }
+
+    /** A stretch of movement was judged by the shove rule. */
+    private fun onShove(judged: ShoveDetector.Outcome) {
+        val direction = judged.direction
+        if (direction == null) {
+            log.add(Marker("PUSH", judged.startNs, judged.detail()))
+            // No shove after all: the gestures that waited for it go on.
+            for (item in waiting) ready.add(item.heard)
+            waiting.clear()
+            return
+        }
+        log.add(Marker(direction.name, judged.startNs, judged.detail()))
+        for (item in waiting) log.add(Marker("OVERRULED", judged.startNs, item.heard.gesture.orEmpty()))
+        waiting.clear()
+        shoveFromNs = judged.startNs
+        shoveToNs = judged.endNs
+        ready.add(Heard(judged.startNs, judged.endNs, false, 0, null, direction))
     }
 
     /** True once after the hand closed into a fist. */
@@ -145,6 +234,8 @@ class ListenSession(
         lastEventNs = event.timestampNs
         // A fist only means something while there are words to choose.
         fist.accel(event.timestampNs, event.x.toDouble(), event.y.toDouble(), event.z.toDouble(), options > 0)
+        // A shove is felt here and handed out by the next gyro event.
+        shove.accel(event)?.let { onShove(it) }
         cursor.push(event.x.toDouble(), event.y.toDouble(), event.z.toDouble())
         // Closing the hand tilts the wrist a little. While a jolt is judged the cursor stays on the word it was on.
         if (fist.pending) return cursorAt
@@ -181,6 +272,12 @@ class ListenSession(
      * the gesture digits made for it in `nearest`, and `UNDO` with the digits that were left.
      * `FIST`, `JOLT` (a jolt that was no fist) and `BUZZ` (the watch's own buzz, with its length
      * in ms in `nearest`) carry the sensor time they happened at in `at_ns`.
+     *
+     * A shove is a line named `SHOVE_UP`, `SHOVE_DOWN`, `SHOVE_LEFT` or `SHOVE_RIGHT`, with the
+     * time it began in `at_ns` and what was measured in `nearest`: the first push (axis and
+     * m/s), the gyro peak, the degrees turned and the length. `PUSH` is a movement the shove
+     * rule turned down, with the same measures and the reason. `OVERRULED` is a gesture the
+     * blueprints named for a movement that was a shove, with the gesture in `nearest`.
      */
     @Synchronized
     fun decisionsCsv(): String {

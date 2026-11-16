@@ -1,8 +1,12 @@
 package com.gesturedatarecorder.recording
 
 /**
- * The six Tactura gestures. [name] is the label written to CSVs and used by the
+ * The Tactura gestures. [name] is the label written to CSVs and used by the
  * training script (ML/train_gesture_classifier.py SUPPORTED_LABELS); keep them identical.
+ *
+ * The first six turn the wrist and are recognised from the user's blueprints. The four shoves
+ * move the whole hand without turning it and are felt by a rule ([ShoveDetector]), so they
+ * need no calibration.
  */
 enum class Gesture(val displayName: String, val phonemes: String) {
     // The phoneme bins come from the team's "Gesture-to-Phoneme Bin Assignment" (ARPAbet).
@@ -11,7 +15,14 @@ enum class Gesture(val displayName: String, val phonemes: String) {
     TWIST_RIGHT("Twist Right", "IY/UH"),
     TWIST_LEFT("Twist Left", "IH/UW"),
     SHAKE("Shake", "S/Z"),
-    DOUBLE_TAP("Double Tap", "CH/JH");
+    DOUBLE_TAP("Double Tap", "CH/JH"),
+
+    // The shoves' bins were chosen on 2026-11-16 for the most everyday words they add
+    // (docs/gesture-recognition-v2-plan.md). The most used sounds sit on the clearest shoves.
+    SHOVE_UP("Shove Up", "L/R"),
+    SHOVE_DOWN("Shove Down", "M/N"),
+    SHOVE_LEFT("Shove Left", "T/D"),
+    SHOVE_RIGHT("Shove Right", "AH/EH");
 
     companion object {
         fun fromLabel(label: String?): Gesture? =

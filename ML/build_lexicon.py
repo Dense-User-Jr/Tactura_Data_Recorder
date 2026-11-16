@@ -14,7 +14,8 @@ wear/src/main/assets/lexicon.csv:
 rank      the word's place among the most common English words (1 is "the")
 zipf      wordfreq's frequency score, higher is more common
 gestures  one digit per gesture, in the order of the Gesture enum:
-          1 Flick Up, 2 Flick Down, 3 Twist Right, 4 Twist Left, 5 Shake, 6 Double Tap
+          1 Flick Up, 2 Flick Down, 3 Twist Right, 4 Twist Left, 5 Shake, 6 Double Tap,
+          7 Shove Up, 8 Shove Down, 9 Shove Left, 0 Shove Right
 
 The watch never needs Python: the output is committed. Run this again only
 when the bins below change.
@@ -26,7 +27,9 @@ from pathlib import Path
 import cmudict
 from wordfreq import top_n_list, zipf_frequency
 
-# The team's "Gesture-to-Phoneme Bin Assignment" (6 gestures, 12 phonemes, ARPAbet).
+# The first six are the team's "Gesture-to-Phoneme Bin Assignment" (6 gestures, 12 phonemes, ARPAbet).
+# The four shoves were added on 2026-11-16: of the sensible sets of four pairs, this one lets the
+# most of the 5,000 most common words be spelled (docs/gesture-recognition-v2-plan.md).
 BINS = {
     "1": ("TH", "DH"),   # Flick Up      dental fricative
     "2": ("P", "B"),     # Flick Down    bilabial stop
@@ -34,6 +37,10 @@ BINS = {
     "4": ("IH", "UW"),   # Twist Left    high vowel
     "5": ("S", "Z"),     # Shake         sibilant fricative
     "6": ("CH", "JH"),   # Double Tap    affricate
+    "7": ("L", "R"),     # Shove Up      liquid
+    "8": ("M", "N"),     # Shove Down    nasal
+    "9": ("T", "D"),     # Shove Left    alveolar stop
+    "0": ("AH", "EH"),   # Shove Right   mid vowel ("but", "bed")
 }
 TOP_WORDS = 50_000
 # Words CMUdict can pronounce that nobody wants spoken.
@@ -49,6 +56,13 @@ EXCLUDE = {
     "poo", "poop", "poops", "pee", "pees", "sissy", "uzi",
     # noises
     "zzz", "ooh", "oooh", "pooh", "boop",
+    # the same kinds, for the sounds the shoves added: fragments, names and noises that would
+    # crowd short words like "to", "in" and "an" off the three places on the screen
+    "de", "dea", "dee", "des", "di", "doo", "du", "duh", "ed", "eh", "el", "elle", "em", "en", "es", "et", "ia", "il",
+    "im", "le", "lea", "leigh", "li", "lieu", "loo", "lou", "lu", "mi", "mm", "mu", "ne", "ni", "nu", "re", "ru", "rue",
+    "te", "ti", "tu", "uh", "uhh", "ul", "um", "umm", "un", "sioux", "penn", "dunn", "dun", "del", "tel", "lynn",
+    "lin", "lim", "til", "poole", "pearce", "des", "des's",
+    "tit", "tits", "titty", "titties", "slut", "sluts", "slutty", "retard", "retarded",
 }
 
 PHONEME_TO_GESTURE = {phoneme: gesture for gesture, phonemes in BINS.items() for phoneme in phonemes}

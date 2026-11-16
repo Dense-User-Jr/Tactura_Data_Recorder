@@ -942,7 +942,46 @@ A line-for-line Python copy of the Kotlin detector gives the same result on the 
 - One recorded fist in ten was also heard as a soft Flick Down by the gesture listener. A gesture named while a jolt is being judged now waits, and is dropped if the jolt was a fist.
 - The decisions file of a session now has a line for every fist, every jolt that was not one, and every buzz, each with its sensor time, so the next pull shows what really set the detector off.
 
-**Not done.** Running fist to choose on the watch. **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
+**On the watch, 11/15 at 11:30 PM.** Russell: it works "surprisingly well", the roll and the fist together choose words, nothing interferes with the gestures. No ghost choices, no wrong word, not slow. The one problem is that a fist is sometimes missed. Three sessions were pulled, with every fist, turned-down jolt and buzz in the log.
+
+*Why fists were missed.* Three causes, all visible in the log.
+
+| Cause | Example from the log | What it was |
+| --- | --- | --- |
+| The fist came right after a cursor step | a jump of 8.0, 105 ms after a buzz ended | Jolts were ignored for 250 ms after every buzz, and the cursor buzzes at each step |
+| The wrist had only just stopped rolling | a jump of 9.5, gyro 3.4 in the 0.3 s before | The rule wanted the wrist nearly still for 0.3 s before |
+| A softer fist | jumps of 6.4 and 6.6 | The rule wanted a jump of 7 |
+
+All three come from how a fist is really used: roll to the word, then close the hand at once. The recordings the rule was tuned on were made with the arm at rest.
+
+*How hard the watch shakes itself, measured.* With the wrist calm, the watch's own buzz moved the accelerometer by at most 4.1 m/s2 over 20 buzzes (median 3.0 for the 15 ms cursor step). That is far under a fist, so ignoring jolts after a buzz was never needed for the fist. It would matter for a pinch.
+
+*Changes.* Jolts are no longer ignored after a buzz. The wrist has to have slowed to under 2.5 rad/s in the 0.15 s before the jolt, instead of under 1.5 for 0.3 s. The jump needed is 6.5.
+
+| Jump | Wrist before | Recorded fists | Pinches taken for a fist | False in 267 s with no fist | False in 81 gesture reps | Fists felt in the three sessions |
+| --- | --- | --- | --- | --- | --- | --- |
+| 7.0 | under 1.5 for 0.3 s (was built) | 9 of 10 | 0 of 20 | 0 | 0 | 10 |
+| 6.5 | under 2.5 for 0.15 s (built now) | 9 of 10 | 0 of 20 | 0 | 0 | 15 |
+| 6.0 | under 2.5 for 0.15 s | 9 of 10 | 1 of 20 | 2 | 1 | 17 |
+
+The last column counts with the detector armed the whole time and without the pause after a buzz. With that pause and only while words were offered, the watch itself felt 5. How many fists Russell really made in those sessions is not known, so the column shows that more are caught, not how many are still missed. A jump of 6.0 starts to let false ones in, so 6.5 is as low as this data supports.
+
+**The looser fist rule on the watch, 11/15 at 11:45 PM.** Russell made 10 fists and 9 were felt. He puts the miss down to a fist that was not made hard. No ghost choices while he was using it. That session is not in the logs yet: the pull held nothing newer than 11:36 PM, which is before this build.
+
+*What the pull did hold.* One session on the earlier rule that was left listening for 317 s after a word, with the wrist doing ordinary things (busy 3 to 29% of the time). Nothing was chosen by mistake, because a fist only counts while words are offered and none were. Replayed with the detector armed the whole time:
+
+| Rule | Fists it would have felt in 317 s |
+| --- | --- |
+| Jump 7.0, wrist calm for 0.3 s before | 2: the real fist, and one more |
+| Jump 6.5, wrist slowed for 0.15 s before (on the watch now) | 6: the real fist, the hand opening after it, and four more |
+
+So the looser rule catches the fists that were being missed and, in ordinary activity, would also fire about once a minute where the stricter one fired about once in five. The earlier 267 s of listening showed none because the wrist was doing nothing but gestures and cursor turns. The protection that holds is that a fist means nothing unless words are on the screen. Words left on the screen while the hand does something else are exposed.
+
+**The 10-fist test in the logs (session of 11:42 PM, 384 s).** Ten fists were felt and ten words chosen: this, this, be, piece, these, see, says, the, see, easy. Every fist was followed by a word, so none was a ghost. Six jolts were turned down, all at the start of a gesture with the wrist turning at 5 to 18 rad/s, which is what that rule is for. The fist Russell says he missed is most likely a jolt of 6.2 just under the bar of 6.5: a fist in every other way, only softer.
+
+*Also in that session.* After the last word the watch listened for another 4.5 minutes of ordinary activity. It named three Flick Downs at 11 to 16% match, through the small soft Flick Down version. These are the false gestures that version was expected to let in. A false gesture puts words on the screen, and words on the screen are what arms the fist, so the two weaknesses can chain. It did not happen here.
+
+**Not done.** Deciding whether words should leave the screen after a while, or some other guard for words left waiting. What to do about the small soft flick versions. **Wrong?** inside Listen mode. A longer and more active wear test. Battery.
 
 ## Parked idea: chords (rotation plus translation)
 

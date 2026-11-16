@@ -57,10 +57,31 @@ class FistDetectorTest {
     }
 
     @Test
-    fun aWristThatWasAlreadyMovingDoesNotCount() {
+    fun aWristStillTurningFastRightBeforeDoesNotCount() {
         val detector = FistDetector()
-        val out = play(detector, 0, 120, joltAt = 40, jolt = 12.0) { i -> if (i in 30..38) 2.0 else 0.1 }
+        val out = play(detector, 0, 120, joltAt = 40, jolt = 12.0) { i -> if (i in 30..38) 4.0 else 0.1 }
         assertEquals(listOf(FistDetector.Outcome.NOT_A_FIST), out)
+    }
+
+    @Test
+    fun aFistRightAfterRollingTheCursorCounts() {
+        val detector = FistDetector()
+        // A roll at 3 rad/s that ends a fifth of a second before the hand closes, then slows down.
+        val out = play(detector, 0, 120, joltAt = 40, jolt = 12.0) { i ->
+            when (i) {
+                in 15..30 -> 3.0
+                in 31..39 -> 1.8
+                else -> 0.1
+            }
+        }
+        assertEquals(listOf(FistDetector.Outcome.FIST), out)
+    }
+
+    @Test
+    fun aSoftFistJustOverTheBarCounts() {
+        val detector = FistDetector()
+        assertEquals(listOf(FistDetector.Outcome.FIST), play(detector, 0, 120, joltAt = 40, jolt = 6.6))
+        assertTrue(play(FistDetector(), 0, 120, joltAt = 40, jolt = 6.4).isEmpty())
     }
 
     @Test

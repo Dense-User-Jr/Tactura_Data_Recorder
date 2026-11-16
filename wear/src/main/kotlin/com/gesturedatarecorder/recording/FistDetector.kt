@@ -10,24 +10,31 @@ import kotlin.math.sqrt
  * hardly turns. So a fist is:
  *
  * 1. a jump of at least [JOLT] between two accelerometer readings,
- * 2. from a wrist that was not really moving (gyro under [BEFORE_LIMIT] in the 0.3 s before),
+ * 2. from a wrist that has stopped turning (gyro under [BEFORE_LIMIT] in the 0.15 s before),
  * 3. that does not turn into a real movement (gyro under [DURING_LIMIT] for the next 0.5 s),
  * 4. and is calm again right after (gyro under [AFTER_LIMIT] from 0.5 to 0.65 s).
  *
  * The answer therefore comes 0.65 s after the jolt. A jolt that is the start of a gesture is
  * turned down as soon as the wrist turns fast, without waiting.
  *
- * The numbers come from 10 recorded fists, 20 pinches and 4.5 minutes of ordinary listening
- * (docs/gesture-recognition-v2-plan.md). They assume about 50 readings a second.
+ * The numbers come from 10 recorded fists, 20 pinches, 4.5 minutes of ordinary listening and
+ * the first evening of use on the watch (docs/gesture-recognition-v2-plan.md). They assume
+ * about 50 readings a second.
+ *
+ * The watch's own buzz also shakes the accelerometer, by up to 4.1 m/s2. That is well under
+ * [JOLT], so nothing has to be done about it here.
  * Not thread safe: call from one thread.
  */
 class FistDetector {
     companion object {
-        /** Accelerometer jump between two readings, in m/s2. Fists gave 5.6 to 20, pinches under 6.3. */
-        const val JOLT = 7.0
+        /** Accelerometer jump between two readings, in m/s2. Fists gave 5.6 to 20, pinches under 6.3, the watch's buzz under 4.2. */
+        const val JOLT = 6.5
 
-        /** Gyro size allowed in the 0.3 s before the jolt, in rad/s. A hand starting to close already moves the wrist a little. */
-        const val BEFORE_LIMIT = 1.5
+        /**
+         * Gyro size allowed just before the jolt, in rad/s. A fist is usually made right after
+         * rolling the cursor to a word, so the wrist only has to have slowed down, not be still.
+         */
+        const val BEFORE_LIMIT = 2.5
 
         /** Gyro size allowed from the jolt until [DURING_NS] after it. Fists stayed under 1.8. A gesture goes far over. */
         const val DURING_LIMIT = 2.5
@@ -35,7 +42,7 @@ class FistDetector {
         /** Gyro size allowed after that: the wrist must be calm again. */
         const val AFTER_LIMIT = 0.5
 
-        const val BEFORE_FROM_NS = 300_000_000L
+        const val BEFORE_FROM_NS = 150_000_000L
         const val BEFORE_TO_NS = 40_000_000L
         const val DURING_NS = 500_000_000L
         const val DECIDE_NS = 650_000_000L
@@ -64,7 +71,7 @@ class FistDetector {
 
     /**
      * One accelerometer reading. A big enough jump starts a judgement, but only when [armed]:
-     * the caller turns that off when there is nothing to choose or the watch has just buzzed.
+     * the caller turns that off when there is nothing to choose.
      */
     fun accel(timestampNs: Long, x: Double, y: Double, z: Double, armed: Boolean) {
         if (hasAccel && armed && joltAt < 0 && timestampNs >= restUntil) {

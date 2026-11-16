@@ -669,13 +669,13 @@ class RecordingService : Service(), SensorEventListener {
     }
 
     private fun vibrate(durationMs: Long) {
-        // In Listen mode the buzz is announced first, so its shaking is not taken for a fist.
-        listening?.mute(durationMs)
+        // In Listen mode every buzz goes in the session's log, since it shakes the accelerometer too.
+        listening?.noteBuzz(durationMs)
         vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     private fun vibrateStopCue() {
-        listening?.mute(260)
+        listening?.noteBuzz(260)
         vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 80, 100, 80), -1))
     }
 

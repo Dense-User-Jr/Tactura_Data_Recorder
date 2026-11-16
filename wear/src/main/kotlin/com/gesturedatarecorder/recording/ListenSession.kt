@@ -20,9 +20,6 @@ class ListenSession(
 
         /** How many words the Listen screen offers at once. */
         const val WORDS_SHOWN = 3
-
-        /** After the watch's own buzz ends, jolts are ignored for this long while the watch settles. */
-        const val BUZZ_SETTLE_MS = 250L
     }
 
     /**
@@ -55,7 +52,6 @@ class ListenSession(
     private val fist = FistDetector()
     private var fistFelt = false
     private var lastEventNs = 0L
-    private var buzzUntilNs = Long.MIN_VALUE
 
     /** Gestures named while a jolt was being judged. They are passed on if it was no fist, and dropped if it was. */
     private val held = ArrayList<Heard>()
@@ -130,12 +126,11 @@ class ListenSession(
     }
 
     /**
-     * The watch is about to buzz for [durationMs]. Its own buzz shakes the accelerometer about
-     * as hard as a pinch, so jolts are not listened for until a moment after it ends.
+     * Notes in the log that the watch is about to buzz for [durationMs]. Its own buzz shakes
+     * the accelerometer, though not nearly as hard as a fist, so this is only for the record.
      */
     @Synchronized
-    fun mute(durationMs: Long) {
-        buzzUntilNs = maxOf(buzzUntilNs, lastEventNs + (durationMs + BUZZ_SETTLE_MS) * 1_000_000L)
+    fun noteBuzz(durationMs: Long) {
         log.add(Marker("BUZZ", lastEventNs, durationMs.toString()))
     }
 
@@ -148,9 +143,8 @@ class ListenSession(
     fun pushAccel(event: SensorEventRecord, axis: TiltCursor.Axis, options: Int): Int {
         if (events.size < MAX_EVENTS) events.add(event)
         lastEventNs = event.timestampNs
-        // A fist only means something while there are words to choose, and not right after the watch's own buzz.
-        val armed = options > 0 && event.timestampNs >= buzzUntilNs
-        fist.accel(event.timestampNs, event.x.toDouble(), event.y.toDouble(), event.z.toDouble(), armed)
+        // A fist only means something while there are words to choose.
+        fist.accel(event.timestampNs, event.x.toDouble(), event.y.toDouble(), event.z.toDouble(), options > 0)
         cursor.push(event.x.toDouble(), event.y.toDouble(), event.z.toDouble())
         // Closing the hand tilts the wrist a little. While a jolt is judged the cursor stays on the word it was on.
         if (fist.pending) return cursorAt

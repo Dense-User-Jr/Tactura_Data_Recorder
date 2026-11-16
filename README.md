@@ -175,7 +175,7 @@ python .\ML\dump_reference_features.py
 
 ## Calibrate your own gestures (blueprints)
 
-The app can also learn your personal version of each gesture and use that instead of the bundled model. This is the v2 recipe: it looks only at the gyroscope, finds the moment the wrist moves the most, cuts a short clip around it, and compares that clip with the average of your own calibration reps (your "blueprints"). The math lives in `ML/blueprint_reference.py`; the watch code in `MotionClip.kt` and `GestureBlueprints.kt` is a line-by-line port, checked by unit tests. When a movement has two strokes of about the same strength (a shake), it cuts a clip around each one and keeps the best fit.
+The app can also learn your personal version of each gesture and use that instead of the bundled model. This is the v2 recipe: it looks only at the gyroscope, finds the moment the wrist moves the most, cuts a short clip around it, and compares that clip with the average of your own calibration reps (your "blueprints"). The math lives in `ML/blueprint_reference.py`; the watch code in `MotionClip.kt` and `GestureBlueprints.kt` is a line-by-line port, checked by unit tests. When a movement has two strokes of about the same strength (a shake), it cuts a clip around each one and keeps the best fit. Each blueprint also learns the two main ways your own reps differ from their average ("eigengestures"), and that usual variation is not counted against you.
 
 To calibrate:
 

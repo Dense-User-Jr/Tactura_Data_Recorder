@@ -6,6 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import kotlin.math.abs
 
 /**
  * Guards the contract between the watch and the laptop for steps 4 to 6 of the v2 recipe:
@@ -154,6 +155,48 @@ class GestureBlueprintsParityTest {
             assertEquals("${cells[1]}: distance", single.distance, listed.distance, 0.0)
         }
         assertEquals(0, GestureBlueprints.chooseClip(listOf(blueprints.values.first().mean), emptyList()))
+    }
+
+    @Test
+    fun eigengesturesMatchPythonReference() {
+        val expected = lines.filter { it[0] == "E" }
+        assertTrue("no reference eigengestures", expected.isNotEmpty())
+        for (cells in expected) {
+            val gesture = cells[1]
+            val index = cells[2].toInt()
+            val blueprint = blueprints.getValue(gesture)
+            assertTrue("$gesture: eigengesture $index is missing", blueprint.directions.size > index)
+            assertEquals("$gesture eigengesture $index: spread", cells[3].toDouble(), blueprint.spreads[index], TOLERANCE)
+            val values = cells.drop(4)
+            assertEquals("$gesture eigengesture $index: length", 3 * MotionClip.CLIP_LEN, values.size)
+            // An eigengesture pointing the other way is the same eigengesture, so either sign may match.
+            var same = 0.0
+            var flipped = 0.0
+            for (axis in 0..2) {
+                for (i in 0 until MotionClip.CLIP_LEN) {
+                    val want = values[axis * MotionClip.CLIP_LEN + i].toDouble()
+                    val got = blueprint.directions[index][axis][i]
+                    same = maxOf(same, abs(got - want))
+                    flipped = maxOf(flipped, abs(got + want))
+                }
+            }
+            assertTrue("$gesture eigengesture $index differs from Python by ${minOf(same, flipped)}", minOf(same, flipped) <= TOLERANCE)
+        }
+        for ((gesture, blueprint) in blueprints) {
+            assertEquals("$gesture: eigengestures kept", expected.count { it[1] == gesture }, blueprint.directions.size)
+        }
+    }
+
+    @Test
+    fun aFaintCopyIsNotAGesture() {
+        for ((gesture, blueprint) in blueprints) {
+            val faint = Array(3) { axis -> DoubleArray(MotionClip.CLIP_LEN) { i -> 0.3 * blueprint.mean[axis][i] } }
+            val alone = mapOf(gesture to blueprint)
+            assertNull("$gesture at 30% strength", GestureBlueprints.classify(faint, alone).gesture)
+            assertNull("$gesture at 30% strength", GestureBlueprints.classifyClips(listOf(faint), alone).gesture)
+            val still = Array(3) { DoubleArray(MotionClip.CLIP_LEN) }
+            assertNull("$gesture: no motion at all", GestureBlueprints.classify(still, alone).gesture)
+        }
     }
 
     @Test

@@ -4,7 +4,7 @@ Russell Mehta. Written Nov 10, 2026. Last updated Nov 15, 2026.
 
 > **Where the build stands (Nov 11).** Phases 0 and 1 are done. Phase 2 runs on the Galaxy Watch 7: calibration, blueprint Classify and the "no gesture" answer all work. The **Wrong?** correction is not built yet, and nothing from phases 3 to 5 is started. The diagrams and formulas in this file render on GitHub.
 >
-> **Update (Nov 15).** A scored run five days after calibration gave 54 of 60 with no recalibration of the flicks and twists. The two wrong names were shakes cropped on the wrong stroke. The recipe now cuts one clip per strong stroke (step 3b) and is waiting for its watch test. See "Working order" near the end.
+> **Update (Nov 15).** A scored run five days after calibration gave 54 of 60 with no recalibration of the flicks and twists. The two wrong names were shakes cropped on the wrong stroke. The recipe now cuts one clip per strong stroke (step 3b), confirmed on the watch that evening. Eigengestures (step 7) and a "strong enough" rule (step 6) were built the same night and wait for their watch test. See "Working order" near the end.
 
 ## The one-minute version
 
@@ -214,21 +214,35 @@ The closest blueprint wins, but only if it is close enough. Otherwise the watch 
 
 The limit is a percentage of the gesture's own size. A clip must miss its closest blueprint by no more than 90% of that blueprint's size, where size is the root mean square of the blueprint. A fixed limit in rad/s was tried first and failed: 1 rad/s is a tiny miss for a twist, but it is the whole gap between Flick Up and Flick Down. With the percentage rule, wrong names fell from 4% to 0%, 12% of real gestures were ignored, and a gesture with no blueprint was ignored every time. The limit sits below 100% on purpose: a clip of no motion is exactly 100% away from every blueprint, so at 100% a faint twitch once passed as a Flick Up on the watch.
 
-### Step 7. Eigengestures (the upgrade)
-
-The average says "here is your typical twist". Eigengestures add "and here are the ways you usually wobble around it", such as a bit faster or a bit bigger. They are the main directions in which your reps differ from your average.
+Since 11/15 there is a second rule, "strong enough": the clip's own size must be at least 60% of the winning blueprint's size. It exists because eigengestures (step 7) forgive part of the gap between a clip and a blueprint, and for a small gesture that can include most of the gap to no motion at all.
 
 ```math
-C = \frac{1}{n}\sum_{i=1}^{n}(x_i-\mu)(x_i-\mu)^{\top}, \qquad C\,v_k = \lambda_k v_k
+\text{answer } \hat{g} \text{ only if } \ d_{\text{eig}}(x,\mu_{\hat{g}}) \le 0.9\,\text{size}(\mu_{\hat{g}}) \ \text{ and } \ \text{size}(x) \ge 0.6\,\text{size}(\mu_{\hat{g}})
 ```
 
-To compare, remove the part of the mismatch that is your usual wobble and measure what is left.
+### Step 7. Eigengestures (built 11/15)
+
+The average says "here is your typical flick". Eigengestures add "and here are the ways you usually differ from it". A person's reps are not scattered evenly around their average. They are stretched in a few directions, and a rep that sits far out along one of those directions is still a normal rep for that person.
+
+**Finding the directions.** Take the reps after lining up and subtract the blueprint from each one. The directions are the top eigenvectors of the covariance of those differences.
 
 ```math
-r = (x-\mu) - \sum_{k=1}^{K}\left(v_k^{\top}(x-\mu)\right)v_k, \qquad d_{\text{eig}}(x) = \frac{\lVert r\rVert}{\sqrt{180}}
+e_i = x_i-\mu, \qquad C = \frac{1}{n}\sum_{i=1}^{n} e_i\,e_i^{\top}, \qquad C\,v_k = \lambda_k v_k, \qquad \sigma_k = \sqrt{\lambda_k}
 ```
 
-Measured once, with 5 reps and the top 2 directions: the leftover mismatch to a person's own blueprint fell from 1.78 to 1.20 rad/s. It needs at least 5 reps per gesture to be meaningful.
+Each direction is a list of 180 numbers with length 1. The spread says how far the reps typically sit along it. We keep the top 2. With n reps there are at most n minus 1 directions, so the code finds them from the small n by n table of dot products between reps, using a simple method (Jacobi rotations) that is written the same way in Python and Kotlin.
+
+**Comparing.** Line the clip up with the blueprint the plain way (step 5). Then measure how much of the leftover follows each direction, remove that part, and measure what remains. The removal is capped at 1.5 times the spread, so a movement far outside the user's habits still counts as different.
+
+```math
+c_k = v_k^{\top}(x-\mu), \qquad r = (x-\mu) - \sum_{k=1}^{2}\operatorname{clip}\left(c_k,\,\pm 1.5\,\sigma_k\right)v_k, \qquad d_{\text{eig}}(x) = \frac{\lVert r\rVert}{\sqrt{180}}
+```
+
+Step 6 now uses this distance for both picking and judging.
+
+**What it found.** In Russell's 11/15 afternoon Flick Up, the first direction holds 62% of the variation between reps, and 86% of it is on the twist axis. It is neither "stronger or weaker" nor "earlier or later". The math found that the main way his flick varies is how much forearm twist leaks into it. One real flick that missed the blueprint by 74% of its size missed by 48% once the two directions were forgiven.
+
+It needs at least 3 reps to give any direction and 5 to be meaningful. Calibration already asks for 5.
 
 ### Step 8. Learning over time
 
@@ -265,7 +279,9 @@ It scored 97% in the same test. Its weakness is that a signal and its mirror ima
 | Slide when comparing | 5 readings each way (100 ms) | Gave 96 to 97% with a worst draw of 94% across the smoothing settings tried |
 | Strong stroke | At least 60% of the peak, highest within 8 readings (160 ms) each way, at most 3 per window | First guess, set on 11/15. Not tuned yet |
 | Reps per gesture | 5, with 3 as the minimum | 3 is enough for the average, 5 allows eigengestures |
-| Eigen directions | 2 | Tested once with 5 reps |
+| Eigen directions | 2 | Russell's pick on 11/15 after a sweep of 1 to 4. The first helps most inside one sitting, the second on a new sitting. More than 2 kept adding a few points but accepted more odd movements |
+| Eigen cap | 1.5 times the spread seen in calibration | First set to 2, then tightened by Russell on 11/15 after the first real random-movement test. Caps from 1.5 to none changed accuracy by at most 2 points, and a tighter cap leaked less |
+| "Strong enough" limit | A clip must be at least 60% of the blueprint's own size | Added 11/15 as a guard for eigengestures at 50%, raised to 60% the same night. On the watch it stopped 5 of 20 movements that should be ignored |
 | "Close enough" limit | Within 90% of the blueprint's own size | Russell's rule. Laptop: 88% correct, 12% ignored, 0% misnamed. Watch: 41 of 41 flicks and twists in each of two sittings |
 | Weight of the shared blueprint | Open | Needs data from more people |
 
@@ -467,7 +483,7 @@ The demo target is solid personal gesture recognition with the math front and ce
 | Order | Work | Why here |
 | --- | --- | --- |
 | 1, done 11/15 | Scorecard on the current blueprints, then pull the data | An informal check on 11/15 named every gesture correctly using the 11/10 blueprints with no recalibration. It was not scored. A scored run turns that into evidence and brings the redone Shake reps to the laptop. |
-| 2, part A done 11/15 | Measure, then test fixes on the laptop | See how close each gesture lands to its limit. Flicks are small (about 1 rad/s), so normal variation between reps uses 36 to 67% of their size against the 90% limit. Twists use 9 to 33%. Eigengestures (step 7) get tested here first. |
+| 2, parts A and B built 11/15 | Measure, then test fixes on the laptop | See how close each gesture lands to its limit. Flicks are small (about 1 rad/s), so normal variation between reps uses 36 to 67% of their size against the 90% limit. Twists use 9 to 33%. Eigengestures (step 7) get tested here first. |
 | 3 | The **Wrong?** correction | Blueprints that learn while worn. `GestureBlueprints.update` already exists and nothing calls it yet. |
 | 4 | Real-time listening | Phase 4 as written. |
 | 5 | Chords with the accelerometer | Parked. See the next section. |
@@ -516,9 +532,108 @@ Three ways of centring the clip were compared. Each number uses 5 random reps pe
 
 **Tempo matters.** An earlier batch of 20 shakes the same evening, on the old build and a slower calibration, scored 17 of 20. The gap between the two strokes was 360 ms in that calibration and 230 to 350 ms in the test, and the match fell from about 55% to about 15% as the gap shrank (correlation 0.91). The comparison can slide a clip in time but it cannot stretch it. Calibrating at the pace the gesture is really done at fixed it for now.
 
-**Not built yet: one ruler.** The winner is picked by raw distance in rad/s but judged by percent of size. A fast shake once missed Shake by 73% of its size and Twist Left by 87%, yet Twist Left won because it is the smaller gesture (3.35 against 3.39 rad/s). Picking the winner by percent too gave 19 of 20 on that batch and helped on Dhruv's data, but turned some ignored windows into wrong names on Russell's 11/10 set (0% to 3.5%).
+**Not built yet: one ruler.** The winner is picked by raw distance in rad/s but judged by percent of size. A fast shake once missed Shake by 73% of its size and Twist Left by 87%, yet Twist Left won because it is the smaller gesture (3.35 against 3.39 rad/s). Picking the winner by percent too gave 19 of 20 on that batch and helped on Dhruv's data, but turned some ignored windows into wrong names on Russell's 11/10 set (0% to 3.5%). It was then tested on flicks and dropped, see the next section.
 
 The comparison of the three methods was run from a scratch script and is not in the repo. The chosen method is in `ML/blueprint_reference.py`, so the evaluation script reproduces its numbers.
+
+### Flick variation, Nov 15 (step 2, part B: measured, not fixed yet)
+
+Flick Up and Flick Down had to be recalibrated twice on 11/15 because they slid to "no gesture" within hours, while the twists ran on five-day-old blueprints. The recordings show why: Russell does not do the same flick from one sitting to the next. How much forearm roll sneaks into it changes a lot.
+
+| Sitting | Flick Up: share of motion on the twist axis, size | Flick Down: share on the twist axis, size |
+| --- | --- | --- |
+| 11/10 evening test | 50%, 0.94 rad/s | 75%, 0.52 rad/s |
+| 11/10 calibration | 33%, 0.99 | 60%, 1.12 |
+| 11/10 test after calibrating | 51%, 0.90 | 73%, 0.74 |
+| 11/15 afternoon test | 32%, 0.65 | 35%, 0.74 |
+| 11/15 recalibration, 5:46 PM | not redone | 32%, 0.67 |
+| 11/15 recalibration, 6:47 PM | 8%, 0.82 | 43%, 1.14 |
+
+The blueprints of the same flick from two sittings sit 33 to 160% of their size apart. The limit is 90%, and normal variation inside one sitting already uses 50 to 65%.
+
+**The test.** Each of the 71 flick windows was judged by blueprints that had never seen its sitting, with the twists and Shake present as usual.
+
+| What the watch knows about a flick | Correct | Ignored | Misnamed |
+| --- | --- | --- | --- |
+| One blueprint from the most recent earlier sitting (what the app does today) | 47 (66%) | 24 | 0 |
+| The same, plus eigengestures (step 7) | 53 (75%) | 18 | 0 |
+| One blueprint per earlier sitting | 51 (72%) | 20 | 0 |
+| One blueprint per earlier sitting, plus eigengestures | 61 (86%) | 10 | 0 |
+
+For comparison, a flick tested inside the sitting it was calibrated in scores 83%.
+
+- **Eigengestures help.** Russell's idea from 11/10. With 5 reps and 2 directions it recovered 6 of the 24 ignored flicks and named nothing wrong. Inside one sitting it took flicks from 83% to 92%.
+- **Remembering earlier sittings helps more when the two are combined.** Keeping one blueprint per sitting, instead of replacing the old one, is the "keeps learning while worn" idea in its simplest form.
+- **One ruler was dropped.** Picking the winner by percent of size turned about one flick in eight into a wrong name. A weak flick is roughly 85% away from a big twist on the same axis, which passes the limit. Picking by raw distance lets the small flick blueprint win first and then fail its own limit, so the window is ignored instead. The two rulers protect small gestures.
+- **Comparing shape only was dropped.** Letting the strength float between half and double scored 42% across days with many wrong names.
+- **Safety check.** With every flick blueprint from all six sittings loaded, 40 of 40 twists and shakes from 11/15 were still right, 20 of 20 still-arm windows were ignored, and no twist or shake was taken for a flick when its own blueprint was hidden.
+- **What is missing.** There are no recordings of ordinary arm movement. Eigengestures and extra blueprints both make matching more forgiving, and without those recordings we cannot measure false alarms. Record ten windows of random movement at the next sitting.
+
+The table above used 2 directions and a cap of 3 times the spread. These tests were run from scratch scripts and are not in the repo.
+
+### Eigengestures built, Nov 15 (step 2, part B)
+
+**Choosing the settings.** Russell asked for a sweep before deciding. Cap fixed at 2 times the spread:
+
+| Directions | Flicks in a new sitting | Flicks in the same sitting | All 96 scored windows of 11/15 | Dhruv's recordings | Odd movements accepted, of 96 |
+| --- | --- | --- | --- | --- | --- |
+| 0 (before) | 66% | 83% | 93% | 84% | 11 |
+| 1 | 69% | 97% | 98% | 87% | 18 |
+| 2 (chosen) | 75% | 97% | 99% | 88% | 19 |
+| 3 | 76% | 97% | 99% | 90% | 24 |
+| 4 | 79% | 97% | 100% | 91% | 25 |
+
+"Odd movements" are the real windows with two sensor axes swapped, which gives movements no gesture uses. It is a rough stand-in for random arm movement. He chose 2 directions and a cap of 2, the cautious end, to be revisited once real random movement is recorded.
+
+**A hole found while building, and the guard for it.** A clip of no motion used to be exactly 100% away from every blueprint, which is why the limit sits at 90%. With eigengestures that is no longer true for small gestures. Part of the gap between "nothing" and a flick lies along the flick's own directions of variation, so it gets forgiven: a clip of no motion came out only 65 to 79% away from Russell's Flick Up. A faint twitch could then pass as a flick.
+
+The guard is a second rule next to "close enough": the clip's own size must be at least 50% of the blueprint's size. To test it, every real window was shrunk to a faint copy and run through the recipe, with the motion threshold applied.
+
+| | Faint copies that still got a name, summed over 10, 15, 20, 30 and 40% strength (of 480) | Accuracy on the 96 windows |
+| --- | --- | --- |
+| Before eigengestures | 132 | 89 right, 6 ignored, 1 misnamed |
+| Eigengestures alone | 222 | 95, 0, 1 |
+| Eigengestures plus "strong enough" at 50% (built) | 125 | 95, 0, 1 |
+| Eigengestures plus "strong enough" at 60% | 86 | 95, 0, 1, and one flick fewer in the new-sitting test |
+
+So the guard brings faint-movement behaviour back to where it was, at no cost in accuracy. Two other options were tried. Forgiving shape only and never strength kept "nothing" at exactly 100% but gave up about half of the gain on flicks. A floor of 60% leaks less and costs one flick in 71. The value is one setting, `MIN_STRENGTH`.
+
+Many of the faint copies that still get a name are faint twists that resemble Russell's Flick Down, which he sometimes does with a lot of forearm roll. That is the gesture set, not the math.
+
+**The repo's evaluation, before and after.** `python ML\evaluate_blueprints.py`: Russell's 11/10 set with 5 reps went from 90% to 95% correct with the limits on, Dhruv from 88% to 91%, the first-5-then-45-later test from 213 to 215 of 225, and the hidden-blueprint test still ignores every window.
+
+**On the watch's own blueprints.** Replaying the 96 scored windows of 11/15 against the reps stored on the watch: 95 right, none ignored, 1 misnamed (a fast shake from before the Shake recalibration). The four ignored Flick Downs of the afternoon all come back. No recalibration is needed, because the watch stores the reps and rebuilds blueprints from them.
+
+**On the watch, 11/15 at 7:20 PM (cap 2, strong enough 50%).** The build compiled, all 20 parity tests passed, and the watch matched the laptop on 50 of 50 windows. Russell did 20 movements that should be ignored and 30 real gestures, with no recalibration.
+
+| Part | Result |
+| --- | --- |
+| 10 random movements (reach, scratch hair, wave, lower arm, punch, raise hand, stretch) | 9 ignored, 1 hair scratch called Flick Up |
+| 10 gentle moves (flicks in three directions, shakes) | 9 ignored, 1 gentle shake called Flick Up |
+| 10 Flick Up, 10 Flick Down | 20 of 20 |
+| 5 Twist Left, 5 Twist Right | 10 of 10 |
+
+- **Why the 18 were ignored.** 11 were not close to any blueprint (they missed by 112 to 233% of its size), 5 were stopped by the "strong enough" rule, and 2 never passed the motion threshold. Without the "strong enough" rule 7 would have been named instead of 2.
+- **The two that got through** matched Flick Up at 13% and 10%, where 10% is the passing mark. Both were soft movements about 61 to 67% as strong as the Flick Up blueprint, the smallest gesture.
+- **Eigengestures bought nothing in this sitting.** The flick blueprints were 40 minutes old, and the recipe without eigengestures would also have scored 30 of 30 with no false alarms. Their gain is on older blueprints, so the test that matters is another day with no recalibration.
+
+**Retuned with the real negatives.** Every option below keeps the 30 real gestures at 30 of 30.
+
+| Setting | False alarms, of 20 | 96 scored windows of 11/15 | Flicks in a new sitting | Faint copies named, of 480 |
+| --- | --- | --- | --- | --- |
+| Cap 2, strong enough 50% (first build) | 2 | 95 right | 75% | 117 |
+| Cap 1.5 | 0 | 95 right | 73% | 114 |
+| Cap 1.5, strong enough 60% (chosen) | 0 | 95 right | 72% | 81 |
+| Strong enough 70% | 0 | 91 right | 65% | 64 |
+| Close enough 85% | 0 | 94 right | 66% | 92 |
+| 1 direction | 0 | 94 right | 69% | 90 |
+| 3 or 4 directions | 3 | not run | not run | not run |
+| No eigengestures | 0 | 89 right | 66% | 132 |
+
+Russell chose cap 1.5 with strong enough at 60%. This was tuned on two false alarms that were borderline, so it needs more random-movement windows from another day.
+
+**Not done.** Watch test of the retuned build. A test on another day with no recalibration. Keeping one blueprint per sitting.
+
 
 ## Parked idea: chords (rotation plus translation)
 

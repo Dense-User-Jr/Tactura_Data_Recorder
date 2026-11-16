@@ -11,6 +11,7 @@ wear/src/test/resources/reference_blueprints.csv with five kinds of line:
     W,<gesture>,<index>,<miss>                      the rep in the F set least like the others
     M,<file>,<gesture or NONE>,<distance>           the decision when every strong stroke is tried
     C,<gesture>,<file>,<clips>,<index>              which of a rep's clips calibration would keep
+    E,<gesture>,<number>,<spread>,<180 values>      one eigengesture of a blueprint (number 0 is the biggest)
 
 The JVM test GestureBlueprintsParityTest rebuilds everything from the same files
 with the watch code and checks the numbers agree.
@@ -80,6 +81,11 @@ def main():
     for gesture in sorted(blueprints):
         made = blueprints[gesture]
         lines.append(",".join(["B", gesture, str(made.count), number(made.size)] + flat(made.mean)))
+
+    for gesture in sorted(blueprints):
+        made = blueprints[gesture]
+        for index, direction in enumerate(made.directions):
+            lines.append(",".join(["E", gesture, str(index), number(made.spreads[index])] + flat(direction)))
 
     # Calibration check: the rep in each set that looks least like the others, and by how much.
     for gesture in sorted(by_gesture):

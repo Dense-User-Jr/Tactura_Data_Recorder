@@ -12,8 +12,10 @@ The recipe, in the order the functions appear:
   2. find_action     where the motion level peaks, and is that loud enough
      find_humps      every stroke nearly as loud as the peak (usually just one)
   3. crop            1.2 s of gyro centred on a stroke, called a "clip"
-  4. build_blueprint average a few clips of one gesture into a blueprint
+  4. build_blueprint average a few clips of one gesture into a blueprint,
+                     and learn the main ways the reps differ (eigengestures)
   5. distance        how much a clip and a blueprint disagree (rad/s)
+     eigen_distance  the same, after forgiving the user's usual variation
   6. classify        closest blueprint, or None when nothing is close
      classify_clips  the same, trying the clip of every strong stroke
 
@@ -27,7 +29,7 @@ to be written again in Kotlin, and the two must give the same numbers.
 
 import csv
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -44,7 +46,12 @@ SLIDE = 5                         # try shifts of -5..+5 readings (100 ms)
 HUMP_SHARE = 0.6                  # a stroke is "strong" when it reaches 60% of the peak
 HUMP_GAP = 8                      # readings; strokes closer than this (160 ms) count as one
 MAX_HUMPS = 3                     # try at most this many strokes per window
+EIGEN_DIRECTIONS = 2              # eigengestures kept per blueprint (0 turns them off)
+EIGEN_CAP = 1.5                   # forgive up to this many times the spread seen in calibration
+EIGEN_FLOOR = 1e-9                # a direction holding less than this share of the variation is noise
+JACOBI_SWEEPS = 30                # passes of the eigenvalue solver; a 5 by 5 table settles in under 10
 LIMIT_PERCENT = 0.9               # "close enough" = within 90% of the blueprint's own size
+MIN_STRENGTH = 0.6                # "strong enough" = at least 60% of the blueprint's own size
 
 GYRO = "gyroscope"
 
@@ -290,6 +297,8 @@ class Blueprint:
     mean: np.ndarray   # shape (3, CLIP_LEN): the typical clip
     count: int         # how many reps went into the mean
     size: float        # rad/s: how big the gesture is (RMS of the mean)
+    directions: list = field(default_factory=list)  # eigengestures: arrays shaped like mean, each of length 1
+    spreads: list = field(default_factory=list)     # how far the reps typically sit along each direction
 
 
 def blueprint_size(mean):
@@ -308,26 +317,158 @@ def _average(clips):
     return total / len(clips)
 
 
+def _jacobi(table):
+    """Eigenvalues and eigenvectors of a small symmetric table (cyclic Jacobi).
+
+    table is a list of n lists of n floats. Returns (values, vectors): values[i]
+    is an eigenvalue and column i of vectors (vectors[k][i] for k in range(n))
+    is its eigenvector. They are not sorted.
+
+    The method zeroes one off-diagonal entry at a time by rotating two rows and
+    two columns. It only adds, multiplies, divides and takes square roots, so
+    the Kotlin port gives the same numbers.
+    """
+    n = len(table)
+    a = [list(row) for row in table]
+    v = [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
+    for _ in range(JACOBI_SWEEPS):
+        for p in range(n - 1):
+            for q in range(p + 1, n):
+                if a[p][q] == 0.0:
+                    continue
+                theta = (a[q][q] - a[p][p]) / (2.0 * a[p][q])
+                t = (1.0 if theta >= 0.0 else -1.0) / (abs(theta) + math.sqrt(theta * theta + 1.0))
+                c = 1.0 / math.sqrt(t * t + 1.0)
+                s = t * c
+                for k in range(n):  # columns p and q
+                    akp = a[k][p]
+                    akq = a[k][q]
+                    a[k][p] = c * akp - s * akq
+                    a[k][q] = s * akp + c * akq
+                for k in range(n):  # rows p and q
+                    apk = a[p][k]
+                    aqk = a[q][k]
+                    a[p][k] = c * apk - s * aqk
+                    a[q][k] = s * apk + c * aqk
+                for k in range(n):
+                    vkp = v[k][p]
+                    vkq = v[k][q]
+                    v[k][p] = c * vkp - s * vkq
+                    v[k][q] = s * vkp + c * vkq
+    return [a[i][i] for i in range(n)], v
+
+
+def eigengestures(aligned, mean):
+    """Step 7. The main ways the reps of one gesture differ from their average.
+
+    aligned holds the reps after lining up, mean is their average. Returns
+    (directions, spreads). Each direction is an array shaped like mean with
+    length 1: a pattern that, added to or taken from the blueprint, turns it
+    into one of the user's usual versions of the gesture. The matching spread
+    is how far the reps typically sit along that pattern.
+
+    The directions are the top eigenvectors of the covariance of the reps.
+    With n reps there are at most n - 1 of them, so the eigenvalues are taken
+    from the small n by n table of dot products between reps instead of a 180
+    by 180 one. Up to EIGEN_DIRECTIONS are kept. Fewer than 3 reps give none.
+    """
+    n = len(aligned)
+    if EIGEN_DIRECTIONS <= 0 or n < 3:
+        return [], []
+    deviations = [clip - mean for clip in aligned]
+    axes, length = mean.shape
+    gram = [[0.0] * n for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            total = 0.0
+            for axis in range(axes):
+                for k in range(length):
+                    total += float(deviations[i][axis, k]) * float(deviations[j][axis, k])
+            gram[i][j] = total
+    trace = 0.0
+    for i in range(n):
+        trace += gram[i][i]
+    values, vectors = _jacobi(gram)
+    order = sorted(range(n), key=lambda index: (-values[index], index))  # biggest first
+    directions = []
+    spreads = []
+    for index in order:
+        if len(directions) == EIGEN_DIRECTIONS:
+            break
+        value = values[index]
+        if value <= EIGEN_FLOOR * trace:
+            break
+        scale = math.sqrt(value)
+        direction = np.zeros_like(mean)
+        for rep in range(n):
+            direction = direction + vectors[rep][index] * deviations[rep]
+        directions.append(direction / scale)
+        spreads.append(math.sqrt(value / n))
+    return directions, spreads
+
+
 def build_blueprint(clips):
-    """Average a few clips of the same gesture.
+    """Average a few clips of the same gesture, and learn how they differ.
 
     Each clip is first slid to line up with the others: start from the first
     clip, line everything up with it, average, then line up with that average
-    and average again.
+    and average again. The lined-up clips also give the eigengestures.
     """
     reference = clips[0]
     for _ in range(2):
         aligned = [shifted(clip, distance(clip, reference)[1]) for clip in clips]
         reference = _average(aligned)
-    return Blueprint(mean=reference, count=len(clips), size=blueprint_size(reference))
+    directions, spreads = eigengestures(aligned, reference)
+    return Blueprint(mean=reference, count=len(clips), size=blueprint_size(reference),
+                     directions=directions, spreads=spreads)
+
+
+def eigen_distance(clip, blueprint):
+    """How much a clip and a blueprint disagree, after forgiving the user's usual variation.
+
+    First line the clip up with the blueprint the plain way (distance). Then
+    look at what is left over, clip minus mean, and ask how much of it follows
+    each eigengesture. That part is removed, but only up to EIGEN_CAP times the
+    spread seen in calibration, so a movement far outside the user's habits
+    still counts as different. Returns (distance, shift) like distance.
+
+    A blueprint with no directions gives exactly the plain distance.
+    """
+    best, shift = distance(clip, blueprint.mean)
+    if not blueprint.directions:
+        return best, shift
+    moved = shifted(clip, shift)
+    mean = blueprint.mean
+    axes, length = mean.shape
+    removed = []
+    for index, direction in enumerate(blueprint.directions):
+        amount = 0.0
+        for axis in range(axes):
+            for i in range(length):
+                amount += (moved[axis, i] - mean[axis, i]) * direction[axis, i]
+        limit = EIGEN_CAP * blueprint.spreads[index]
+        removed.append(min(max(amount, -limit), limit))
+    total = 0.0
+    for axis in range(axes):
+        for i in range(length):
+            left = moved[axis, i] - mean[axis, i]
+            for index, direction in enumerate(blueprint.directions):
+                left -= removed[index] * direction[axis, i]
+            total += left * left
+    return math.sqrt(total / (axes * length)), shift
 
 
 def update_blueprint(blueprint, clip):
-    """Fold one more confirmed rep into a blueprint (learning over time)."""
+    """Fold one more confirmed rep into a blueprint (learning over time).
+
+    The eigengestures are carried over unchanged, because they need the reps
+    themselves and a blueprint only keeps their average.
+    """
     aligned = shifted(clip, distance(clip, blueprint.mean)[1])
     count = blueprint.count + 1
     mean = blueprint.mean + (aligned - blueprint.mean) / count
-    return Blueprint(mean=mean, count=count, size=blueprint_size(mean))
+    return Blueprint(mean=mean, count=count, size=blueprint_size(mean),
+                     directions=blueprint.directions, spreads=blueprint.spreads)
 
 
 def worst_rep(clips):
@@ -383,6 +524,14 @@ def classify(clip, blueprints, use_limit=True):
     the clip misses the closest blueprint by more than LIMIT_PERCENT of that
     blueprint's own size. Measuring the miss against the size of the gesture
     keeps "close" meaning the same thing for a small flick and a big twist.
+    The miss is measured with eigen_distance, so the user's usual variation
+    does not count against them.
+
+    use_limit also applies the "strong enough" rule: the clip's own size must
+    be at least MIN_STRENGTH of the blueprint's size. Eigengestures forgive
+    part of the gap between a clip and a blueprint, and for a small gesture
+    that can include most of the gap to no motion at all. Without this rule a
+    faint twitch could pass as the smallest gesture.
 
     The limit has to stay below 100%: a clip of almost no motion is exactly
     100% away from every blueprint, so at 100% a faint twitch could pass as
@@ -393,12 +542,14 @@ def classify(clip, blueprints, use_limit=True):
     best_name = None
     best = float("inf")
     for name in sorted(blueprints):
-        value = distance(clip, blueprints[name].mean)[0]
+        value = eigen_distance(clip, blueprints[name])[0]
         if value < best:
             best = value
             best_name = name
-    if use_limit and best > LIMIT_PERCENT * blueprints[best_name].size:
-        return None, best
+    if use_limit:
+        size = blueprints[best_name].size
+        if best > LIMIT_PERCENT * size or blueprint_size(clip) < MIN_STRENGTH * size:
+            return None, best
     return best_name, best
 
 
@@ -406,8 +557,9 @@ def classify_clips(clips, blueprints, use_limit=True):
     """Pick the closest blueprint, trying the clip of every strong stroke.
 
     clips comes from extract_clips. Every clip is compared with every
-    blueprint and the single best fit wins. The "close enough" rule is the same
-    as in classify. Returns (name, distance); name is None for an empty list
+    blueprint and the single best fit wins. The "close enough" and "strong
+    enough" rules are the same as in classify, applied to the winning clip.
+    Returns (name, distance); name is None for an empty list
     (quiet wrist), for no blueprints, or when nothing is close enough.
 
     With one clip this gives exactly what classify gives.
@@ -415,13 +567,17 @@ def classify_clips(clips, blueprints, use_limit=True):
     if not clips or not blueprints:
         return None, float("inf")
     best_name = None
+    best_clip = None
     best = float("inf")
     for name in sorted(blueprints):
         for clip in clips:
-            value = distance(clip, blueprints[name].mean)[0]
+            value = eigen_distance(clip, blueprints[name])[0]
             if value < best:
                 best = value
                 best_name = name
-    if use_limit and best > LIMIT_PERCENT * blueprints[best_name].size:
-        return None, best
+                best_clip = clip
+    if use_limit:
+        size = blueprints[best_name].size
+        if best > LIMIT_PERCENT * size or blueprint_size(best_clip) < MIN_STRENGTH * size:
+            return None, best
     return best_name, best

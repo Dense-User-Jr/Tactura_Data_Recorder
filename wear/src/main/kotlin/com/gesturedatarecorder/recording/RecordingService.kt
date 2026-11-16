@@ -255,6 +255,7 @@ class RecordingService : Service(), SensorEventListener {
         captureMetrics: SessionMetrics
     ) {
         publish { it.copy(phase = RecordingPhase.CLASSIFYING, message = "Classifying") }
+        Corrections.forget()
         // Once every gesture is calibrated, the user's own blueprints answer instead of the forest.
         if (BlueprintStore.isComplete()) {
             classifyWithBlueprints(model, events, startedAtWallMs, captureMetrics)
@@ -322,7 +323,11 @@ class RecordingService : Service(), SensorEventListener {
         val started = SystemClock.elapsedRealtimeNanos()
         val (extraction, match) = withContext(Dispatchers.Default) {
             val found = MotionClip.extract(events)
-            found to GestureBlueprints.classifyVersions(found.clips, BlueprintStore.blueprints())
+            found to GestureBlueprints.classifyVersions(
+                found.clips,
+                BlueprintStore.blueprints(),
+                notes = BlueprintStore.notes()
+            )
         }
         val inferenceMs = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000f
         val forest = withContext(Dispatchers.Default) {
@@ -337,6 +342,7 @@ class RecordingService : Service(), SensorEventListener {
         }
         val message = when {
             prediction != null -> "Classified"
+            match.ignoredByNote -> "Looks like a movement you said was nothing"
             extraction.clip == null -> "Wrist stayed still"
             else -> "Did not match a blueprint"
         }
@@ -356,7 +362,7 @@ class RecordingService : Service(), SensorEventListener {
         Log.i(
             TAG,
             "Blueprints: ${prediction?.label ?: "NONE"} distance=${match.distance} version=${match.version} " +
-                "peak=${extraction.peakLevel} " +
+                "nearest=${match.nearest} ignoredByNote=${match.ignoredByNote} peak=${extraction.peakLevel} " +
                 "in $inferenceMs ms; forest said ${forest?.label} ${forest?.confidence}; file=$fileName"
         )
         publish {
@@ -370,6 +376,8 @@ class RecordingService : Service(), SensorEventListener {
                 message = message
             )
         }
+        // Kept so the Wrong? button can teach the watch what this movement really was.
+        Corrections.remember(extraction.clips, match, fileName)
     }
 
     /**

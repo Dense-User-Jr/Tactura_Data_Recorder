@@ -14,6 +14,8 @@ wear/src/test/resources/reference_blueprints.csv with five kinds of line:
     E,<gesture>,<number>,<spread>,<180 values>      one eigengesture of a blueprint (number 0 is the biggest)
     G,<gesture>,<file>;<file>;...                   the reps of a second blueprint of the same gesture
     V,<file>,<gesture or NONE>,<distance>,<index>   the decision with two blueprints per gesture
+    N,<gesture>,<file>:<clip>;<file>:<clip>;...     notes on a gesture: movements "the user said were nothing"
+    X,<file>,<gesture or NONE>,<1 if a note refused it, else 0>   the V decision again, with those notes
 
 The JVM test GestureBlueprintsParityTest rebuilds everything from the same files
 with the watch code and checks the numbers agree.
@@ -37,6 +39,7 @@ import blueprint_reference as B  # noqa: E402
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = PROJECT_ROOT / "wear" / "src" / "test" / "resources" / "reference_blueprints.csv"
 REPS = 5
+NOTES = 4  # files per gesture turned into notes for the X lines
 
 
 def number(value):
@@ -123,10 +126,26 @@ def main():
         versions[gesture] = [blueprints[gesture], B.build_blueprint([clip_of(path) for path in second])]
         lines.append(",".join(["G", gesture, ";".join(relative(path) for path in second)]))
     later = 0
+    named = {}
     for path in tests:
         name, value, index = B.classify_versions(clips_of(path), versions, use_limit=True)
         later += index > 0
+        named[path] = name
         lines.append(",".join(["V", relative(path), name or "NONE", number(value), str(index)]))
+
+    # Notes: pretend the first NOTES files named as each gesture were really nothing.
+    notes = {}
+    for gesture in sorted(versions):
+        picked = [path for path in tests if named[path] == gesture][:NOTES]
+        spots = [(path, B.nearest_version(clips_of(path), versions)[2]) for path in picked]
+        notes[gesture] = [clips_of(path)[spot] for path, spot in spots]
+        lines.append(",".join(["N", gesture, ";".join(f"{relative(path)}:{spot}" for path, spot in spots)]))
+    refused = 0
+    for path in tests:
+        name = B.classify_versions(clips_of(path), versions, use_limit=True, notes=notes)[0]
+        by_note = named[path] is not None and name is None
+        refused += by_note
+        lines.append(",".join(["X", relative(path), name or "NONE", "1" if by_note else "0"]))
 
     # Calibration: for later recordings of each gesture, which clip fits the first REPS reps.
     for gesture in sorted(by_gesture):
@@ -145,7 +164,7 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Wrote {len(blueprints)} blueprints, {len(tests)} decisions {dict(decided)} "
-          f"({several} test files have more than one strong stroke, {later} decided by a second blueprint) and "
+          f"({several} test files have more than one strong stroke, {later} decided by a second blueprint, {refused} refused by a note) and "
           f"{len(by_gesture)} updates to {args.output}")
 
 

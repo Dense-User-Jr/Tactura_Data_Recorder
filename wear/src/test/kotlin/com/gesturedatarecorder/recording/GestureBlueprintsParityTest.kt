@@ -1,6 +1,7 @@
 package com.gesturedatarecorder.recording
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -157,6 +158,59 @@ class GestureBlueprintsParityTest {
             if (match.version > 0) later++
         }
         assertTrue("no test file was decided by the second blueprint", later > 0)
+    }
+
+    /** Notes per gesture: the clips the N lines list, each as file:position among the file's clips. */
+    private val notes: Map<String, List<Array<DoubleArray>>> by lazy {
+        lines.filter { it[0] == "N" }.associate { cells ->
+            cells[1] to cells.getOrElse(2) { "" }.split(';').filter { it.isNotEmpty() }.map { item ->
+                clipsOf(item.substringBeforeLast(':'))[item.substringAfterLast(':').toInt()]
+            }
+        }
+    }
+
+    @Test
+    fun decisionsWithNotesMatchPythonReference() {
+        val expected = lines.filter { it[0] == "X" }
+        assertTrue("no reference decisions with notes", expected.isNotEmpty())
+        var refused = 0
+        var named = 0
+        for (cells in expected) {
+            val file = cells[1]
+            val match = GestureBlueprints.classifyVersions(clipsOf(file), versions, notes = notes)
+            assertEquals("$file: decision with notes", cells[2], match.gesture ?: "NONE")
+            assertEquals("$file: refused by a note", cells[3] == "1", match.ignoredByNote)
+            if (match.ignoredByNote) refused++
+            if (match.gesture != null) named++
+        }
+        assertTrue("no test file was refused by a note", refused > 0)
+        assertTrue("no test file was still named with notes", named > 0)
+    }
+
+    @Test
+    fun twoNotesAreNotAPatternAndThreeAre() {
+        val single = blueprints.mapValues { listOf(it.value) }
+        val file = lines.first { it[0] == "M" && it[2] != "NONE" }[1]
+        val clips = clipsOf(file)
+        val plain = GestureBlueprints.classifyVersions(clips, single)
+        val gesture = plain.gesture!!
+        assertEquals("the nearest gesture is the one named", gesture, plain.nearest)
+        val clip = clips[plain.clip]
+
+        assertFalse(GestureBlueprints.refusedByNotes(clip, listOf(clip, clip)))
+        assertTrue(GestureBlueprints.refusedByNotes(clip, listOf(clip, clip, clip)))
+
+        val two = GestureBlueprints.classifyVersions(clips, single, notes = mapOf(gesture to listOf(clip, clip)))
+        assertEquals("two notes change nothing", gesture, two.gesture)
+        val three = GestureBlueprints.classifyVersions(clips, single, notes = mapOf(gesture to listOf(clip, clip, clip)))
+        assertNull("three alike notes refuse it", three.gesture)
+        assertTrue(three.ignoredByNote)
+        assertEquals("it still says which gesture it looked like", gesture, three.nearest)
+
+        // Notes belong to one gesture. The same three on another gesture change nothing.
+        val other = blueprints.keys.first { it != gesture }
+        val elsewhere = GestureBlueprints.classifyVersions(clips, single, notes = mapOf(other to listOf(clip, clip, clip)))
+        assertEquals(gesture, elsewhere.gesture)
     }
 
     @Test

@@ -42,6 +42,9 @@ object GestureBlueprints {
      */
     const val MIN_STRENGTH = 0.6
 
+    /** "I did nothing" corrections of one gesture that must be alike before the watch acts on them. */
+    const val NOTES_NEEDED = 3
+
     /** Eigengestures kept per blueprint. 0 turns them off. */
     const val EIGEN_DIRECTIONS = 2
 
@@ -88,9 +91,20 @@ object GestureBlueprints {
     /**
      * The decision when a gesture may have several blueprints. [gesture] is null when it is no
      * known gesture. [size] is the size of the blueprint that decided and [version] its position
-     * in that gesture's list (-1 when there was nothing to compare).
+     * in that gesture's list (-1 when there was nothing to compare). [clip] is the position of
+     * the deciding clip in the list that was classified, and [nearest] the gesture of the nearest
+     * blueprint whether or not it was accepted. [ignoredByNote] is true when the movement passed
+     * every rule and was turned down only because it looks like something the user said was nothing.
      */
-    class VersionMatch(val gesture: String?, val distance: Double, val size: Double, val version: Int)
+    class VersionMatch(
+        val gesture: String?,
+        val distance: Double,
+        val size: Double,
+        val version: Int,
+        val clip: Int = -1,
+        val nearest: String? = null,
+        val ignoredByNote: Boolean = false
+    )
 
     /** The rep that looks least like the others: its [index], and its [miss] as a fraction of size. */
     class RepCheck(val index: Int, val miss: Double)
@@ -443,42 +457,69 @@ object GestureBlueprints {
      * blueprint, exactly as in [classifyClips]. Another blueprint of the same gesture is not
      * given a second chance, because that let more random movement through in testing.
      *
-     * With one blueprint per gesture this decides exactly like [classifyClips].
+     * [notes] maps a gesture name to the movements the user said were nothing when the watch
+     * named that gesture. A movement that passes every rule is still refused when it looks like
+     * an active note of the winning gesture ([refusedByNotes]). The note always wins.
+     *
+     * With one blueprint per gesture and no notes this decides exactly like [classifyClips].
      */
     fun classifyVersions(
         clips: List<Array<DoubleArray>>,
         versions: Map<String, List<Blueprint>>,
-        useLimit: Boolean = true
+        useLimit: Boolean = true,
+        notes: Map<String, List<Array<DoubleArray>>> = emptyMap()
     ): VersionMatch {
         var bestName: String? = null
-        var bestClip: Array<DoubleArray>? = null
         var bestBlueprint: Blueprint? = null
         var bestVersion = -1
+        var bestClip = -1
         var best = Double.POSITIVE_INFINITY
         // Sorted names, like Python's sorted(): the first name wins a tie, then the older blueprint, then the first clip.
         for (name in versions.keys.sorted()) {
             val list = versions.getValue(name)
             for (index in list.indices) {
-                for (clip in clips) {
-                    val value = eigenDistance(clip, list[index]).distance
+                for (c in clips.indices) {
+                    val value = eigenDistance(clips[c], list[index]).distance
                     if (value < best) {
                         best = value
                         bestName = name
-                        bestClip = clip
                         bestBlueprint = list[index]
                         bestVersion = index
+                        bestClip = c
                     }
                 }
             }
         }
         val winner = bestName ?: return VersionMatch(null, best, 0.0, -1)
-        val winningClip = bestClip ?: return VersionMatch(null, best, 0.0, -1)
-        val winningBlueprint = bestBlueprint ?: return VersionMatch(null, best, 0.0, -1)
-        if (useLimit && !passes(winningClip, winningBlueprint, best)) {
-            return VersionMatch(null, best, winningBlueprint.size, bestVersion)
+        val blueprint = bestBlueprint ?: return VersionMatch(null, best, 0.0, -1)
+        val clip = clips[bestClip]
+        if (useLimit && !passes(clip, blueprint, best)) {
+            return VersionMatch(null, best, blueprint.size, bestVersion, bestClip, winner)
         }
-        return VersionMatch(winner, best, winningBlueprint.size, bestVersion)
+        val told = notes[winner]
+        if (told != null && refusedByNotes(clip, told)) {
+            return VersionMatch(null, best, blueprint.size, bestVersion, bestClip, winner, ignoredByNote = true)
+        }
+        return VersionMatch(winner, best, blueprint.size, bestVersion, bestClip, winner)
     }
+
+    /** True when two clips are the same movement: within the limit of the bigger one's size. */
+    fun alike(first: Array<DoubleArray>, second: Array<DoubleArray>): Boolean =
+        distance(first, second).distance <= LIMIT_PERCENT * maxOf(size(first), size(second))
+
+    /**
+     * The notes that are part of a pattern.
+     *
+     * A note is a movement the watch named as a gesture and the user said was nothing. One note
+     * changes nothing. It starts to count once [NOTES_NEEDED] notes of that gesture are alike,
+     * itself included, so a single wrong tap cannot ban a real gesture.
+     */
+    fun activeNotes(notes: List<Array<DoubleArray>>): List<Array<DoubleArray>> =
+        notes.filter { note -> notes.count { other -> alike(note, other) } >= NOTES_NEEDED }
+
+    /** True when [clip] is close enough to an active note to be recognised as that movement. */
+    fun refusedByNotes(clip: Array<DoubleArray>, notes: List<Array<DoubleArray>>): Boolean =
+        activeNotes(notes).any { note -> distance(clip, note).distance <= LIMIT_PERCENT * size(note) }
 
     /** The "close enough" and "strong enough" rules for the winning clip and blueprint. */
     private fun passes(clip: Array<DoubleArray>, blueprint: Blueprint, eigenMiss: Double): Boolean {

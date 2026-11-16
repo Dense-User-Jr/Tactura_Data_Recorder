@@ -22,13 +22,22 @@ import java.io.File
  * way from one sitting to the next. Every finished set becomes its own blueprint, and Classify
  * compares a movement with all of them.
  *
+ * Two more things are kept per gesture, both fed by the **Wrong?** button. Corrections are
+ * movements the user said were that gesture when the watch said something else: once there are
+ * [REPS_NEEDED] of them they become one more set. Notes are movements the watch took for that
+ * gesture and the user said were nothing: Classify refuses movements that look like them
+ * ([GestureBlueprints.refusedByNotes]).
+ *
  * Every function that touches the file takes a [Context] and must be called off the main thread.
  */
 object BlueprintStore {
     private const val TAG = "BlueprintStore"
     private const val FILE_NAME = "blueprints.json"
 
-    /** File layout. 1 kept one list of reps per gesture; 2 keeps a list of sets per gesture. */
+    /**
+     * File layout. 1 kept one list of reps per gesture; 2 keeps a list of sets per gesture, and
+     * since the Wrong? button also its corrections and notes.
+     */
     private const val VERSION = 2
 
     /** Reps of each gesture that calibration asks for. */
@@ -43,6 +52,18 @@ object BlueprintStore {
 
     /** Finished sets remembered per gesture. When one more is finished, the oldest is forgotten. */
     const val MAX_VERSIONS = 10
+
+    /** Notes remembered per gesture. When one more is added, the oldest is forgotten. */
+    const val MAX_NOTES = 30
+
+    /**
+     * What happened when a correction was added: how many corrections of the gesture are now
+     * waiting, whether they just became a new set, and how many finished sets the gesture has.
+     */
+    class CorrectionResult(val waiting: Int, val becameVersion: Boolean, val versions: Int)
+
+    /** What happened when a note was added: whether the watch now ignores movements like it. */
+    class NoteResult(val count: Int, val active: Boolean)
 
     /**
      * What happened when a rep was added: how many reps the set being calibrated has now, whether
@@ -69,6 +90,13 @@ object BlueprintStore {
      */
     private val sets = LinkedHashMap<Gesture, MutableList<MutableList<Array<DoubleArray>>>>()
     private val drops = HashMap<Gesture, Int>()
+
+    /** Corrections of each gesture that are waiting to become a set. */
+    private val corrections = HashMap<Gesture, MutableList<Array<DoubleArray>>>()
+    private val correctionDrops = HashMap<Gesture, Int>()
+
+    /** Movements the user said were nothing, kept on the gesture the watch took them for. */
+    private val notes = HashMap<Gesture, MutableList<Array<DoubleArray>>>()
     private var loaded = false
     private var built: Map<String, List<GestureBlueprints.Blueprint>>? = null
 
@@ -96,7 +124,14 @@ object BlueprintStore {
                 for (gesture in GESTURES) {
                     val all = ArrayList<MutableList<Array<DoubleArray>>>()
                     if (layout >= 2) {
-                        val stored = saved.optJSONObject(gesture.name)?.optJSONArray("sets") ?: continue
+                        val entry = saved.optJSONObject(gesture.name) ?: continue
+                        entry.optJSONArray("corrections")?.let { stored ->
+                            clipsFromJson(stored).takeIf { it.isNotEmpty() }?.let { corrections[gesture] = it }
+                        }
+                        entry.optJSONArray("notes")?.let { stored ->
+                            clipsFromJson(stored).takeIf { it.isNotEmpty() }?.let { notes[gesture] = it }
+                        }
+                        val stored = entry.optJSONArray("sets") ?: continue
                         for (s in 0 until stored.length()) all.add(clipsFromJson(stored.getJSONArray(s)))
                     } else {
                         // The old layout had one list of reps per gesture: that list is the first set.
@@ -110,6 +145,8 @@ object BlueprintStore {
             } catch (error: Exception) {
                 Log.e(TAG, "Could not read $FILE_NAME; starting with no calibration", error)
                 sets.clear()
+                corrections.clear()
+                notes.clear()
             }
         }
         publish()
@@ -186,6 +223,97 @@ object BlueprintStore {
         return result
     }
 
+    /** The notes of each gesture that has any, keyed by the gesture's label. */
+    @Synchronized
+    fun notes(): Map<String, List<Array<DoubleArray>>> = notes.entries.associate { it.key.name to it.value.toList() }
+
+    /**
+     * Saves one correction: a movement the user says was [gesture] when the watch said something
+     * else. [candidates] holds one clip per strong stroke, loudest first, and must not be empty.
+     *
+     * Corrections wait in a pile. When the pile reaches [REPS_NEEDED] it is checked like a
+     * calibration (the least typical one is dropped if it would not be recognised from the
+     * rest, up to [MAX_DROPS] times) and then becomes one more set of the gesture.
+     */
+    @Synchronized
+    fun addCorrection(context: Context, gesture: Gesture, candidates: List<Array<DoubleArray>>): CorrectionResult {
+        load(context)
+        val pile = corrections.getOrPut(gesture) { ArrayList() }
+        // The first correction is centred like the blueprints the gesture already has, the rest like the pile.
+        val chosen = if (pile.isEmpty()) bestFit(gesture, candidates) else GestureBlueprints.chooseClip(candidates, pile)
+        pile.add(candidates[chosen])
+        var became = false
+        if (pile.size >= REPS_NEEDED) {
+            val check = GestureBlueprints.worstRep(pile)
+            val used = correctionDrops[gesture] ?: 0
+            if (check.miss > GestureBlueprints.LIMIT_PERCENT && used < MAX_DROPS) {
+                pile.removeAt(check.index)
+                correctionDrops[gesture] = used + 1
+            } else {
+                val all = sets.getOrPut(gesture) { ArrayList() }
+                // Keep a set that is still being calibrated at the end of the list.
+                val at = if (all.isNotEmpty() && all[all.size - 1].size < REPS_NEEDED) all.size - 1 else all.size
+                all.add(at, ArrayList(pile))
+                while (all.count { it.size >= REPS_NEEDED } > MAX_VERSIONS) all.removeAt(0)
+                corrections.remove(gesture)
+                correctionDrops.remove(gesture)
+                became = true
+            }
+        }
+        built = null
+        save(context)
+        publish()
+        return CorrectionResult(corrections[gesture]?.size ?: 0, became, versionCount(gesture))
+    }
+
+    /** The candidate that comes closest to a blueprint [gesture] already has. The loudest when it has none. */
+    private fun bestFit(gesture: Gesture, candidates: List<Array<DoubleArray>>): Int {
+        val known = blueprints()[gesture.name] ?: return 0
+        var best = 0
+        var bestValue = Double.POSITIVE_INFINITY
+        for (c in candidates.indices) {
+            for (blueprint in known) {
+                val value = GestureBlueprints.eigenDistance(candidates[c], blueprint).distance
+                if (value < bestValue) {
+                    bestValue = value
+                    best = c
+                }
+            }
+        }
+        return best
+    }
+
+    /**
+     * Saves one note: [clip] is a movement the watch took for [gesture] and the user says was
+     * nothing. It starts to count once [GestureBlueprints.NOTES_NEEDED] notes of the gesture are alike.
+     */
+    @Synchronized
+    fun addNote(context: Context, gesture: Gesture, clip: Array<DoubleArray>): NoteResult {
+        load(context)
+        val list = notes.getOrPut(gesture) { ArrayList() }
+        list.add(clip)
+        while (list.size > MAX_NOTES) list.removeAt(0)
+        save(context)
+        return NoteResult(list.size, GestureBlueprints.activeNotes(list).any { it === clip })
+    }
+
+    /**
+     * Forgets the notes of [gesture] that [clip] looks like, and returns how many there were.
+     * Used when the watch ignored a movement because of a note and the user says it was real.
+     */
+    @Synchronized
+    fun removeNotesLike(context: Context, gesture: Gesture, clip: Array<DoubleArray>): Int {
+        load(context)
+        val list = notes[gesture] ?: return 0
+        val before = list.size
+        list.removeAll { note ->
+            GestureBlueprints.distance(clip, note).distance <= GestureBlueprints.LIMIT_PERCENT * GestureBlueprints.size(note)
+        }
+        if (list.isEmpty()) notes.remove(gesture)
+        if (list.size != before) save(context)
+        return before - list.size
+    }
+
     /**
      * Starts a new set for [gesture], so it can be calibrated again. The finished sets are kept
      * and Classify goes on using them. A set that was still being calibrated is started over.
@@ -201,16 +329,22 @@ object BlueprintStore {
         publish()
     }
 
-    /** Forgets every set of [gesture], or of every gesture when it is null. */
+    /** Forgets every set, correction and note of [gesture], or of every gesture when it is null. */
     @Synchronized
     fun forget(context: Context, gesture: Gesture? = null) {
         load(context)
         if (gesture == null) {
             sets.clear()
             drops.clear()
+            corrections.clear()
+            correctionDrops.clear()
+            notes.clear()
         } else {
             sets.remove(gesture)
             drops.remove(gesture)
+            corrections.remove(gesture)
+            correctionDrops.remove(gesture)
+            notes.remove(gesture)
         }
         built = null
         save(context)
@@ -225,14 +359,16 @@ object BlueprintStore {
     private fun save(context: Context) {
         try {
             val gestures = JSONObject()
-            for ((gesture, all) in sets) {
-                val stored = JSONArray()
-                for (list in all) {
-                    val reps = JSONArray()
-                    for (clip in list) reps.put(toJson(clip))
-                    stored.put(reps)
+            for (gesture in GESTURES) {
+                val entry = JSONObject()
+                sets[gesture]?.let { all ->
+                    val stored = JSONArray()
+                    for (list in all) stored.put(clipsToJson(list))
+                    entry.put("sets", stored)
                 }
-                gestures.put(gesture.name, JSONObject().put("sets", stored))
+                corrections[gesture]?.let { entry.put("corrections", clipsToJson(it)) }
+                notes[gesture]?.let { entry.put("notes", clipsToJson(it)) }
+                if (entry.length() > 0) gestures.put(gesture.name, entry)
             }
             val root = JSONObject().put("version", VERSION).put("gestures", gestures)
             // Write to a temporary file first, so a crash mid-write cannot leave a broken file.
@@ -255,6 +391,12 @@ object BlueprintStore {
             for (value in clip[axis]) flat.put(value)
         }
         return flat
+    }
+
+    private fun clipsToJson(list: List<Array<DoubleArray>>): JSONArray {
+        val reps = JSONArray()
+        for (clip in list) reps.put(toJson(clip))
+        return reps
     }
 
     /** One set of reps: a list of flat clips. A clip of the wrong length is skipped. */

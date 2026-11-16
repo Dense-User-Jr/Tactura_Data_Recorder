@@ -497,7 +497,7 @@ The demo target is solid personal gesture recognition with the math front and ce
 | 1 | Clean exam on another day: no recalibration, 10 of each gesture, 10 random movements | Everything on 11/15 was tuned and tested the same evening. This is the proof that flicks and eigengestures hold on older blueprints | Russell, the watch, 15 minutes |
 | 2 | Make the 11/15 evidence reproducible: label files for the pulled rounds, the comparison scripts in the repo | The day's numbers come from untracked folders and scratch scripts. A teammate cannot rerun them yet | Laptop only |
 | 3 | A teammate calibrates and runs the scorecard | Every setting is tuned on one wrist plus Dhruv's October recordings. This is the exit test of phase 2 | A teammate, the watch |
-| 4 | Remember sittings (storage and matching built 11/15), and the **Wrong?** correction | Flicks change from sitting to sitting. One blueprint per sitting plus eigengestures scored 86% on a new sitting in the laptop test, against 66% for one blueprint. Includes the context file of phase 3 | Design decisions from Russell, then code |
+| 4 | Remember sittings and the **Wrong?** correction (both built 11/15, Wrong? not yet run on the watch) | Flicks change from sitting to sitting. One blueprint per sitting plus eigengestures scored 86% on a new sitting in the laptop test, against 66% for one blueprint. Includes the context file of phase 3 | Design decisions from Russell, then code |
 | 5 | Gesture definitions | Flick is small and variable, Shake and Twist Left are close relatives, Double Tap has no recordings. Written definitions and on-watch hints | Team decision |
 | 6 | Real-time listening | No button. The biggest change in how the demo feels. Needs a false-alarm budget and more random-movement data | Code, the watch |
 | 7 | The write-up and demo video | The math story for graduate applications: the diagnosis, blueprints, the alignment fix, what eigengestures found | Russell |
@@ -709,7 +709,55 @@ So versions buy about 7 points on flicks in a new sitting and cost about 2 false
 
 **In the code.** `classify_versions` in `ML/blueprint_reference.py`, `classifyVersions` in `GestureBlueprints.kt`, and a parity test with two blueprints per gesture (G and V lines of `reference_blueprints.csv`). `BlueprintStore` keeps a list of rep sets per gesture and reads the old file layout as one set, so nothing needs recalibrating after the update. The watch starts with one version of each gesture, because the earlier flick and shake reps were erased by the old **Redo**.
 
-**Not done.** Compiling and running on the watch. The **Wrong?** button, which will feed the same storage.
+**On the watch, 11/15 at 8:35 PM.** The build compiled and the parity tests passed. 29 windows, watch and laptop agree on all 29, including which version decided.
+
+Russell recalibrated Flick Down three times in a row, on purpose a little differently each time, so the watch held four versions.
+
+| Version | Made | Size | What it is |
+| --- | --- | --- | --- |
+| 1 | 6:47 PM | 1.14 | The energetic flick |
+| 2 | 8:38 PM | 0.80 | Medium. One rep dropped by the calibration check |
+| 3 | 8:39 PM | 0.46 | A soft flick, almost all on one axis |
+| 4 | 8:40 PM | 1.11 | Close to version 1 (33% apart) |
+
+Then 12 Flick Down tries. One window held no movement at all. The other 11 were all named Flick Down: 6 through version 3, 4 through version 4, 1 through version 1. One random movement was ignored.
+
+With version 1 alone, the same 11 would have been 6 right, 3 called Flick Up and 2 ignored. Fair warning on that comparison: a plain recalibration that replaced the blueprint (version 4 alone) also gets 11 of 11 here, because it was made minutes before. What versions add over replacing can only show in a later sitting.
+
+**What the extra versions cost, on older data.** With four Flick Down versions, the 51 windows that should be ignored are still all ignored, but two of them come within 10 points of version 3's limit. The 80 real gestures of the two evening rounds go from 79 right to 78: one Flick Down that version 1 accepted is now nearest to another version, which turns it down. That is the "nearest must pass" rule working both ways. A small version can also take a movement away from a version that would have accepted it.
+
+**Not done.** A test in a later sitting.
+
+## The Wrong? button, Nov 15 (roadmap 4, second half)
+
+After a Classify result the user can tap **Wrong?** and say what the movement really was. There are two kinds of correction and they do different things.
+
+**"It was this gesture."** The watch said nothing, or named another gesture. Russell's decision: both are the same kind of mistake and go in the same pile. Five corrections of a gesture become one more version, checked like a calibration.
+
+**"It was nothing."** The watch named a gesture and the user did none. The watch has no blueprint for "nothing", so there is no pile to add this to.
+
+Russell's idea: do not try to describe "nothing". Send the movement as a notice to the gesture that wrongly claimed it, and use it to sculpt that gesture's territory. The blueprint is not changed. A dent is cut out of the area around it, exactly where the stranger stood.
+
+| Question | Russell's decision |
+| --- | --- |
+| How much evidence before the watch acts | Wait for a pattern of 3 |
+| A real gesture looks like a noted movement. Who wins | The note, always. Stricter for now |
+
+**The rule.** A note is the clip of a movement the user said was nothing, kept on the gesture the watch named. A note is active once 3 notes of that gesture are alike, itself included. A movement that passes every rule of step 6 is still refused when it is close enough to an active note of the winning gesture.
+
+```math
+\text{alike}(a, b):\ d(a, b) \le 0.9 \cdot \max(\text{size}(a), \text{size}(b)), \qquad \text{refuse } x \text{ if } \ d(x, n) \le 0.9 \cdot \text{size}(n) \ \text{ for an active note } n
+```
+
+**Why "3 alike" and not "3 taps".** Tested on Russell's recordings before building. If the three sloppiest real Flick Downs were tapped as "nothing" by mistake, a rule that counts taps would then refuse 45 of his 47 real Flick Downs. Those three are not alike, so with "3 alike" none becomes active and nothing is refused. A wrong tap only does damage when the same wrong tap is made three times on the same movement.
+
+**First look at what notes do.** No random movement gets through at the moment, so the 8 that came closest were used as if they had. All 8 were closest to the same blueprint, the small soft Flick Down of 8:39 PM, and 7 of them are the gentle movements of the 7:25 PM round. As notes, 7 of the 8 become active, and they refuse none of the 47 real Flick Downs. A note is a small movement, so its dent is small: it stops that movement and near copies of it, and little else. That makes notes safe and modest. They suit a stranger that keeps coming back, such as a hair scratch.
+
+**One addition to flag.** If the watch ignores a movement because of a note and the user corrects it to the gesture it looked like, the notes it matched are removed. Without this, a wrong note could only be undone by forgetting the whole gesture. Russell has not decided on this one. It is easy to take out.
+
+**In the code.** `active_notes`, `refused_by_notes` and the `notes` argument of `classify_versions` in `ML/blueprint_reference.py`. The same in `GestureBlueprints.kt`, with a parity test (N and X lines of `reference_blueprints.csv`). `Corrections.kt` applies a correction. `BlueprintStore` keeps the corrections and notes of each gesture in `blueprints.json`. Each correction is also saved as a small CSV in `/sdcard/Download/GestureCorrections`.
+
+**Not done.** Compiling and running on the watch. What to keep when a version retires (Russell's "notes of patterns over time" idea). Corrections are not yet used to adjust eigengesture forgiveness, which was the other half of the sculpting idea.
 
 ## Parked idea: chords (rotation plus translation)
 

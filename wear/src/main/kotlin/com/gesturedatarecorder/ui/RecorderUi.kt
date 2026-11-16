@@ -52,6 +52,7 @@ import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
 import com.gesturedatarecorder.recording.BlueprintStore
+import com.gesturedatarecorder.recording.Corrections
 import com.gesturedatarecorder.recording.Gesture
 import com.gesturedatarecorder.recording.PredictionSource
 import com.gesturedatarecorder.recording.RecordingPhase
@@ -463,6 +464,28 @@ private fun ResultScreen(status: RecordingStatus, calibrationDone: Boolean, onAg
         else -> "Record again"
     }
 
+    // Wrong?: the user tells the watch what the movement really was. Only for the user's own blueprints.
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var correcting by remember { mutableStateOf(false) }
+    var corrected by remember { mutableStateOf(false) }
+    val canCorrect = classify && status.source == PredictionSource.BLUEPRINTS && !corrected
+    if (correcting) {
+        CorrectionPicker(
+            said = Gesture.fromLabel(status.prediction?.label),
+            onPick = { truth ->
+                correcting = false
+                corrected = true
+                scope.launch(Dispatchers.IO) {
+                    val message = Corrections.apply(context.applicationContext, truth)
+                    RecordingRepository.update { it.copy(message = message) }
+                }
+            },
+            onCancel = { correcting = false }
+        )
+        return
+    }
+
     // The new result arrives in signal red, then settles to white. 1 = red, 0 = white.
     val flash = remember { Animatable(1f) }
     LaunchedEffect(Unit) { flash.animateTo(0f, tween(FLASH_MS, delayMillis = FLASH_HOLD_MS)) }
@@ -532,6 +555,16 @@ private fun ResultScreen(status: RecordingStatus, calibrationDone: Boolean, onAg
                 )
             }
         }
+        if (canCorrect) {
+            item {
+                TacturaButton(
+                    label = "Wrong?",
+                    detail = "Say what it was",
+                    onClick = { correcting = true },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
         item {
             TacturaButton(
                 label = "Done",
@@ -545,6 +578,37 @@ private fun ResultScreen(status: RecordingStatus, calibrationDone: Boolean, onAg
         status.fileName?.let { name ->
             item { Note(name, sizeSp = 9f) }
         }
+    }
+}
+
+/**
+ * The list behind Wrong?: what the movement really was. [said] is the gesture the watch named,
+ * or null when it said "No gesture". "Nothing" is only offered when the watch named a gesture.
+ */
+@Composable
+private fun CorrectionPicker(said: Gesture?, onPick: (Gesture?) -> Unit, onCancel: () -> Unit) {
+    ScrollingScreen {
+        item { Label("What was it?", color = Ink.Text, sizeSp = 12f, bold = true) }
+        BlueprintStore.GESTURES.filter { it != said }.forEach { gesture ->
+            item(key = gesture.name) {
+                TacturaButton(
+                    label = gesture.displayName,
+                    onClick = { onPick(gesture) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+        if (said != null) {
+            item {
+                TacturaButton(
+                    label = "Nothing",
+                    detail = "I did no gesture",
+                    onClick = { onPick(null) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+        item { TacturaButton(label = "Cancel", onClick = onCancel, modifier = Modifier.fillMaxWidth()) }
     }
 }
 

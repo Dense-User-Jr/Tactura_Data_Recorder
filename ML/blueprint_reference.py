@@ -53,6 +53,7 @@ EIGEN_FLOOR = 1e-9                # a direction holding less than this share of 
 JACOBI_SWEEPS = 30                # passes of the eigenvalue solver; a 5 by 5 table settles in under 10
 LIMIT_PERCENT = 0.9               # "close enough" = within 90% of the blueprint's own size
 MIN_STRENGTH = 0.6                # "strong enough" = at least 60% of the blueprint's own size (only for clips that needed forgiving)
+NOTES_NEEDED = 3  # "I did nothing" corrections that must be alike before the watch acts on them
 
 GYRO = "gyroscope"
 
@@ -593,7 +594,51 @@ def classify_clips(clips, blueprints, use_limit=True):
     return best_name, best
 
 
-def classify_versions(clips, versions, use_limit=True):
+def nearest_version(clips, versions):
+    """The single best fit among every clip and every blueprint of every gesture.
+
+    Returns (name, index, clip_index, distance): the gesture, the position of
+    the blueprint in that gesture's list, and the position of the clip in clips.
+    (None, -1, -1, inf) when there is nothing to compare.
+    """
+    best_name = None
+    best_index = -1
+    best_clip = -1
+    best = float("inf")
+    for name in sorted(versions):
+        for index, blueprint in enumerate(versions[name]):
+            for clip_index, clip in enumerate(clips):
+                value = eigen_distance(clip, blueprint)[0]
+                if value < best:
+                    best = value
+                    best_name = name
+                    best_index = index
+                    best_clip = clip_index
+    return best_name, best_index, best_clip, best
+
+
+def alike(first, second):
+    """True when two clips are the same movement: within the limit of the bigger one's size."""
+    return distance(first, second)[0] <= LIMIT_PERCENT * max(blueprint_size(first), blueprint_size(second))
+
+
+def active_notes(notes):
+    """The notes that are part of a pattern.
+
+    A note is a movement the watch named as a gesture and the user said was
+    nothing. One note changes nothing. It starts to count once NOTES_NEEDED
+    notes of that gesture are alike, itself included, so a single wrong tap
+    cannot ban a real gesture.
+    """
+    return [note for note in notes if sum(1 for other in notes if alike(note, other)) >= NOTES_NEEDED]
+
+
+def refused_by_notes(clip, notes):
+    """True when clip is close enough to an active note to be recognised as that movement."""
+    return any(distance(clip, note)[0] <= LIMIT_PERCENT * blueprint_size(note) for note in active_notes(notes))
+
+
+def classify_versions(clips, versions, use_limit=True, notes=None):
     """Pick the closest blueprint when a gesture may have several of them.
 
     versions maps a gesture name to a list of Blueprints, oldest first: one for
@@ -607,26 +652,21 @@ def classify_versions(clips, versions, use_limit=True):
     blueprint of the same gesture is not given a second chance, because that
     let more random movement through in testing.
 
+    notes maps a gesture name to the movements the user said were nothing when
+    the watch named that gesture. A movement that passes every rule is still
+    refused when it looks like an active note of the winning gesture
+    (refused_by_notes). The note always wins.
+
     Returns (name, distance, index). index is the position of the deciding
     blueprint in its gesture's list, or -1 when there was nothing to compare.
-    With one blueprint per gesture this decides exactly like classify_clips.
+    With one blueprint per gesture and no notes this decides exactly like
+    classify_clips.
     """
-    best_name = None
-    best_clip = None
-    best_index = -1
-    best = float("inf")
-    if clips:
-        for name in sorted(versions):
-            for index, blueprint in enumerate(versions[name]):
-                for clip in clips:
-                    value = eigen_distance(clip, blueprint)[0]
-                    if value < best:
-                        best = value
-                        best_name = name
-                        best_clip = clip
-                        best_index = index
+    best_name, best_index, best_clip, best = nearest_version(clips, versions)
     if best_name is None:
         return None, best, -1
-    if use_limit and not _passes(best_clip, versions[best_name][best_index], best):
+    if use_limit and not _passes(clips[best_clip], versions[best_name][best_index], best):
+        return None, best, best_index
+    if notes and refused_by_notes(clips[best_clip], notes.get(best_name, [])):
         return None, best, best_index
     return best_name, best, best_index

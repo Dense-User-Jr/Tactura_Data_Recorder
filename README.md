@@ -194,7 +194,18 @@ Every calibration rep is also saved as a raw CSV, labeled with the gesture you w
 
 **Recalibrating keeps what the watch already knows.** Pick a gesture and tap **Recalibrate** at the bottom of the home screen, then do 5 new reps. The new reps become one more version of that gesture next to the earlier ones, and Classify compares a movement with every version. This is for gestures you do a little differently from one sitting to the next. The watch remembers up to 10 versions of a gesture and then forgets the oldest. Classify keeps working with the earlier versions while you recalibrate.
 
-**Forget** removes every version of the selected gesture, for when a calibration went wrong. **Reset all** forgets everything so you can start over. The CSVs already saved are kept.
+**Wrong?** After a Classify result from your blueprints, tap **Wrong?** and say what the movement really was.
+
+- If it was one of the gestures, the movement is kept as a correction. Five corrections of a gesture become one more version of it.
+- If it was **Nothing** (the watch named a gesture and you did none), the movement is kept as a note on that gesture. Once three notes look alike, the watch ignores movements like them, even when they also look like the gesture. If it then ignores a real gesture, tap **Wrong?** and pick the gesture: the note is removed.
+
+Each correction is also saved as a small CSV that names the Classify file it corrects:
+
+```text
+/sdcard/Download/GestureCorrections/0004_correction_said-flick_up_was-nothing_20261115_213000.csv
+```
+
+**Forget** removes every version, correction and note of the selected gesture, for when a calibration went wrong. **Reset all** forgets everything so you can start over. The CSVs already saved are kept.
 
 To score the recipe on the recordings in this repository:
 

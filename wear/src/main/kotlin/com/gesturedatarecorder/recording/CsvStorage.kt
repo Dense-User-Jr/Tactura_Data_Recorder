@@ -35,6 +35,22 @@ object CsvStorage {
      */
     val CALIBRATION_DIR = Environment.DIRECTORY_DOWNLOADS + "/GestureCalibration/"
 
+    /**
+     * Corrections made with the Wrong? button: /sdcard/Download/GestureCorrections. One small
+     * file per correction, naming the Classify window it corrects and what it really was.
+     */
+    val CORRECTIONS_DIR = Environment.DIRECTORY_DOWNLOADS + "/GestureCorrections/"
+
+    /** Name for a correction: what the watch [said] and what the user says it [was]. */
+    fun correctionName(number: Int, said: String, was: String, wallMs: Long): String =
+        "%04d_correction_said-%s_was-%s_%s.csv".format(
+            Locale.US,
+            number,
+            said.lowercase(Locale.US),
+            was.lowercase(Locale.US),
+            timestamp(wallMs)
+        )
+
     fun recordingName(number: Int, gesture: Gesture, startedAtWallMs: Long): String =
         "%04d_%s_%s.csv".format(Locale.US, number, gesture.name.lowercase(Locale.US), timestamp(startedAtWallMs))
 

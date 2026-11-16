@@ -18,6 +18,7 @@ The recipe, in the order the functions appear:
      eigen_distance  the same, after forgiving the user's usual variation
   6. classify        closest blueprint, or None when nothing is close
      classify_clips  the same, trying the clip of every strong stroke
+     classify_versions  the same, when a gesture has several blueprints
 
 Only the gyroscope is used. The accelerometer measures gravity, so it records
 the resting angle of the arm, and the first model learned that angle instead
@@ -590,3 +591,42 @@ def classify_clips(clips, blueprints, use_limit=True):
     if use_limit and not _passes(best_clip, blueprints[best_name], best):
         return None, best
     return best_name, best
+
+
+def classify_versions(clips, versions, use_limit=True):
+    """Pick the closest blueprint when a gesture may have several of them.
+
+    versions maps a gesture name to a list of Blueprints, oldest first: one for
+    each time the user calibrated that gesture. People do not do a small
+    gesture the same way from one sitting to the next, so the watch keeps the
+    earlier blueprints instead of replacing them.
+
+    Every clip is compared with every blueprint of every gesture, and the
+    single best fit decides. The "close enough" and "strong enough" rules are
+    then applied to that one blueprint, exactly as in classify_clips. Another
+    blueprint of the same gesture is not given a second chance, because that
+    let more random movement through in testing.
+
+    Returns (name, distance, index). index is the position of the deciding
+    blueprint in its gesture's list, or -1 when there was nothing to compare.
+    With one blueprint per gesture this decides exactly like classify_clips.
+    """
+    best_name = None
+    best_clip = None
+    best_index = -1
+    best = float("inf")
+    if clips:
+        for name in sorted(versions):
+            for index, blueprint in enumerate(versions[name]):
+                for clip in clips:
+                    value = eigen_distance(clip, blueprint)[0]
+                    if value < best:
+                        best = value
+                        best_name = name
+                        best_clip = clip
+                        best_index = index
+    if best_name is None:
+        return None, best, -1
+    if use_limit and not _passes(best_clip, versions[best_name][best_index], best):
+        return None, best, best_index
+    return best_name, best, best_index

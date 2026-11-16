@@ -310,8 +310,8 @@ class RecordingService : Service(), SensorEventListener {
 
     /**
      * Classify with the user's blueprints: find the action, crop around every strong stroke, and
-     * pick the closest blueprint, or decide that no known gesture happened. The forest's answer is
-     * only logged, so the two can be compared later.
+     * pick the closest blueprint among every version of every gesture, or decide that no known
+     * gesture happened. The forest's answer is only logged, so the two can be compared later.
      */
     private suspend fun classifyWithBlueprints(
         model: Result<Pair<ModelStore.Loaded, Boolean>>,
@@ -322,7 +322,7 @@ class RecordingService : Service(), SensorEventListener {
         val started = SystemClock.elapsedRealtimeNanos()
         val (extraction, match) = withContext(Dispatchers.Default) {
             val found = MotionClip.extract(events)
-            found to GestureBlueprints.classifyClips(found.clips, BlueprintStore.blueprints())
+            found to GestureBlueprints.classifyVersions(found.clips, BlueprintStore.blueprints())
         }
         val inferenceMs = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000f
         val forest = withContext(Dispatchers.Default) {
@@ -333,8 +333,7 @@ class RecordingService : Service(), SensorEventListener {
 
         // "Match" is how close the clip came, as a share of the gesture's own size: 100% is a perfect fit.
         val prediction = match.gesture?.let { name ->
-            val size = BlueprintStore.blueprints().getValue(name).size
-            GesturePrediction(name, (1.0 - match.distance / size).coerceIn(0.0, 1.0).toFloat())
+            GesturePrediction(name, (1.0 - match.distance / match.size).coerceIn(0.0, 1.0).toFloat())
         }
         val message = when {
             prediction != null -> "Classified"
@@ -356,7 +355,8 @@ class RecordingService : Service(), SensorEventListener {
         }
         Log.i(
             TAG,
-            "Blueprints: ${prediction?.label ?: "NONE"} distance=${match.distance} peak=${extraction.peakLevel} " +
+            "Blueprints: ${prediction?.label ?: "NONE"} distance=${match.distance} version=${match.version} " +
+                "peak=${extraction.peakLevel} " +
                 "in $inferenceMs ms; forest said ${forest?.label} ${forest?.confidence}; file=$fileName"
         )
         publish {
@@ -401,6 +401,8 @@ class RecordingService : Service(), SensorEventListener {
             )
             name to BlueprintStore.addRep(applicationContext, gesture, clips)
         }
+        val known = BlueprintStore.versionCount(gesture)
+        val finished = added.count >= BlueprintStore.REPS_NEEDED && !added.dropped
         Log.i(
             TAG,
             "Calibration ${gesture.name}: ${added.count} of ${BlueprintStore.REPS_NEEDED} reps, " +
@@ -410,6 +412,7 @@ class RecordingService : Service(), SensorEventListener {
             added.dropped -> "One rep didn't match the others, so it was dropped. Do one more, the same way each time."
             added.inconsistent -> "Saved, but these reps differ a lot. It may not be recognised. Redo it later."
             fileName == null -> "Rep counted, CSV not saved"
+            finished && known > 1 -> "${gesture.displayName} now has $known versions"
             else -> "Saved"
         }
         publish {

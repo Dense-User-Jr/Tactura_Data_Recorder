@@ -129,6 +129,56 @@ class GestureBlueprintsParityTest {
         assertTrue("no test file has more than one strong stroke", several > 0)
     }
 
+    /** Two blueprints per gesture: the reference one, and one built from the files the G line lists. */
+    private val versions: Map<String, List<GestureBlueprints.Blueprint>> by lazy {
+        lines.filter { it[0] == "G" }.associate { cells ->
+            val second = GestureBlueprints.build(cells[2].split(';').map { file -> clipOf(file)!! })
+            cells[1] to listOf(blueprints.getValue(cells[1]), second)
+        }
+    }
+
+    @Test
+    fun decisionsWithSeveralBlueprintsMatchPythonReference() {
+        assertEquals("a second blueprint for every gesture", blueprints.keys, versions.keys)
+        val expected = lines.filter { it[0] == "V" }
+        assertTrue("no reference decisions for several blueprints", expected.isNotEmpty())
+        var later = 0
+        for (cells in expected) {
+            val file = cells[1]
+            val match = GestureBlueprints.classifyVersions(clipsOf(file), versions)
+            assertEquals("$file: decision", cells[2], match.gesture ?: "NONE")
+            assertEquals("$file: which blueprint decided", cells[4].toInt(), match.version)
+            val distance = cells[3].toDouble()
+            if (distance.isInfinite()) {
+                assertTrue("$file: Python saw a quiet wrist", match.distance.isInfinite())
+            } else {
+                assertEquals("$file: distance", distance, match.distance, TOLERANCE)
+            }
+            if (match.version > 0) later++
+        }
+        assertTrue("no test file was decided by the second blueprint", later > 0)
+    }
+
+    @Test
+    fun oneBlueprintPerGestureDecidesLikeClassifyClips() {
+        val single = blueprints.mapValues { listOf(it.value) }
+        for (cells in lines.filter { it[0] == "M" }) {
+            val clips = clipsOf(cells[1])
+            val one = GestureBlueprints.classifyClips(clips, blueprints)
+            val several = GestureBlueprints.classifyVersions(clips, single)
+            assertEquals("${cells[1]}: decision", one.gesture, several.gesture)
+            if (clips.isEmpty()) {
+                assertEquals("${cells[1]}: nothing to compare", -1, several.version)
+            } else {
+                assertEquals("${cells[1]}: distance", one.distance, several.distance, 0.0)
+                assertEquals("${cells[1]}: the only blueprint decided", 0, several.version)
+            }
+        }
+        val nothing = GestureBlueprints.classifyVersions(clipsOf(lines.first { it[0] == "M" }[1]), emptyMap())
+        assertNull(nothing.gesture)
+        assertEquals(-1, nothing.version)
+    }
+
     @Test
     fun chosenCalibrationClipsMatchPythonReference() {
         val expected = lines.filter { it[0] == "C" }

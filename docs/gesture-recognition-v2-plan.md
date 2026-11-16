@@ -480,15 +480,29 @@ The targets are proposals for the team to set. The watch test on 11/10 took abou
 
 ## Working order (Nov 15)
 
-The demo target is solid personal gesture recognition with the math front and center. So the order below makes the current five gestures provably reliable before anything new is added. Where it disagrees with the phase table above, this order wins. It is a working proposal and the team can change it.
+The demo target is solid personal gesture recognition with the math front and center. The order below makes the current five gestures provably reliable before anything new is added. Where it disagrees with the phase table above, this order wins. It is a working proposal and the team can change it.
 
-| Order | Work | Why here |
-| --- | --- | --- |
-| 1, done 11/15 | Scorecard on the current blueprints, then pull the data | An informal check on 11/15 named every gesture correctly using the 11/10 blueprints with no recalibration. It was not scored. A scored run turns that into evidence and brings the redone Shake reps to the laptop. |
-| 2, parts A and B built 11/15 | Measure, then test fixes on the laptop | See how close each gesture lands to its limit. Flicks are small (about 1 rad/s), so normal variation between reps uses 36 to 67% of their size against the 90% limit. Twists use 9 to 33%. Eigengestures (step 7) get tested here first. |
-| 3 | The **Wrong?** correction | Blueprints that learn while worn. `GestureBlueprints.update` already exists and nothing calls it yet. |
-| 4 | Real-time listening | Phase 4 as written. |
-| 5 | Chords with the accelerometer | Parked. See the next section. |
+**Done on 11/15**
+
+| Work | Result |
+| --- | --- |
+| Scorecard on five-day-old blueprints | 54 of 60. Twists survive five days. Details below |
+| Alignment: one clip per strong stroke | Shakes no longer cropped on the wrong stroke. Confirmed on the watch |
+| Eigengestures (2 directions, cap 1.5) and the "strong enough" rule | The day's 96 scored windows went from 89 to 95 right. 30 of 30 random movements ignored |
+
+**Roadmap from here**
+
+| Order | Work | Why it matters | Needs |
+| --- | --- | --- | --- |
+| 1 | Clean exam on another day: no recalibration, 10 of each gesture, 10 random movements | Everything on 11/15 was tuned and tested the same evening. This is the proof that flicks and eigengestures hold on older blueprints | Russell, the watch, 15 minutes |
+| 2 | Make the 11/15 evidence reproducible: label files for the pulled rounds, the comparison scripts in the repo | The day's numbers come from untracked folders and scratch scripts. A teammate cannot rerun them yet | Laptop only |
+| 3 | A teammate calibrates and runs the scorecard | Every setting is tuned on one wrist plus Dhruv's October recordings. This is the exit test of phase 2 | A teammate, the watch |
+| 4 | Remember sittings (storage and matching built 11/15), and the **Wrong?** correction | Flicks change from sitting to sitting. One blueprint per sitting plus eigengestures scored 86% on a new sitting in the laptop test, against 66% for one blueprint. Includes the context file of phase 3 | Design decisions from Russell, then code |
+| 5 | Gesture definitions | Flick is small and variable, Shake and Twist Left are close relatives, Double Tap has no recordings. Written definitions and on-watch hints | Team decision |
+| 6 | Real-time listening | No button. The biggest change in how the demo feels. Needs a false-alarm budget and more random-movement data | Code, the watch |
+| 7 | The write-up and demo video | The math story for graduate applications: the diagnosis, blueprints, the alignment fix, what eigengestures found | Russell |
+| 8 | Repo cleanup and merge | About 1000 tracked build files, `local.properties`, merging `blueprints`. Needs a heads-up to Dhruv | Team |
+| Parked | Phoneme bins, word decoder and speech on the watch. Chords with the accelerometer. Pooling data across users, with the consent question for Prof. Nishida | After the recognition demo | |
 
 ### Scorecard, Nov 15 (step 1, done)
 
@@ -653,6 +667,49 @@ The one left over is a Flick Down at 41% strength. The cost of the narrower rule
 
 **Not done.** Watch test of this final build. A test on another day with no recalibration. Keeping one blueprint per sitting.
 
+
+## Remembering sittings, Nov 15 (roadmap 4, first half)
+
+**The problem.** Flicks change from sitting to sitting. Until now, recalibrating a gesture threw the old blueprint away, so the watch only ever knew the most recent way Russell did it.
+
+**Russell's decisions.**
+
+| Question | Decision |
+| --- | --- |
+| What happens to the old blueprint when a gesture is recalibrated | It is kept. The new reps become one more version |
+| How many versions of a gesture to remember | Up to 10, then the oldest is forgotten |
+| What a **Wrong?** correction does (not built yet) | Corrections collect. Five of them for a gesture become a new version |
+
+**The rule.** A movement is compared with every version of every gesture. The single nearest blueprint decides, and the "close enough" and "strong enough" rules of step 6 are applied to that one blueprint. With one version per gesture this is exactly the old rule.
+
+```math
+(\hat{g}, \hat{v}) = \arg\min_{g,\,v} \ d_{\text{eig}}(x, \mu_{g,v}), \qquad \text{then step 6 with } s = \text{size}(\mu_{\hat{g},\hat{v}})
+```
+
+**Tested before building.** Every calibration that ever finished was replayed in time order against the five rounds of 11/15: 176 real gestures and 50 windows that should be ignored. Each round only saw versions that existed at that moment.
+
+| Rule | Right | Ignored | Wrong name | False alarms, of 50 |
+| --- | --- | --- | --- | --- |
+| Latest version only (the watch until now) | 174 | 1 | 1 | 0 |
+| Every version, the nearest must pass (built) | 176 | 0 | 0 | 2 |
+| Every version, any version of the winning gesture may pass | 176 | 0 | 0 | 6 |
+
+The third rule was tried because it sounds generous and harmless. It tripled the false alarms for no gain, so it was dropped.
+
+**The price.** More versions means more ways for a random movement to look like something. Both false alarms came through the flick blueprints of 11/10, which are small (size 0.99 and 1.12).
+
+| Versions kept | False alarms, of 50 | Flicks right in a new sitting, of 111 |
+| --- | --- | --- |
+| 1 | 0 | 82% |
+| 2 | 1 | 86% |
+| 3 | 2 | 86% |
+| 10 | 2 | 89% |
+
+So versions buy about 7 points on flicks in a new sitting and cost about 2 false alarms in 50 on this data. The sample of movements to ignore is small, so that second number is soft. If false alarms grow on the wrist, the first thing to try is a smaller limit on versions, or **Forget** on a gesture and one clean calibration.
+
+**In the code.** `classify_versions` in `ML/blueprint_reference.py`, `classifyVersions` in `GestureBlueprints.kt`, and a parity test with two blueprints per gesture (G and V lines of `reference_blueprints.csv`). `BlueprintStore` keeps a list of rep sets per gesture and reads the old file layout as one set, so nothing needs recalibrating after the update. The watch starts with one version of each gesture, because the earlier flick and shake reps were erased by the old **Redo**.
+
+**Not done.** Compiling and running on the watch. The **Wrong?** button, which will feed the same storage.
 
 ## Parked idea: chords (rotation plus translation)
 

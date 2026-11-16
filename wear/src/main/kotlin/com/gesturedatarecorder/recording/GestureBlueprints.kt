@@ -85,6 +85,13 @@ object GestureBlueprints {
     /** The decision for one clip. [gesture] is null when it is no known gesture. */
     class Match(val gesture: String?, val distance: Double)
 
+    /**
+     * The decision when a gesture may have several blueprints. [gesture] is null when it is no
+     * known gesture. [size] is the size of the blueprint that decided and [version] its position
+     * in that gesture's list (-1 when there was nothing to compare).
+     */
+    class VersionMatch(val gesture: String?, val distance: Double, val size: Double, val version: Int)
+
     /** The rep that looks least like the others: its [index], and its [miss] as a fraction of size. */
     class RepCheck(val index: Int, val miss: Double)
 
@@ -422,6 +429,55 @@ object GestureBlueprints {
             }
         }
         return bestIndex
+    }
+
+    /**
+     * Step 6 when a gesture may have several blueprints.
+     *
+     * [versions] maps a gesture name to its blueprints, oldest first: one for each time the user
+     * calibrated that gesture. People do not do a small gesture the same way from one sitting to
+     * the next, so the watch keeps the earlier blueprints instead of replacing them.
+     *
+     * Every clip is compared with every blueprint of every gesture, and the single best fit
+     * decides. The "close enough" and "strong enough" rules are then applied to that one
+     * blueprint, exactly as in [classifyClips]. Another blueprint of the same gesture is not
+     * given a second chance, because that let more random movement through in testing.
+     *
+     * With one blueprint per gesture this decides exactly like [classifyClips].
+     */
+    fun classifyVersions(
+        clips: List<Array<DoubleArray>>,
+        versions: Map<String, List<Blueprint>>,
+        useLimit: Boolean = true
+    ): VersionMatch {
+        var bestName: String? = null
+        var bestClip: Array<DoubleArray>? = null
+        var bestBlueprint: Blueprint? = null
+        var bestVersion = -1
+        var best = Double.POSITIVE_INFINITY
+        // Sorted names, like Python's sorted(): the first name wins a tie, then the older blueprint, then the first clip.
+        for (name in versions.keys.sorted()) {
+            val list = versions.getValue(name)
+            for (index in list.indices) {
+                for (clip in clips) {
+                    val value = eigenDistance(clip, list[index]).distance
+                    if (value < best) {
+                        best = value
+                        bestName = name
+                        bestClip = clip
+                        bestBlueprint = list[index]
+                        bestVersion = index
+                    }
+                }
+            }
+        }
+        val winner = bestName ?: return VersionMatch(null, best, 0.0, -1)
+        val winningClip = bestClip ?: return VersionMatch(null, best, 0.0, -1)
+        val winningBlueprint = bestBlueprint ?: return VersionMatch(null, best, 0.0, -1)
+        if (useLimit && !passes(winningClip, winningBlueprint, best)) {
+            return VersionMatch(null, best, winningBlueprint.size, bestVersion)
+        }
+        return VersionMatch(winner, best, winningBlueprint.size, bestVersion)
     }
 
     /** The "close enough" and "strong enough" rules for the winning clip and blueprint. */

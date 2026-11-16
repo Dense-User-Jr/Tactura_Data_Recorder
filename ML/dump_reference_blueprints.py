@@ -12,6 +12,8 @@ wear/src/test/resources/reference_blueprints.csv with five kinds of line:
     M,<file>,<gesture or NONE>,<distance>           the decision when every strong stroke is tried
     C,<gesture>,<file>,<clips>,<index>              which of a rep's clips calibration would keep
     E,<gesture>,<number>,<spread>,<180 values>      one eigengesture of a blueprint (number 0 is the biggest)
+    G,<gesture>,<file>;<file>;...                   the reps of a second blueprint of the same gesture
+    V,<file>,<gesture or NONE>,<distance>,<index>   the decision with two blueprints per gesture
 
 The JVM test GestureBlueprintsParityTest rebuilds everything from the same files
 with the watch code and checks the numbers agree.
@@ -114,6 +116,18 @@ def main():
         name, value = B.classify_clips(clips, blueprints, use_limit=True)
         lines.append(",".join(["M", relative(path), name or "NONE", number(value)]))
 
+    # Several blueprints per gesture: the first REPS recordings and the next REPS, as two "sittings".
+    versions = {}
+    for gesture in sorted(by_gesture):
+        second = by_gesture[gesture][REPS:2 * REPS]
+        versions[gesture] = [blueprints[gesture], B.build_blueprint([clip_of(path) for path in second])]
+        lines.append(",".join(["G", gesture, ";".join(relative(path) for path in second)]))
+    later = 0
+    for path in tests:
+        name, value, index = B.classify_versions(clips_of(path), versions, use_limit=True)
+        later += index > 0
+        lines.append(",".join(["V", relative(path), name or "NONE", number(value), str(index)]))
+
     # Calibration: for later recordings of each gesture, which clip fits the first REPS reps.
     for gesture in sorted(by_gesture):
         earlier = [clip_of(path) for path in by_gesture[gesture][:REPS]]
@@ -131,7 +145,7 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Wrote {len(blueprints)} blueprints, {len(tests)} decisions {dict(decided)} "
-          f"({several} test files have more than one strong stroke) and "
+          f"({several} test files have more than one strong stroke, {later} decided by a second blueprint) and "
           f"{len(by_gesture)} updates to {args.output}")
 
 

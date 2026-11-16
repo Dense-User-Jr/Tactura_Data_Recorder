@@ -192,7 +192,9 @@ Every calibration rep is also saved as a raw CSV, labeled with the gesture you w
 /sdcard/Download/GestureCalibration/0007_calib_twist_left_20261110_223000.csv
 ```
 
-**Reset calibration**, at the bottom of the home screen, forgets all reps so you can start over. The CSVs already saved are kept.
+**Recalibrating keeps what the watch already knows.** Pick a gesture and tap **Recalibrate** at the bottom of the home screen, then do 5 new reps. The new reps become one more version of that gesture next to the earlier ones, and Classify compares a movement with every version. This is for gestures you do a little differently from one sitting to the next. The watch remembers up to 10 versions of a gesture and then forgets the oldest. Classify keeps working with the earlier versions while you recalibrate.
+
+**Forget** removes every version of the selected gesture, for when a calibration went wrong. **Reset all** forgets everything so you can start over. The CSVs already saved are kept.
 
 To score the recipe on the recordings in this repository:
 

@@ -90,6 +90,8 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
     val calibration by BlueprintStore.progress.collectAsState()
     LaunchedEffect(Unit) { withContext(Dispatchers.IO) { BlueprintStore.load(context.applicationContext) } }
     val nextToCalibrate = BlueprintStore.GESTURES.firstOrNull { (calibration[it] ?: 0) < BlueprintStore.REPS_NEEDED }
+    // Finished sets of reps per gesture. A gesture that is being recalibrated still has its earlier ones.
+    val versions by BlueprintStore.versions.collectAsState()
 
     // Keep the screen awake while the app is open. Without this the watch reads a flick or a
     // lowered wrist as "done looking" and swaps the app for a blurred picture with the clock on it.
@@ -123,13 +125,17 @@ fun RecorderApp(permission: SensorPermission, onPermissionAction: () -> Unit) {
                     onClassify = { RecordingService.startClassification(context) },
                     canStart = canStart,
                     calibration = calibration,
+                    versions = versions,
                     nextToCalibrate = nextToCalibrate,
                     onCalibrate = { RecordingService.startCalibration(context) },
                     onResetCalibration = {
-                        scope.launch(Dispatchers.IO) { BlueprintStore.clear(context.applicationContext) }
+                        scope.launch(Dispatchers.IO) { BlueprintStore.forget(context.applicationContext) }
                     },
-                    onRedoGesture = { gesture ->
-                        scope.launch(Dispatchers.IO) { BlueprintStore.clear(context.applicationContext, gesture) }
+                    onRecalibrate = { gesture ->
+                        scope.launch(Dispatchers.IO) { BlueprintStore.startNewVersion(context.applicationContext, gesture) }
+                    },
+                    onForgetGesture = { gesture ->
+                        scope.launch(Dispatchers.IO) { BlueprintStore.forget(context.applicationContext, gesture) }
                     }
                 )
                 Screen.COUNTDOWN -> CountdownScreen(shown)
@@ -199,13 +205,16 @@ private fun HomeScreen(
     onClassify: () -> Unit,
     canStart: Boolean,
     calibration: Map<Gesture, Int>,
+    versions: Map<Gesture, Int>,
     nextToCalibrate: Gesture?,
     onCalibrate: () -> Unit,
     onResetCalibration: () -> Unit,
-    onRedoGesture: (Gesture) -> Unit
+    onRecalibrate: (Gesture) -> Unit,
+    onForgetGesture: (Gesture) -> Unit
 ) {
     val repsNeeded = BlueprintStore.REPS_NEEDED
-    val calibrated = nextToCalibrate == null
+    // Every gesture has at least one blueprint, so Classify uses them. Stays true while one is recalibrated.
+    val calibrated = BlueprintStore.GESTURES.all { (versions[it] ?: 0) > 0 }
     val calibrateHint = if (nextToCalibrate == null) {
         "All gestures done"
     } else {
@@ -217,6 +226,7 @@ private fun HomeScreen(
     val repsTotal = BlueprintStore.GESTURES.size * repsNeeded
     val systemLine = when {
         !canStart -> "Sensors off"
+        calibrated && nextToCalibrate != null -> "Recal ${calibration[nextToCalibrate] ?: 0}/$repsNeeded"
         calibrated -> "Sys.Ready"
         else -> "Cal $repsSaved/$repsTotal"
     }
@@ -252,11 +262,12 @@ private fun HomeScreen(
                 detail = if (calibrated) "Your blueprints" else "Old model",
                 onClick = onClassify,
                 modifier = Modifier.fillMaxWidth(),
-                primary = calibrated,
+                // While a gesture is being recalibrated, finishing that is the next thing to do.
+                primary = calibrated && nextToCalibrate == null,
                 enabled = canStart
             )
         }
-        if (calibrated) calibrateAction(calibrateHint, enabled = false, onCalibrate = onCalibrate)
+        if (calibrated) calibrateAction(calibrateHint, enabled = canStart && nextToCalibrate != null, onCalibrate = onCalibrate)
         item {
             TacturaButton(
                 label = "Record",
@@ -271,6 +282,7 @@ private fun HomeScreen(
         Gesture.entries.forEach { gesture ->
             item(key = gesture.name) {
                 val recorded = status.sessionTally[gesture] ?: 0
+                val known = versions[gesture] ?: 0
                 SelectRow(
                     label = gesture.displayName,
                     selected = gesture == selectedGesture,
@@ -281,19 +293,32 @@ private fun HomeScreen(
                     } else {
                         null
                     },
-                    detail = if (recorded > 0) "$recorded recorded" else null
+                    detail = listOfNotNull(
+                        if (known > 1) "$known versions" else null,
+                        if (recorded > 0) "$recorded recorded" else null
+                    ).joinToString(", ").ifEmpty { null }
                 )
             }
         }
 
-        if (calibration.values.any { it > 0 }) {
+        if (calibration.values.any { it > 0 } || versions.values.any { it > 0 }) {
             item { SectionLabel("Calibration") }
-            if ((calibration[selectedGesture] ?: 0) > 0) {
+            val selectedVersions = versions[selectedGesture] ?: 0
+            if ((calibration[selectedGesture] ?: 0) > 0 || selectedVersions > 0) {
                 item {
                     TacturaButton(
-                        label = "Redo ${selectedGesture.displayName}",
-                        detail = "Forget its reps",
-                        onClick = { onRedoGesture(selectedGesture) },
+                        label = "Recalibrate ${selectedGesture.displayName}",
+                        // The blueprints it already has are kept, and Classify goes on using them.
+                        detail = if (selectedVersions > 0) "Adds a version" else "Start its reps over",
+                        onClick = { onRecalibrate(selectedGesture) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                item {
+                    TacturaButton(
+                        label = "Forget ${selectedGesture.displayName}",
+                        detail = if (selectedVersions > 1) "All $selectedVersions versions" else "Its reps",
+                        onClick = { onForgetGesture(selectedGesture) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -310,7 +335,7 @@ private fun HomeScreen(
     }
 }
 
-/** The Calibrate button. Filled while there are still reps to do, greyed out once every gesture is done. */
+/** The Calibrate button. Filled while there are still reps to do, greyed out when no gesture needs any. */
 private fun ScalingLazyListScope.calibrateAction(hint: String, enabled: Boolean, onCalibrate: () -> Unit) {
     item {
         TacturaButton(

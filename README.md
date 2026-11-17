@@ -35,6 +35,12 @@ The APK is created at:
 wear\build\outputs\apk\debug\wear-debug.apk
 ```
 
+Build outputs, Gradle's cache and `local.properties` are not in git. Gradle recreates the outputs on every build, so always install the APK you just built. `local.properties` tells Gradle where the Android SDK is on your laptop. Android Studio writes it when you open the project. If a build says "SDK location not found", open the project in Android Studio once, or create `local.properties` in the repository root with one line:
+
+```text
+sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk
+```
+
 ## Install on a Wear OS watch
 
 ### Enable debugging on the watch

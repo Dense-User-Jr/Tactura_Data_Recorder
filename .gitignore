@@ -1,3 +1,24 @@
+# Local machine and IDE state
+.gradle/
+.idea/caches/
+.idea/deploymentTargetSelector.xml
+.venv/
+local.properties
+.claude/
 CLAUDE.md
 mystuff.txt
+
+# Temporary device diagnostics
+.watch-*.png
+.watch-*.xml
+
+# Gradle outputs. Gradle recreates all of this on every build.
+build/
+*/build/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Older pulls off the watch, kept on one laptop only (see data/README.md)
 _old_pulls/

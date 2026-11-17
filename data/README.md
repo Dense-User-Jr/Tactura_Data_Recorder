@@ -25,7 +25,7 @@ data/
 
 ## Answer keys (labels)
 
-A labels file says what was really done in each file. It has one row per file: `file`, `truth`, `note`.
+A labels file says what was really done in each file. It has one row per file: `file`, `truth`, `round`, `note`. `round` groups the windows that were scored together. To grade the watch's answers against the keys, run `python ML/grade_watch_logs.py`.
 
 | File | Covers |
 | --- | --- |

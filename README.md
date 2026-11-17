@@ -234,6 +234,15 @@ To score the recipe on the recordings in this repository:
 python .\ML\evaluate_blueprints.py
 ```
 
+To grade what the watch actually answered in a Classify session, against an answer key (a `labels*.csv` next to the windows, see `data/README.md`):
+
+```powershell
+python .\ML\grade_watch_logs.py
+python .\ML\grade_watch_logs.py .\data\russell --round "8 PM"
+```
+
+It prints one Markdown table per round: real gestures named right, ignored or misnamed, and false alarms on windows that should get no gesture. It grades the answers saved at the time, so changing the code does not change them.
+
 If you change the recipe in `ML/blueprint_reference.py`, port the change to Kotlin, regenerate the reference values and re-run the tests:
 
 ```powershell

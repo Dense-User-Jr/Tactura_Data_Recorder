@@ -495,7 +495,7 @@ The demo target is solid personal gesture recognition with the math front and ce
 | Order | Work | Why it matters | Needs |
 | --- | --- | --- | --- |
 | 1 | Clean exam on another day: no recalibration, 10 of each gesture, 10 random movements | Everything on 11/15 was tuned and tested the same evening. This is the proof that flicks and eigengestures hold on older blueprints | Russell, the watch, 15 minutes |
-| 2 | Make the 11/15 evidence reproducible: label files for the pulled rounds, the comparison scripts in the repo | The day's numbers come from untracked folders and scratch scripts. A teammate cannot rerun them yet | Laptop only |
+| 2, half done 11/16 | Make the 11/15 evidence reproducible: label files for the pulled rounds, the comparison scripts in the repo | Done: the data is in `data/` with answer keys for every Classify round, and `python ML/grade_watch_logs.py` reruns every on-watch table in this doc. Still scratch: the laptop what-if replays (settings sweeps, versions, the new-sitting flick test) | Laptop only |
 | 3 | A teammate calibrates and runs the scorecard | Every setting is tuned on one wrist plus Dhruv's October recordings. This is the exit test of phase 2 | A teammate, the watch |
 | 4 | Remember sittings and the **Wrong?** correction (both built 11/15, Wrong? not yet run on the watch) | Flicks change from sitting to sitting. One blueprint per sitting plus eigengestures scored 86% on a new sitting in the laptop test, against 66% for one blueprint. Includes the context file of phase 3 | Design decisions from Russell, then code |
 | 5 | Gesture definitions | Flick is small and variable, Shake and Twist Left are close relatives, Double Tap has no recordings. Written definitions and on-watch hints | Team decision |

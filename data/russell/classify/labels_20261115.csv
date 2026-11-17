@@ -1,275 +1,275 @@
-file,truth,note
-0111_classify_pred-none-0_20261115_163746.csv,,"informal tries before the scorecard, not written down"
-0112_classify_pred-twist_left-80_20261115_163822.csv,,"informal tries before the scorecard, not written down"
-0113_classify_pred-flick_up-40_20261115_164200.csv,,"informal tries before the scorecard, not written down"
-0114_classify_pred-flick_down-52_20261115_165250.csv,,"informal tries before the scorecard, not written down"
-0115_classify_pred-shake-49_20261115_170410.csv,,"informal tries before the scorecard, not written down"
-0116_classify_pred-shake-60_20261115_170418.csv,,"informal tries before the scorecard, not written down"
-0117_classify_pred-twist_left-76_20261115_172907.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0118_classify_pred-twist_left-74_20261115_172928.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0119_classify_pred-twist_left-73_20261115_172935.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0120_classify_pred-twist_left-77_20261115_172944.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0121_classify_pred-twist_left-68_20261115_172951.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0122_classify_pred-twist_left-66_20261115_172959.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0123_classify_pred-twist_left-68_20261115_173008.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0124_classify_pred-twist_left-72_20261115_173017.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0125_classify_pred-twist_left-59_20261115_173026.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0126_classify_pred-twist_left-83_20261115_173034.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0127_classify_pred-twist_left-71_20261115_173043.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0128_classify_pred-twist_left-72_20261115_173051.csv,TWIST_LEFT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0129_classify_pred-twist_right-71_20261115_173131.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0130_classify_pred-twist_right-75_20261115_173140.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0131_classify_pred-twist_right-50_20261115_173149.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0132_classify_pred-twist_right-65_20261115_173158.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0133_classify_pred-twist_right-75_20261115_173207.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0134_classify_pred-twist_right-74_20261115_173215.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0135_classify_pred-twist_right-81_20261115_173223.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0136_classify_pred-twist_right-77_20261115_173231.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0137_classify_pred-twist_right-79_20261115_173239.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0138_classify_pred-twist_right-76_20261115_173247.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0139_classify_pred-twist_right-73_20261115_173255.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0140_classify_pred-twist_right-71_20261115_173304.csv,TWIST_RIGHT,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0141_classify_pred-flick_up-11_20261115_173331.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0142_classify_pred-flick_up-50_20261115_173339.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0143_classify_pred-flick_up-11_20261115_173347.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0144_classify_pred-flick_up-38_20261115_173356.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0145_classify_pred-flick_up-46_20261115_173404.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0146_classify_pred-flick_up-46_20261115_173412.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0147_classify_pred-flick_up-37_20261115_173420.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0148_classify_pred-flick_up-55_20261115_173428.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0149_classify_pred-flick_up-44_20261115_173435.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0150_classify_pred-flick_up-35_20261115_173443.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0151_classify_pred-flick_up-29_20261115_173451.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0152_classify_pred-flick_up-44_20261115_173459.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0153_classify_pred-flick_up-31_20261115_173506.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0154_classify_pred-flick_up-35_20261115_173514.csv,FLICK_UP,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0155_classify_pred-flick_down-33_20261115_173545.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0156_classify_pred-flick_down-39_20261115_173552.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0157_classify_pred-flick_down-32_20261115_173600.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0158_classify_pred-flick_down-16_20261115_173608.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0159_classify_pred-flick_down-39_20261115_173616.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0160_classify_pred-none-0_20261115_173623.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0161_classify_pred-flick_down-27_20261115_173631.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0162_classify_pred-flick_down-11_20261115_173639.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0163_classify_pred-none-0_20261115_173647.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0164_classify_pred-none-0_20261115_173655.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0165_classify_pred-flick_down-26_20261115_173703.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0166_classify_pred-none-0_20261115_173711.csv,FLICK_DOWN,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0167_classify_pred-shake-58_20261115_173723.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0168_classify_pred-shake-73_20261115_173730.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0169_classify_pred-shake-75_20261115_173738.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0170_classify_pred-shake-71_20261115_173745.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0171_classify_pred-shake-81_20261115_173754.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0172_classify_pred-shake-72_20261115_173804.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0173_classify_pred-shake-63_20261115_173815.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0174_classify_pred-shake-58_20261115_173822.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0175_classify_pred-twist_left-47_20261115_173830.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0176_classify_pred-twist_left-36_20261115_173839.csv,SHAKE,scorecard on 5-day-old blueprints (Shake recalibrated just before)
-0177_classify_pred-flick_down-20_20261115_174710.csv,,not written down
-0178_classify_pred-shake-48_20261115_181846.csv,SHAKE,20 shakes on the old alignment build
-0179_classify_pred-none-0_20261115_181902.csv,SHAKE,20 shakes on the old alignment build
-0180_classify_pred-shake-21_20261115_181914.csv,SHAKE,20 shakes on the old alignment build
-0181_classify_pred-twist_left-16_20261115_181925.csv,SHAKE,20 shakes on the old alignment build
-0182_classify_pred-shake-58_20261115_181937.csv,SHAKE,20 shakes on the old alignment build
-0183_classify_pred-shake-20_20261115_181948.csv,SHAKE,20 shakes on the old alignment build
-0184_classify_pred-twist_left-12_20261115_181958.csv,SHAKE,20 shakes on the old alignment build
-0185_classify_pred-shake-36_20261115_182012.csv,SHAKE,20 shakes on the old alignment build
-0186_classify_pred-shake-48_20261115_182048.csv,SHAKE,20 shakes on the old alignment build
-0187_classify_pred-shake-57_20261115_182059.csv,SHAKE,20 shakes on the old alignment build
-0188_classify_pred-shake-49_20261115_182257.csv,SHAKE,20 shakes on the old alignment build
-0189_classify_pred-shake-57_20261115_182320.csv,SHAKE,20 shakes on the old alignment build
-0190_classify_pred-shake-25_20261115_182337.csv,SHAKE,20 shakes on the old alignment build
-0191_classify_pred-shake-26_20261115_182349.csv,SHAKE,20 shakes on the old alignment build
-0192_classify_pred-shake-12_20261115_182400.csv,SHAKE,20 shakes on the old alignment build
-0193_classify_pred-shake-46_20261115_182451.csv,SHAKE,20 shakes on the old alignment build
-0194_classify_pred-shake-52_20261115_182503.csv,SHAKE,20 shakes on the old alignment build
-0195_classify_pred-shake-54_20261115_182514.csv,SHAKE,20 shakes on the old alignment build
-0196_classify_pred-shake-48_20261115_182524.csv,SHAKE,20 shakes on the old alignment build
-0197_classify_pred-shake-46_20261115_182534.csv,SHAKE,20 shakes on the old alignment build
-0198_classify_pred-twist_left-33_20261115_183759.csv,,not written down
-0199_classify_pred-shake-76_20261115_184027.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0200_classify_pred-shake-71_20261115_184038.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0201_classify_pred-shake-73_20261115_184048.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0202_classify_pred-shake-67_20261115_184059.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0203_classify_pred-shake-76_20261115_184110.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0204_classify_pred-shake-68_20261115_184120.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0205_classify_pred-shake-70_20261115_184132.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0206_classify_pred-shake-75_20261115_184143.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0207_classify_pred-shake-74_20261115_184156.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0208_classify_pred-shake-80_20261115_184207.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0209_classify_pred-shake-79_20261115_184217.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0210_classify_pred-shake-78_20261115_184228.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0211_classify_pred-shake-73_20261115_184238.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0212_classify_pred-shake-74_20261115_184248.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0213_classify_pred-shake-88_20261115_184259.csv,SHAKE,"shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
-0214_classify_pred-twist_left-74_20261115_184310.csv,TWIST_LEFT,one Twist Left on the one-clip-per-stroke build
-0215_classify_pred-none-0_20261115_184700.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0216_classify_pred-none-0_20261115_184709.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0217_classify_pred-flick_down-58_20261115_184818.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0218_classify_pred-flick_down-60_20261115_184826.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0219_classify_pred-none-0_20261115_184836.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0220_classify_pred-shake-64_20261115_184846.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0221_classify_pred-flick_up-44_20261115_184946.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0222_classify_pred-flick_up-50_20261115_184954.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0223_classify_pred-flick_up-25_20261115_185002.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0224_classify_pred-flick_up-55_20261115_185010.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0225_classify_pred-flick_up-42_20261115_185018.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0226_classify_pred-flick_up-47_20261115_185025.csv,,"flick tries around the 6:47 PM flick recalibration, not written down"
-0227_classify_pred-none-0_20261115_192044.csv,NOTHING,"7:20 PM round, should be ignored: reach"
-0228_classify_pred-flick_up-13_20261115_192054.csv,NOTHING,"7:20 PM round, should be ignored: scratch hair"
-0229_classify_pred-none-0_20261115_192123.csv,NOTHING,"7:20 PM round, should be ignored: scratch hair"
-0230_classify_pred-none-0_20261115_192137.csv,NOTHING,"7:20 PM round, should be ignored: scratch hair"
-0231_classify_pred-none-0_20261115_192154.csv,NOTHING,"7:20 PM round, should be ignored: wave"
-0232_classify_pred-none-0_20261115_192210.csv,NOTHING,"7:20 PM round, should be ignored: lower arm"
-0233_classify_pred-none-0_20261115_192226.csv,NOTHING,"7:20 PM round, should be ignored: punch"
-0234_classify_pred-none-0_20261115_192237.csv,NOTHING,"7:20 PM round, should be ignored: hand up and down"
-0235_classify_pred-none-0_20261115_192250.csv,NOTHING,"7:20 PM round, should be ignored: stretch up"
-0236_classify_pred-none-0_20261115_192304.csv,NOTHING,"7:20 PM round, should be ignored: scratch hair"
-0237_classify_pred-none-0_20261115_192324.csv,NOTHING,"7:20 PM round, should be ignored: gentle flick up"
-0238_classify_pred-none-0_20261115_192336.csv,NOTHING,"7:20 PM round, should be ignored: gentle flick up"
-0239_classify_pred-none-0_20261115_192347.csv,NOTHING,"7:20 PM round, should be ignored: gentle flick left"
-0240_classify_pred-none-0_20261115_192401.csv,NOTHING,"7:20 PM round, should be ignored: gentle flick left"
-0241_classify_pred-none-0_20261115_192414.csv,NOTHING,"7:20 PM round, should be ignored: gentle flick right"
-0242_classify_pred-none-0_20261115_192425.csv,NOTHING,"7:20 PM round, should be ignored: gentle flick right"
-0243_classify_pred-none-0_20261115_192440.csv,NOTHING,"7:20 PM round, should be ignored: gentle shake"
-0244_classify_pred-flick_up-10_20261115_192451.csv,NOTHING,"7:20 PM round, should be ignored: gentle shake"
-0245_classify_pred-none-0_20261115_192505.csv,NOTHING,"7:20 PM round, should be ignored: gentle shake"
-0246_classify_pred-none-0_20261115_192518.csv,NOTHING,"7:20 PM round, should be ignored: gentle shake"
-0247_classify_pred-flick_up-62_20261115_192533.csv,FLICK_UP,7:20 PM round
-0248_classify_pred-flick_up-65_20261115_192546.csv,FLICK_UP,7:20 PM round
-0249_classify_pred-flick_up-46_20261115_192601.csv,FLICK_UP,7:20 PM round
-0250_classify_pred-flick_up-46_20261115_192613.csv,FLICK_UP,7:20 PM round
-0251_classify_pred-flick_up-46_20261115_192626.csv,FLICK_UP,7:20 PM round
-0252_classify_pred-flick_up-28_20261115_192636.csv,FLICK_UP,7:20 PM round
-0253_classify_pred-flick_up-38_20261115_192647.csv,FLICK_UP,7:20 PM round
-0254_classify_pred-flick_up-29_20261115_192702.csv,FLICK_UP,7:20 PM round
-0255_classify_pred-flick_up-16_20261115_192715.csv,FLICK_UP,7:20 PM round
-0256_classify_pred-flick_up-19_20261115_192739.csv,FLICK_UP,7:20 PM round
-0257_classify_pred-flick_down-54_20261115_192752.csv,FLICK_DOWN,7:20 PM round
-0258_classify_pred-flick_down-44_20261115_192804.csv,FLICK_DOWN,7:20 PM round
-0259_classify_pred-flick_down-26_20261115_192815.csv,FLICK_DOWN,7:20 PM round
-0260_classify_pred-flick_down-40_20261115_192832.csv,FLICK_DOWN,7:20 PM round
-0261_classify_pred-flick_down-59_20261115_192911.csv,FLICK_DOWN,7:20 PM round
-0262_classify_pred-flick_down-37_20261115_192923.csv,FLICK_DOWN,7:20 PM round
-0263_classify_pred-flick_down-45_20261115_193027.csv,FLICK_DOWN,7:20 PM round
-0264_classify_pred-flick_down-59_20261115_193039.csv,FLICK_DOWN,7:20 PM round
-0265_classify_pred-flick_down-71_20261115_193100.csv,FLICK_DOWN,7:20 PM round
-0266_classify_pred-flick_down-51_20261115_193113.csv,FLICK_DOWN,7:20 PM round
-0267_classify_pred-twist_left-59_20261115_193127.csv,TWIST_LEFT,7:20 PM round
-0268_classify_pred-twist_left-69_20261115_193151.csv,TWIST_LEFT,7:20 PM round
-0269_classify_pred-twist_left-61_20261115_193205.csv,TWIST_LEFT,7:20 PM round
-0270_classify_pred-twist_left-72_20261115_193216.csv,TWIST_LEFT,7:20 PM round
-0271_classify_pred-twist_left-65_20261115_193231.csv,TWIST_LEFT,7:20 PM round
-0272_classify_pred-twist_right-60_20261115_193253.csv,TWIST_RIGHT,7:20 PM round
-0273_classify_pred-twist_right-57_20261115_193306.csv,TWIST_RIGHT,7:20 PM round
-0274_classify_pred-twist_right-54_20261115_193325.csv,TWIST_RIGHT,7:20 PM round
-0275_classify_pred-twist_right-51_20261115_193349.csv,TWIST_RIGHT,7:20 PM round
-0276_classify_pred-twist_right-60_20261115_193401.csv,TWIST_RIGHT,7:20 PM round
-0277_classify_pred-twist_left-79_20261115_195917.csv,TWIST_LEFT,8 PM round
-0278_classify_pred-twist_left-73_20261115_195948.csv,TWIST_LEFT,8 PM round
-0279_classify_pred-twist_left-64_20261115_195958.csv,TWIST_LEFT,8 PM round
-0280_classify_pred-twist_left-60_20261115_200009.csv,TWIST_LEFT,8 PM round
-0281_classify_pred-twist_left-72_20261115_200019.csv,TWIST_LEFT,8 PM round
-0282_classify_pred-twist_left-71_20261115_200030.csv,TWIST_LEFT,8 PM round
-0283_classify_pred-twist_left-76_20261115_200041.csv,TWIST_LEFT,8 PM round
-0284_classify_pred-twist_left-73_20261115_200051.csv,TWIST_LEFT,8 PM round
-0285_classify_pred-twist_left-76_20261115_200101.csv,TWIST_LEFT,8 PM round
-0286_classify_pred-twist_left-77_20261115_200112.csv,TWIST_LEFT,8 PM round
-0287_classify_pred-twist_right-77_20261115_200125.csv,TWIST_RIGHT,8 PM round
-0288_classify_pred-twist_right-72_20261115_200135.csv,TWIST_RIGHT,8 PM round
-0289_classify_pred-twist_right-64_20261115_200146.csv,TWIST_RIGHT,8 PM round
-0290_classify_pred-twist_right-78_20261115_200156.csv,TWIST_RIGHT,8 PM round
-0291_classify_pred-twist_right-74_20261115_200206.csv,TWIST_RIGHT,8 PM round
-0292_classify_pred-twist_right-71_20261115_200216.csv,TWIST_RIGHT,8 PM round
-0293_classify_pred-twist_right-68_20261115_200226.csv,TWIST_RIGHT,8 PM round
-0294_classify_pred-twist_right-61_20261115_200236.csv,TWIST_RIGHT,8 PM round
-0295_classify_pred-twist_right-75_20261115_200246.csv,TWIST_RIGHT,8 PM round
-0296_classify_pred-twist_right-73_20261115_200256.csv,TWIST_RIGHT,8 PM round
-0297_classify_pred-flick_up-36_20261115_200307.csv,FLICK_UP,8 PM round
-0298_classify_pred-flick_up-14_20261115_200319.csv,FLICK_UP,8 PM round
-0299_classify_pred-flick_up-29_20261115_200330.csv,FLICK_UP,8 PM round
-0300_classify_pred-flick_up-40_20261115_200340.csv,FLICK_UP,8 PM round
-0301_classify_pred-flick_up-30_20261115_200351.csv,FLICK_UP,8 PM round
-0302_classify_pred-flick_up-20_20261115_200401.csv,FLICK_UP,8 PM round
-0303_classify_pred-flick_up-16_20261115_200411.csv,FLICK_UP,8 PM round
-0304_classify_pred-flick_up-41_20261115_200421.csv,FLICK_UP,8 PM round
-0305_classify_pred-flick_up-40_20261115_200432.csv,FLICK_UP,8 PM round
-0306_classify_pred-flick_up-44_20261115_200443.csv,FLICK_UP,8 PM round
-0307_classify_pred-flick_down-46_20261115_200455.csv,FLICK_DOWN,8 PM round
-0308_classify_pred-flick_down-43_20261115_200505.csv,FLICK_DOWN,8 PM round
-0309_classify_pred-flick_down-50_20261115_200515.csv,FLICK_DOWN,8 PM round
-0310_classify_pred-none-0_20261115_200525.csv,FLICK_DOWN,8 PM round
-0311_classify_pred-flick_down-51_20261115_200536.csv,FLICK_DOWN,8 PM round
-0312_classify_pred-flick_down-45_20261115_200547.csv,FLICK_DOWN,8 PM round
-0313_classify_pred-none-0_20261115_200556.csv,FLICK_DOWN,8 PM round
-0314_classify_pred-none-0_20261115_200606.csv,FLICK_DOWN,8 PM round
-0315_classify_pred-none-0_20261115_200618.csv,FLICK_DOWN,8 PM round
-0316_classify_pred-flick_down-51_20261115_200631.csv,FLICK_DOWN,8 PM round
-0317_classify_pred-shake-75_20261115_200643.csv,SHAKE,8 PM round
-0318_classify_pred-shake-76_20261115_200653.csv,SHAKE,8 PM round
-0319_classify_pred-shake-84_20261115_200703.csv,SHAKE,8 PM round
-0320_classify_pred-shake-80_20261115_200713.csv,SHAKE,8 PM round
-0321_classify_pred-shake-79_20261115_200722.csv,SHAKE,8 PM round
-0322_classify_pred-shake-73_20261115_200731.csv,SHAKE,8 PM round
-0323_classify_pred-shake-74_20261115_200740.csv,SHAKE,8 PM round
-0324_classify_pred-shake-78_20261115_200751.csv,SHAKE,8 PM round
-0325_classify_pred-shake-76_20261115_200801.csv,SHAKE,8 PM round
-0326_classify_pred-shake-71_20261115_200810.csv,SHAKE,8 PM round
-0327_classify_pred-none-0_20261115_200833.csv,NOTHING,"8 PM round, random movement"
-0328_classify_pred-none-0_20261115_200844.csv,NOTHING,"8 PM round, random movement"
-0329_classify_pred-none-0_20261115_200852.csv,NOTHING,"8 PM round, random movement"
-0330_classify_pred-none-0_20261115_200902.csv,NOTHING,"8 PM round, random movement"
-0331_classify_pred-none-0_20261115_200912.csv,NOTHING,"8 PM round, random movement"
-0332_classify_pred-none-0_20261115_200921.csv,NOTHING,"8 PM round, random movement"
-0333_classify_pred-none-0_20261115_200930.csv,NOTHING,"8 PM round, random movement"
-0334_classify_pred-none-0_20261115_200940.csv,NOTHING,"8 PM round, random movement"
-0335_classify_pred-none-0_20261115_200951.csv,NOTHING,"8 PM round, random movement"
-0336_classify_pred-none-0_20261115_201001.csv,NOTHING,"8 PM round, random movement"
-0337_classify_pred-flick_down-60_20261115_201859.csv,,"informal tries, not written down"
-0338_classify_pred-flick_up-62_20261115_201912.csv,,"informal tries, not written down"
-0339_classify_pred-twist_left-63_20261115_203550.csv,,"informal tries, not written down"
-0340_classify_pred-twist_left-70_20261115_203559.csv,,"informal tries, not written down"
-0341_classify_pred-twist_left-75_20261115_203606.csv,,"informal tries, not written down"
-0342_classify_pred-twist_right-61_20261115_203614.csv,,"informal tries, not written down"
-0343_classify_pred-twist_right-72_20261115_203623.csv,,"informal tries, not written down"
-0344_classify_pred-twist_right-74_20261115_203631.csv,,"informal tries, not written down"
-0345_classify_pred-flick_up-44_20261115_203638.csv,,"informal tries, not written down"
-0346_classify_pred-flick_up-50_20261115_203645.csv,,"informal tries, not written down"
-0347_classify_pred-flick_up-48_20261115_203652.csv,,"informal tries, not written down"
-0348_classify_pred-none-0_20261115_203659.csv,FLICK_DOWN,Flick Down tries before recalibrating it three times
-0349_classify_pred-flick_down-34_20261115_203708.csv,FLICK_DOWN,Flick Down tries before recalibrating it three times
-0350_classify_pred-flick_up-12_20261115_203716.csv,FLICK_DOWN,Flick Down tries before recalibrating it three times
-0351_classify_pred-flick_down-44_20261115_203724.csv,FLICK_DOWN,Flick Down tries before recalibrating it three times
-0352_classify_pred-flick_down-50_20261115_203731.csv,FLICK_DOWN,Flick Down tries before recalibrating it three times
-0353_classify_pred-none-0_20261115_204119.csv,FLICK_DOWN,"Flick Down tries with four Flick Down versions, no movement registered"
-0354_classify_pred-flick_down-60_20261115_204132.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0355_classify_pred-flick_down-55_20261115_204140.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0356_classify_pred-flick_down-48_20261115_204149.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0357_classify_pred-flick_down-62_20261115_204156.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0358_classify_pred-flick_down-55_20261115_204204.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0359_classify_pred-flick_down-21_20261115_204211.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0360_classify_pred-flick_down-43_20261115_204219.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0361_classify_pred-flick_down-61_20261115_204227.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0362_classify_pred-flick_down-42_20261115_204244.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0363_classify_pred-flick_down-65_20261115_204320.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0364_classify_pred-flick_down-42_20261115_204335.csv,FLICK_DOWN,Flick Down tries with four Flick Down versions
-0365_classify_pred-none-0_20261115_204701.csv,NOTHING,random movement
-0366_classify_pred-none-0_20261115_211828.csv,NOTHING,trying to make the watch name a non-gesture
-0367_classify_pred-none-0_20261115_211837.csv,NOTHING,trying to make the watch name a non-gesture
-0368_classify_pred-none-0_20261115_211845.csv,NOTHING,trying to make the watch name a non-gesture
-0369_classify_pred-none-0_20261115_211852.csv,NOTHING,trying to make the watch name a non-gesture
-0370_classify_pred-none-0_20261115_211859.csv,NOTHING,trying to make the watch name a non-gesture
-0371_classify_pred-none-0_20261115_211909.csv,NOTHING,trying to make the watch name a non-gesture
-0372_classify_pred-none-0_20261115_211917.csv,NOTHING,trying to make the watch name a non-gesture
-0373_classify_pred-none-0_20261115_211934.csv,NOTHING,trying to make the watch name a non-gesture
-0374_classify_pred-none-0_20261115_211946.csv,NOTHING,trying to make the watch name a non-gesture
-0375_classify_pred-none-0_20261115_211959.csv,NOTHING,trying to make the watch name a non-gesture
-0376_classify_pred-none-0_20261115_212010.csv,FLICK_UP,"very soft Flick Up, Wrong? round, corrected to Flick Up"
-0377_classify_pred-none-0_20261115_212021.csv,FLICK_UP,"very soft Flick Up, Wrong? round, too soft to register"
-0378_classify_pred-flick_down-29_20261115_212035.csv,FLICK_UP,"very soft Flick Up, Wrong? round, corrected to Flick Up"
-0379_classify_pred-flick_down-18_20261115_212048.csv,FLICK_UP,"very soft Flick Up, Wrong? round, corrected to Flick Up"
-0380_classify_pred-none-0_20261115_212059.csv,FLICK_UP,"very soft Flick Up, Wrong? round, corrected to Flick Up"
-0381_classify_pred-none-0_20261115_212109.csv,FLICK_UP,"very soft Flick Up, Wrong? round, too soft to register"
-0382_classify_pred-none-0_20261115_212119.csv,FLICK_UP,"very soft Flick Up, Wrong? round, corrected to Flick Up"
-0383_classify_pred-flick_up-62_20261115_212130.csv,FLICK_UP,"very soft Flick Up, Wrong? round, after the corrections"
-0384_classify_pred-none-0_20261115_212149.csv,,"big movement, not written down"
+file,truth,round,note
+0111_classify_pred-none-0_20261115_163746.csv,,,"informal tries before the scorecard, not written down"
+0112_classify_pred-twist_left-80_20261115_163822.csv,,,"informal tries before the scorecard, not written down"
+0113_classify_pred-flick_up-40_20261115_164200.csv,,,"informal tries before the scorecard, not written down"
+0114_classify_pred-flick_down-52_20261115_165250.csv,,,"informal tries before the scorecard, not written down"
+0115_classify_pred-shake-49_20261115_170410.csv,,,"informal tries before the scorecard, not written down"
+0116_classify_pred-shake-60_20261115_170418.csv,,,"informal tries before the scorecard, not written down"
+0117_classify_pred-twist_left-76_20261115_172907.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0118_classify_pred-twist_left-74_20261115_172928.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0119_classify_pred-twist_left-73_20261115_172935.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0120_classify_pred-twist_left-77_20261115_172944.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0121_classify_pred-twist_left-68_20261115_172951.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0122_classify_pred-twist_left-66_20261115_172959.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0123_classify_pred-twist_left-68_20261115_173008.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0124_classify_pred-twist_left-72_20261115_173017.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0125_classify_pred-twist_left-59_20261115_173026.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0126_classify_pred-twist_left-83_20261115_173034.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0127_classify_pred-twist_left-71_20261115_173043.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0128_classify_pred-twist_left-72_20261115_173051.csv,TWIST_LEFT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0129_classify_pred-twist_right-71_20261115_173131.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0130_classify_pred-twist_right-75_20261115_173140.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0131_classify_pred-twist_right-50_20261115_173149.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0132_classify_pred-twist_right-65_20261115_173158.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0133_classify_pred-twist_right-75_20261115_173207.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0134_classify_pred-twist_right-74_20261115_173215.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0135_classify_pred-twist_right-81_20261115_173223.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0136_classify_pred-twist_right-77_20261115_173231.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0137_classify_pred-twist_right-79_20261115_173239.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0138_classify_pred-twist_right-76_20261115_173247.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0139_classify_pred-twist_right-73_20261115_173255.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0140_classify_pred-twist_right-71_20261115_173304.csv,TWIST_RIGHT,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0141_classify_pred-flick_up-11_20261115_173331.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0142_classify_pred-flick_up-50_20261115_173339.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0143_classify_pred-flick_up-11_20261115_173347.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0144_classify_pred-flick_up-38_20261115_173356.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0145_classify_pred-flick_up-46_20261115_173404.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0146_classify_pred-flick_up-46_20261115_173412.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0147_classify_pred-flick_up-37_20261115_173420.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0148_classify_pred-flick_up-55_20261115_173428.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0149_classify_pred-flick_up-44_20261115_173435.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0150_classify_pred-flick_up-35_20261115_173443.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0151_classify_pred-flick_up-29_20261115_173451.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0152_classify_pred-flick_up-44_20261115_173459.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0153_classify_pred-flick_up-31_20261115_173506.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0154_classify_pred-flick_up-35_20261115_173514.csv,FLICK_UP,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0155_classify_pred-flick_down-33_20261115_173545.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0156_classify_pred-flick_down-39_20261115_173552.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0157_classify_pred-flick_down-32_20261115_173600.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0158_classify_pred-flick_down-16_20261115_173608.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0159_classify_pred-flick_down-39_20261115_173616.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0160_classify_pred-none-0_20261115_173623.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0161_classify_pred-flick_down-27_20261115_173631.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0162_classify_pred-flick_down-11_20261115_173639.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0163_classify_pred-none-0_20261115_173647.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0164_classify_pred-none-0_20261115_173655.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0165_classify_pred-flick_down-26_20261115_173703.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0166_classify_pred-none-0_20261115_173711.csv,FLICK_DOWN,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0167_classify_pred-shake-58_20261115_173723.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0168_classify_pred-shake-73_20261115_173730.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0169_classify_pred-shake-75_20261115_173738.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0170_classify_pred-shake-71_20261115_173745.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0171_classify_pred-shake-81_20261115_173754.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0172_classify_pred-shake-72_20261115_173804.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0173_classify_pred-shake-63_20261115_173815.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0174_classify_pred-shake-58_20261115_173822.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0175_classify_pred-twist_left-47_20261115_173830.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0176_classify_pred-twist_left-36_20261115_173839.csv,SHAKE,11/15 5:29 PM scorecard,scorecard on 5-day-old blueprints (Shake recalibrated just before)
+0177_classify_pred-flick_down-20_20261115_174710.csv,,,not written down
+0178_classify_pred-shake-48_20261115_181846.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0179_classify_pred-none-0_20261115_181902.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0180_classify_pred-shake-21_20261115_181914.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0181_classify_pred-twist_left-16_20261115_181925.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0182_classify_pred-shake-58_20261115_181937.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0183_classify_pred-shake-20_20261115_181948.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0184_classify_pred-twist_left-12_20261115_181958.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0185_classify_pred-shake-36_20261115_182012.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0186_classify_pred-shake-48_20261115_182048.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0187_classify_pred-shake-57_20261115_182059.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0188_classify_pred-shake-49_20261115_182257.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0189_classify_pred-shake-57_20261115_182320.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0190_classify_pred-shake-25_20261115_182337.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0191_classify_pred-shake-26_20261115_182349.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0192_classify_pred-shake-12_20261115_182400.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0193_classify_pred-shake-46_20261115_182451.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0194_classify_pred-shake-52_20261115_182503.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0195_classify_pred-shake-54_20261115_182514.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0196_classify_pred-shake-48_20261115_182524.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0197_classify_pred-shake-46_20261115_182534.csv,SHAKE,"11/15 6:18 PM shakes, old alignment",20 shakes on the old alignment build
+0198_classify_pred-twist_left-33_20261115_183759.csv,,,not written down
+0199_classify_pred-shake-76_20261115_184027.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0200_classify_pred-shake-71_20261115_184038.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0201_classify_pred-shake-73_20261115_184048.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0202_classify_pred-shake-67_20261115_184059.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0203_classify_pred-shake-76_20261115_184110.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0204_classify_pred-shake-68_20261115_184120.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0205_classify_pred-shake-70_20261115_184132.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0206_classify_pred-shake-75_20261115_184143.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0207_classify_pred-shake-74_20261115_184156.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0208_classify_pred-shake-80_20261115_184207.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0209_classify_pred-shake-79_20261115_184217.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0210_classify_pred-shake-78_20261115_184228.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0211_classify_pred-shake-73_20261115_184238.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0212_classify_pred-shake-74_20261115_184248.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0213_classify_pred-shake-88_20261115_184259.csv,SHAKE,"11/15 6:40 PM shakes, new alignment","shakes on the one-clip-per-stroke build, Shake recalibrated at natural pace"
+0214_classify_pred-twist_left-74_20261115_184310.csv,TWIST_LEFT,"11/15 6:40 PM shakes, new alignment",one Twist Left on the one-clip-per-stroke build
+0215_classify_pred-none-0_20261115_184700.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0216_classify_pred-none-0_20261115_184709.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0217_classify_pred-flick_down-58_20261115_184818.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0218_classify_pred-flick_down-60_20261115_184826.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0219_classify_pred-none-0_20261115_184836.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0220_classify_pred-shake-64_20261115_184846.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0221_classify_pred-flick_up-44_20261115_184946.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0222_classify_pred-flick_up-50_20261115_184954.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0223_classify_pred-flick_up-25_20261115_185002.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0224_classify_pred-flick_up-55_20261115_185010.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0225_classify_pred-flick_up-42_20261115_185018.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0226_classify_pred-flick_up-47_20261115_185025.csv,,,"flick tries around the 6:47 PM flick recalibration, not written down"
+0227_classify_pred-none-0_20261115_192044.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: reach"
+0228_classify_pred-flick_up-13_20261115_192054.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: scratch hair"
+0229_classify_pred-none-0_20261115_192123.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: scratch hair"
+0230_classify_pred-none-0_20261115_192137.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: scratch hair"
+0231_classify_pred-none-0_20261115_192154.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: wave"
+0232_classify_pred-none-0_20261115_192210.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: lower arm"
+0233_classify_pred-none-0_20261115_192226.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: punch"
+0234_classify_pred-none-0_20261115_192237.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: hand up and down"
+0235_classify_pred-none-0_20261115_192250.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: stretch up"
+0236_classify_pred-none-0_20261115_192304.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: scratch hair"
+0237_classify_pred-none-0_20261115_192324.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle flick up"
+0238_classify_pred-none-0_20261115_192336.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle flick up"
+0239_classify_pred-none-0_20261115_192347.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle flick left"
+0240_classify_pred-none-0_20261115_192401.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle flick left"
+0241_classify_pred-none-0_20261115_192414.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle flick right"
+0242_classify_pred-none-0_20261115_192425.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle flick right"
+0243_classify_pred-none-0_20261115_192440.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle shake"
+0244_classify_pred-flick_up-10_20261115_192451.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle shake"
+0245_classify_pred-none-0_20261115_192505.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle shake"
+0246_classify_pred-none-0_20261115_192518.csv,NOTHING,11/15 7:20 PM round,"7:20 PM round, should be ignored: gentle shake"
+0247_classify_pred-flick_up-62_20261115_192533.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0248_classify_pred-flick_up-65_20261115_192546.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0249_classify_pred-flick_up-46_20261115_192601.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0250_classify_pred-flick_up-46_20261115_192613.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0251_classify_pred-flick_up-46_20261115_192626.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0252_classify_pred-flick_up-28_20261115_192636.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0253_classify_pred-flick_up-38_20261115_192647.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0254_classify_pred-flick_up-29_20261115_192702.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0255_classify_pred-flick_up-16_20261115_192715.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0256_classify_pred-flick_up-19_20261115_192739.csv,FLICK_UP,11/15 7:20 PM round,7:20 PM round
+0257_classify_pred-flick_down-54_20261115_192752.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0258_classify_pred-flick_down-44_20261115_192804.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0259_classify_pred-flick_down-26_20261115_192815.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0260_classify_pred-flick_down-40_20261115_192832.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0261_classify_pred-flick_down-59_20261115_192911.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0262_classify_pred-flick_down-37_20261115_192923.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0263_classify_pred-flick_down-45_20261115_193027.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0264_classify_pred-flick_down-59_20261115_193039.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0265_classify_pred-flick_down-71_20261115_193100.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0266_classify_pred-flick_down-51_20261115_193113.csv,FLICK_DOWN,11/15 7:20 PM round,7:20 PM round
+0267_classify_pred-twist_left-59_20261115_193127.csv,TWIST_LEFT,11/15 7:20 PM round,7:20 PM round
+0268_classify_pred-twist_left-69_20261115_193151.csv,TWIST_LEFT,11/15 7:20 PM round,7:20 PM round
+0269_classify_pred-twist_left-61_20261115_193205.csv,TWIST_LEFT,11/15 7:20 PM round,7:20 PM round
+0270_classify_pred-twist_left-72_20261115_193216.csv,TWIST_LEFT,11/15 7:20 PM round,7:20 PM round
+0271_classify_pred-twist_left-65_20261115_193231.csv,TWIST_LEFT,11/15 7:20 PM round,7:20 PM round
+0272_classify_pred-twist_right-60_20261115_193253.csv,TWIST_RIGHT,11/15 7:20 PM round,7:20 PM round
+0273_classify_pred-twist_right-57_20261115_193306.csv,TWIST_RIGHT,11/15 7:20 PM round,7:20 PM round
+0274_classify_pred-twist_right-54_20261115_193325.csv,TWIST_RIGHT,11/15 7:20 PM round,7:20 PM round
+0275_classify_pred-twist_right-51_20261115_193349.csv,TWIST_RIGHT,11/15 7:20 PM round,7:20 PM round
+0276_classify_pred-twist_right-60_20261115_193401.csv,TWIST_RIGHT,11/15 7:20 PM round,7:20 PM round
+0277_classify_pred-twist_left-79_20261115_195917.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0278_classify_pred-twist_left-73_20261115_195948.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0279_classify_pred-twist_left-64_20261115_195958.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0280_classify_pred-twist_left-60_20261115_200009.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0281_classify_pred-twist_left-72_20261115_200019.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0282_classify_pred-twist_left-71_20261115_200030.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0283_classify_pred-twist_left-76_20261115_200041.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0284_classify_pred-twist_left-73_20261115_200051.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0285_classify_pred-twist_left-76_20261115_200101.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0286_classify_pred-twist_left-77_20261115_200112.csv,TWIST_LEFT,11/15 8 PM round,8 PM round
+0287_classify_pred-twist_right-77_20261115_200125.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0288_classify_pred-twist_right-72_20261115_200135.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0289_classify_pred-twist_right-64_20261115_200146.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0290_classify_pred-twist_right-78_20261115_200156.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0291_classify_pred-twist_right-74_20261115_200206.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0292_classify_pred-twist_right-71_20261115_200216.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0293_classify_pred-twist_right-68_20261115_200226.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0294_classify_pred-twist_right-61_20261115_200236.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0295_classify_pred-twist_right-75_20261115_200246.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0296_classify_pred-twist_right-73_20261115_200256.csv,TWIST_RIGHT,11/15 8 PM round,8 PM round
+0297_classify_pred-flick_up-36_20261115_200307.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0298_classify_pred-flick_up-14_20261115_200319.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0299_classify_pred-flick_up-29_20261115_200330.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0300_classify_pred-flick_up-40_20261115_200340.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0301_classify_pred-flick_up-30_20261115_200351.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0302_classify_pred-flick_up-20_20261115_200401.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0303_classify_pred-flick_up-16_20261115_200411.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0304_classify_pred-flick_up-41_20261115_200421.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0305_classify_pred-flick_up-40_20261115_200432.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0306_classify_pred-flick_up-44_20261115_200443.csv,FLICK_UP,11/15 8 PM round,8 PM round
+0307_classify_pred-flick_down-46_20261115_200455.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0308_classify_pred-flick_down-43_20261115_200505.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0309_classify_pred-flick_down-50_20261115_200515.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0310_classify_pred-none-0_20261115_200525.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0311_classify_pred-flick_down-51_20261115_200536.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0312_classify_pred-flick_down-45_20261115_200547.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0313_classify_pred-none-0_20261115_200556.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0314_classify_pred-none-0_20261115_200606.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0315_classify_pred-none-0_20261115_200618.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0316_classify_pred-flick_down-51_20261115_200631.csv,FLICK_DOWN,11/15 8 PM round,8 PM round
+0317_classify_pred-shake-75_20261115_200643.csv,SHAKE,11/15 8 PM round,8 PM round
+0318_classify_pred-shake-76_20261115_200653.csv,SHAKE,11/15 8 PM round,8 PM round
+0319_classify_pred-shake-84_20261115_200703.csv,SHAKE,11/15 8 PM round,8 PM round
+0320_classify_pred-shake-80_20261115_200713.csv,SHAKE,11/15 8 PM round,8 PM round
+0321_classify_pred-shake-79_20261115_200722.csv,SHAKE,11/15 8 PM round,8 PM round
+0322_classify_pred-shake-73_20261115_200731.csv,SHAKE,11/15 8 PM round,8 PM round
+0323_classify_pred-shake-74_20261115_200740.csv,SHAKE,11/15 8 PM round,8 PM round
+0324_classify_pred-shake-78_20261115_200751.csv,SHAKE,11/15 8 PM round,8 PM round
+0325_classify_pred-shake-76_20261115_200801.csv,SHAKE,11/15 8 PM round,8 PM round
+0326_classify_pred-shake-71_20261115_200810.csv,SHAKE,11/15 8 PM round,8 PM round
+0327_classify_pred-none-0_20261115_200833.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0328_classify_pred-none-0_20261115_200844.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0329_classify_pred-none-0_20261115_200852.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0330_classify_pred-none-0_20261115_200902.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0331_classify_pred-none-0_20261115_200912.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0332_classify_pred-none-0_20261115_200921.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0333_classify_pred-none-0_20261115_200930.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0334_classify_pred-none-0_20261115_200940.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0335_classify_pred-none-0_20261115_200951.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0336_classify_pred-none-0_20261115_201001.csv,NOTHING,11/15 8 PM round,"8 PM round, random movement"
+0337_classify_pred-flick_down-60_20261115_201859.csv,,,"informal tries, not written down"
+0338_classify_pred-flick_up-62_20261115_201912.csv,,,"informal tries, not written down"
+0339_classify_pred-twist_left-63_20261115_203550.csv,,,"informal tries, not written down"
+0340_classify_pred-twist_left-70_20261115_203559.csv,,,"informal tries, not written down"
+0341_classify_pred-twist_left-75_20261115_203606.csv,,,"informal tries, not written down"
+0342_classify_pred-twist_right-61_20261115_203614.csv,,,"informal tries, not written down"
+0343_classify_pred-twist_right-72_20261115_203623.csv,,,"informal tries, not written down"
+0344_classify_pred-twist_right-74_20261115_203631.csv,,,"informal tries, not written down"
+0345_classify_pred-flick_up-44_20261115_203638.csv,,,"informal tries, not written down"
+0346_classify_pred-flick_up-50_20261115_203645.csv,,,"informal tries, not written down"
+0347_classify_pred-flick_up-48_20261115_203652.csv,,,"informal tries, not written down"
+0348_classify_pred-none-0_20261115_203659.csv,FLICK_DOWN,"11/15 8:37 PM Flick Down, before the new versions",Flick Down tries before recalibrating it three times
+0349_classify_pred-flick_down-34_20261115_203708.csv,FLICK_DOWN,"11/15 8:37 PM Flick Down, before the new versions",Flick Down tries before recalibrating it three times
+0350_classify_pred-flick_up-12_20261115_203716.csv,FLICK_DOWN,"11/15 8:37 PM Flick Down, before the new versions",Flick Down tries before recalibrating it three times
+0351_classify_pred-flick_down-44_20261115_203724.csv,FLICK_DOWN,"11/15 8:37 PM Flick Down, before the new versions",Flick Down tries before recalibrating it three times
+0352_classify_pred-flick_down-50_20261115_203731.csv,FLICK_DOWN,"11/15 8:37 PM Flick Down, before the new versions",Flick Down tries before recalibrating it three times
+0353_classify_pred-none-0_20261115_204119.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions","Flick Down tries with four Flick Down versions, no movement registered"
+0354_classify_pred-flick_down-60_20261115_204132.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0355_classify_pred-flick_down-55_20261115_204140.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0356_classify_pred-flick_down-48_20261115_204149.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0357_classify_pred-flick_down-62_20261115_204156.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0358_classify_pred-flick_down-55_20261115_204204.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0359_classify_pred-flick_down-21_20261115_204211.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0360_classify_pred-flick_down-43_20261115_204219.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0361_classify_pred-flick_down-61_20261115_204227.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0362_classify_pred-flick_down-42_20261115_204244.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0363_classify_pred-flick_down-65_20261115_204320.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0364_classify_pred-flick_down-42_20261115_204335.csv,FLICK_DOWN,"11/15 8:41 PM round, four Flick Down versions",Flick Down tries with four Flick Down versions
+0365_classify_pred-none-0_20261115_204701.csv,NOTHING,"11/15 8:41 PM round, four Flick Down versions",random movement
+0366_classify_pred-none-0_20261115_211828.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0367_classify_pred-none-0_20261115_211837.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0368_classify_pred-none-0_20261115_211845.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0369_classify_pred-none-0_20261115_211852.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0370_classify_pred-none-0_20261115_211859.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0371_classify_pred-none-0_20261115_211909.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0372_classify_pred-none-0_20261115_211917.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0373_classify_pred-none-0_20261115_211934.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0374_classify_pred-none-0_20261115_211946.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0375_classify_pred-none-0_20261115_211959.csv,NOTHING,"11/15 9:18 PM round, Wrong? button",trying to make the watch name a non-gesture
+0376_classify_pred-none-0_20261115_212010.csv,FLICK_UP,"11/15 9:18 PM round, Wrong? button","very soft Flick Up, Wrong? round, corrected to Flick Up"
+0377_classify_pred-none-0_20261115_212021.csv,FLICK_UP,"11/15 9:18 PM round, Wrong? button","very soft Flick Up, Wrong? round, too soft to register"
+0378_classify_pred-flick_down-29_20261115_212035.csv,FLICK_UP,"11/15 9:18 PM round, Wrong? button","very soft Flick Up, Wrong? round, corrected to Flick Up"
+0379_classify_pred-flick_down-18_20261115_212048.csv,FLICK_UP,"11/15 9:18 PM round, Wrong? button","very soft Flick Up, Wrong? round, corrected to Flick Up"
+0380_classify_pred-none-0_20261115_212059.csv,FLICK_UP,"11/15 9:18 PM round, Wrong? button","very soft Flick Up, Wrong? round, corrected to Flick Up"
+0381_classify_pred-none-0_20261115_212109.csv,FLICK_UP,"11/15 9:18 PM round, Wrong? button","very soft Flick Up, Wrong? round, too soft to register"
+0382_classify_pred-none-0_20261115_212119.csv,FLICK_UP,"11/15 9:18 PM round, Wrong? button","very soft Flick Up, Wrong? round, corrected to Flick Up"
+0383_classify_pred-flick_up-62_20261115_212130.csv,FLICK_UP,"11/15 9:18 PM round, Wrong? button","very soft Flick Up, Wrong? round, after the corrections"
+0384_classify_pred-none-0_20261115_212149.csv,,,"big movement, not written down"

@@ -73,7 +73,7 @@ def main():
 
     # Blueprints come from the first REPS training recordings of each gesture, in file-name order.
     by_gesture = defaultdict(list)
-    for path in sorted((PROJECT_ROOT / "recordings" / "GestureDataRecorder").glob("*.csv")):
+    for path in sorted((PROJECT_ROOT / "data" / "dhruv" / "recordings").glob("*.csv")):
         label, _ = B.read_gyro_events(path)
         by_gesture[label].append(path)
 
@@ -101,10 +101,10 @@ def main():
     tests = []
     for gesture in sorted(by_gesture):
         tests += by_gesture[gesture][REPS::9]
-    with (PROJECT_ROOT / "classify_logs" / "labels.csv").open("r", newline="", encoding="utf-8") as handle:
+    with (PROJECT_ROOT / "data" / "russell" / "classify" / "labels.csv").open("r", newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
             if row["truth"].strip():
-                tests.append(PROJECT_ROOT / "classify_logs" / row["file"])
+                tests.append(PROJECT_ROOT / "data" / "russell" / "classify" / row["file"])
     decided = defaultdict(int)
     for path in tests:
         name, value = B.classify(clip_of(path), blueprints, use_limit=True)

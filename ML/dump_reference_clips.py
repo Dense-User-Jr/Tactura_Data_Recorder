@@ -22,6 +22,7 @@ Re-run after changing the recipe (and port the change to Kotlin):
 """
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
@@ -59,8 +60,13 @@ def main():
     parser.add_argument("--every", type=int, default=5, help="use every Nth training CSV (default: 5)")
     args = parser.parse_args()
 
-    training = sorted((PROJECT_ROOT / "recordings" / "GestureDataRecorder").glob("*.csv"))[:: args.every]
-    watch = sorted((PROJECT_ROOT / "classify_logs").glob("0*.csv"))[::4]  # includes still-arm windows
+    training = sorted((PROJECT_ROOT / "data" / "dhruv" / "recordings").glob("*.csv"))[:: args.every]
+    # The 11/10 evening test: the files named in labels.csv. The folder also holds later
+    # sittings, and the watch started its numbering over that night, so numbers repeat.
+    watch_dir = PROJECT_ROOT / "data" / "russell" / "classify"
+    with (watch_dir / "labels.csv").open("r", newline="", encoding="utf-8") as handle:
+        evening = {row["file"] for row in csv.DictReader(handle)}
+    watch = sorted(p for p in watch_dir.glob("0*.csv") if p.name in evening)[::4]  # includes still-arm windows
     lines = [reference_line(path) for path in training + watch]
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

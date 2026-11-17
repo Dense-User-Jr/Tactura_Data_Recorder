@@ -132,8 +132,10 @@ Each classified window is also saved, in the same CSV format, to a separate fold
 The name holds the predicted label and confidence percentage; the `gesture_label` column holds the predicted label, **not** the true gesture. Never copy these files into the training folder. Their purpose is to re-run the exact window through the `.joblib` model on a PC and compare its answer with the watch's ONNX answer:
 
 ```powershell
-adb pull /sdcard/Download/GestureClassify .\classify_logs
+adb pull /sdcard/Download/GestureClassify .\_old_pulls\pull_GestureClassify
 ```
+
+Then copy your own windows into `data/<your name>/classify/`, as described under "Where pulled files go" below.
 
 The current model recognizes the five classes represented in the training data: Flick Up, Flick Down, Twist Right, Twist Left, and Shake. Double Tap is not recognized until examples are collected and the model is retrained.
 
@@ -194,7 +196,7 @@ Every calibration rep is also saved as a raw CSV, labeled with the gesture you w
 
 **Recalibrating keeps what the watch already knows.** Pick a gesture and tap **Recalibrate** at the bottom of the home screen, then do 5 new reps. The new reps become one more version of that gesture next to the earlier ones, and Classify compares a movement with every version. This is for gestures you do a little differently from one sitting to the next. The watch remembers up to 10 versions of a gesture and then forgets the oldest. Classify keeps working with the earlier versions while you recalibrate.
 
-**Recording Double Tap is different.** With Double Tap selected, **Record** asks the watch for its fastest sensor readings instead of 50 per second. It is used to find out what a finger tap or pinch looks like to the sensors. Keep those recordings out of `recordings/`: they are not training data.
+**Recording Double Tap is different.** With Double Tap selected, **Record** asks the watch for its fastest sensor readings instead of 50 per second. It is used to find out what a finger tap or pinch looks like to the sensors. They are not training data, so keep them out of the training set in `data/dhruv/recordings`.
 
 **Listen** (shown once every gesture is calibrated) needs no button. The watch keeps listening and names each gesture as it happens: the screen shows the gesture's phoneme bin (for example `TH/DH` for Flick Up), the watch buzzes and plays a short tick. Leave a short pause, about a third of a second with the wrist calm, between gestures. Movement that goes on for more than 1.8 seconds is treated as ordinary movement and ignored. Turn the watch's media volume up to hear the tick. Tap **Stop** to end.
 
@@ -243,7 +245,7 @@ python .\ML\dump_reference_blueprints.py
 The shove rule works the same way: `ML/shove_reference.py` is the source of truth, `ShoveDetector.kt` is its copy, and `python .\ML\dump_reference_shove.py` regenerates the stream the parity test replays. To see what the rule makes of any recording or Listen stream:
 
 ```powershell
-python .\ML\shove_reference.py .\listen_logs_v6\0049_listen_stream_20261115_234241.csv
+python .\ML\shove_reference.py .\data\russell\listen\0049_listen_stream_20261115_234241.csv
 ```
 
 ## Pull CSV files off the watch
@@ -260,23 +262,24 @@ List the files on the watch:
 adb shell ls -l /sdcard/Download/GestureDataRecorder
 ```
 
-From the repository root, copy all recordings into a local `recordings` folder:
+From the repository root, pull into `_old_pulls`, a scratch folder that git ignores:
 
 ```powershell
-adb pull /sdcard/Download/GestureDataRecorder .\recordings
+New-Item -ItemType Directory -Force .\_old_pulls
+adb pull /sdcard/Download/GestureDataRecorder .\_old_pulls\pull_GestureDataRecorder
 ```
 
 You can pull one file instead:
 
 ```powershell
-adb pull /sdcard/Download/GestureDataRecorder/twist_right_20260924_194114.csv .\recordings\
+adb pull /sdcard/Download/GestureDataRecorder/0007_twist_right_20261009_215119.csv .\_old_pulls\
 ```
 
-The local `recordings` folder is not created by source control; create it first if needed:
+The other folders on the watch are `GestureClassify`, `GestureCalibration`, `GestureListen` and `GestureCorrections`. Pull them the same way.
 
-```powershell
-New-Item -ItemType Directory -Force .\recordings
-```
+### Where pulled files go
+
+Every person has a folder under `data/`, described in `data/README.md`. The watch is shared and does not know who is wearing it, so a pull holds everyone's files. Copy only your own files, picked by the date and time in their names, into `data/<your name>/recordings/` (or `classify/`, `calibration/`, `listen/`, `corrections/`), and write down what you actually did while you still remember. A file name and its `gesture_label` column only say what the watch guessed, or which gesture was selected on the watch.
 
 ### Clear recordings from the watch
 
@@ -294,7 +297,7 @@ The second command should print no CSV filenames. This leaves the app and its re
 The plotting utility is in `Accessory Software/sensor_gesture_plot.py`. Run it from the repository root after pulling recordings. With no input files, it automatically reads every `.csv` in:
 
 ```text
-recordings/GestureDataRecorder
+data/dhruv/recordings
 ```
 
 By default, it writes a new graph to the `Graphs` directory. The first graph is named:
@@ -315,14 +318,14 @@ The `Graphs` directory is created automatically if it does not exist. To plot se
 
 ```powershell
 python ".\Accessory Software\sensor_gesture_plot.py" `
-	".\recordings\GestureDataRecorder\0007_twist_right_20260924_194114.csv"
+	".\data\dhruv\recordings\0007_twist_right_20261009_215119.csv"
 ```
 
 To choose a different output file, use `-o` or `--output`. An explicitly supplied output path is used as-is:
 
 ```powershell
 python ".\Accessory Software\sensor_gesture_plot.py" `
-	".\recordings\GestureDataRecorder\0007_twist_right_20260924_194114.csv" `
+	".\data\dhruv\recordings\0007_twist_right_20261009_215119.csv" `
 	-o ".\Accessory Software\Graphs\twist_right_0007.png"
 ```
 

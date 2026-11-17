@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT = PROJECT_ROOT / "recordings" / "GestureDataRecorder"
+DEFAULT_INPUT = PROJECT_ROOT / "data" / "dhruv" / "recordings"
 DEFAULT_OUTPUT = Path(__file__).resolve().parent / "gesture_random_forest.joblib"
 SUPPORTED_LABELS = (
     "FLICK_UP",

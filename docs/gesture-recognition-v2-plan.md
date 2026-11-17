@@ -524,7 +524,7 @@ Russell, Galaxy Watch 7, left wrist. Flick Up, Flick Down, Twist Left and Twist 
 - **Flicks sit at the limit.** Today's flicks were about 25 to 30% smaller than on 11/10. Today's Flick Down was mostly on the y axis (78%), where the 11/10 calibration was mostly on x (60%). But a blueprint built from the first five of today's reps did not clearly do better on the rest: Flick Down 4 of 7 against 3 of 7 with the old one, Flick Up 7 of 9 against 9 of 9. Today's flicks miss a blueprint built from each other by a median 55% (up) and 69% (down) of its size. So the main issue is variation between reps of a small gesture, more than a stale calibration. This is one split on few windows, so treat it as a pointer.
 - **Arm tremor is measurable but small.** The resting motion level was 0.06 rad/s, against 0.04 on 11/10. A flick is about 0.8.
 
-The pulled files are in `classify_logs_v3/` (files 0117 to 0176) and `calibration_logs_v2/`.
+The pulled files are in `data/russell/classify/` (files 0117 to 0176) and `data/russell/calibration/`.
 
 ### Alignment fix, Nov 15 (step 2, part A)
 
@@ -887,7 +887,7 @@ The signs of the two angles were checked against these: roll grows the way a Twi
 
 **Choosing without a tap: data first, 11/15.** There are no recordings of a pinch, a tap or a fist. Russell wants to try all three as the "select" movement: one pinch, a double pinch, and closing the hand. Ten recordings of each, made with Record and Double Tap selected, told apart by the order they are made in. With Double Tap selected, Record now asks for the fastest sensor readings the watch gives, so one round of recordings shows both what each movement looks like and whether 50 readings a second would have been enough (by thinning them out on the laptop).
 
-**What a pinch, a double pinch and a fist look like, 11/15 at 11:15 PM.** 35 recordings at 100 readings a second (`recordings_pinch_v1`, files 18 to 52): 10 single pinches, 10 double pinches, 10 fists (close the hand, then open), 5 with the arm still. The measure is the accelerometer's jump from one reading to the next, in m/s2, after thinning to 50 readings a second.
+**What a pinch, a double pinch and a fist look like, 11/15 at 11:15 PM.** 35 recordings at 100 readings a second (`data/russell/recordings`, files 18 to 52): 10 single pinches, 10 double pinches, 10 fists (close the hand, then open), 5 with the arm still. The measure is the accelerometer's jump from one reading to the next, in m/s2, after thinning to 50 readings a second.
 
 | | Accel jump at 50 Hz | Gyro peak, rad/s | Notes |
 | --- | --- | --- | --- |
@@ -987,7 +987,7 @@ So the looser rule catches the fists that were being missed and, in ordinary act
 
 **Russell's question.** Should a shove of the hand only ever be combined with a twist (a chord), or also be a gesture by itself, and which is the feasible place to start? The order chosen: find out whether the watch can read a shove alone, with a small probe of chords in the same round of recordings.
 
-**The recordings.** 48 at 100 readings a second (`recordings_shove_v1`, files 53 to 100): 8 each of shove up, down, left and right (the whole hand moves a few inches and comes back, watch face up), then 8 of a Twist Right while shoving up and 8 of a Twist Right while shoving right.
+**The recordings.** 48 at 100 readings a second (`data/russell/recordings`, files 53 to 100): 8 each of shove up, down, left and right (the whole hand moves a few inches and comes back, watch face up), then 8 of a Twist Right while shoving up and 8 of a Twist Right while shoving right.
 
 **How a shove is read.** The accelerometer feels gravity and the hand's own acceleration added together. Turning the wrist swings gravity around inside the readings, so gravity has to be taken out first. The gyro says how the watch turns, so the watch's orientation R(t) is followed from the moment before the movement, and the hand's own acceleration, in the frame the watch started in, is
 

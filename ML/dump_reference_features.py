@@ -1,7 +1,7 @@
 """Write reference features for the Kotlin parity test.
 
 Runs the training script's own ``recording_features()`` on a sample of the CSVs in
-``recordings/GestureDataRecorder`` and writes one line per recording,
+``data/dhruv/recordings`` and writes one line per recording,
 ``<file name>,<192 features>``, to
 ``wear/src/test/resources/reference_features.csv``. The JVM test
 ``GestureFeaturesParityTest`` checks that the watch's Kotlin port

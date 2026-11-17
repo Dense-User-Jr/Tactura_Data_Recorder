@@ -1,0 +1,17 @@
+start,last,too_long,decision,match_percent,version,nearest,ignored_by_note,clips
+93,106,false,FLICK_UP,41.1,0,FLICK_UP,false,1
+179,194,false,NONE,0.0,1,FLICK_UP,false,1
+283,322,false,NONE,0.0,2,FLICK_DOWN,false,2
+374,419,false,NONE,0.0,2,FLICK_DOWN,false,2
+479,500,false,NONE,0.0,1,FLICK_UP,false,1
+526,531,false,NONE,0.0,2,FLICK_DOWN,false,1
+792,826,false,NONE,0.0,2,FLICK_DOWN,false,1
+854,894,false,NONE,0.0,0,FLICK_DOWN,false,1
+918,940,false,TWIST_RIGHT,37.5,0,TWIST_RIGHT,false,1
+1076,1115,false,NONE,0.0,0,TWIST_RIGHT,false,1
+1143,1180,false,NONE,0.0,1,SHAKE,false,2
+1212,1264,false,SHAKE,57.1,1,SHAKE,false,2
+-1,-1,false,UNDO,0.0,-1,13,false,0
+1360,1373,false,NONE,0.0,1,FLICK_UP,false,1
+-1,-1,false,WORD:these,0.0,-1,13,false,0
+1974,1992,false,NONE,0.0,1,FLICK_UP,false,1

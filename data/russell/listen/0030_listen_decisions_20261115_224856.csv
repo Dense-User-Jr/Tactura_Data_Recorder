@@ -1,0 +1,4 @@
+start,last,too_long,decision,match_percent,version,nearest,ignored_by_note,clips
+31,85,false,FLICK_UP,13.5,0,FLICK_UP,false,1
+122,164,false,TWIST_LEFT,56.4,0,TWIST_LEFT,false,2
+-1,-1,false,WORD:this,0.0,-1,14,false,0

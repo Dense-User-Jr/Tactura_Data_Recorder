@@ -18,7 +18,7 @@ import java.io.File
 class MotionClipParityTest {
     private val repoRoot = listOf("..", ".")
         .map(::File)
-        .first { File(it, "recordings/GestureDataRecorder").isDirectory }
+        .first { File(it, "data/dhruv/recordings").isDirectory }
 
     private class Reference(val file: String, val peakIndex: Int, val peakLevel: Double, val clip: DoubleArray?)
 

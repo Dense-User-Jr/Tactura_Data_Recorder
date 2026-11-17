@@ -26,7 +26,7 @@ FILES = 14
 
 
 def main():
-    recordings = sorted((PROJECT_ROOT / "recordings" / "GestureDataRecorder").glob("*.csv"))
+    recordings = sorted((PROJECT_ROOT / "data" / "dhruv" / "recordings").glob("*.csv"))
     picked = recordings[::EVERY][:FILES]
     gate = B.MotionGate()
     lines = [",".join(["S", str(GAP_NS), ";".join(path.relative_to(PROJECT_ROOT).as_posix() for path in picked)])]

@@ -1,0 +1,9 @@
+start,last,too_long,decision,match_percent,version,nearest,ignored_by_note,clips
+24,32,false,NONE,0.0,2,FLICK_DOWN,false,1
+48,88,false,NONE,0.0,0,FLICK_UP,false,1
+145,177,false,FLICK_UP,34.2,0,FLICK_UP,false,1
+-1,-1,false,WORD:the,0.0,-1,1,false,0
+385,400,false,FLICK_UP,48.6,0,FLICK_UP,false,1
+618,682,false,TWIST_RIGHT,33.1,0,TWIST_RIGHT,false,2
+1017,1064,false,SHAKE,16.7,1,SHAKE,false,2
+-1,-1,false,WORD:these,0.0,-1,135,false,0

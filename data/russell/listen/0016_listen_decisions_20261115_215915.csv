@@ -1,0 +1,12 @@
+start,last,too_long,decision,match_percent,version,nearest,ignored_by_note,clips
+63,66,false,NONE,0.0,2,FLICK_DOWN,false,1
+379,411,false,FLICK_UP,20.6,0,FLICK_UP,false,1
+529,564,false,TWIST_RIGHT,36.9,0,TWIST_RIGHT,false,2
+616,620,false,NONE,0.0,1,FLICK_UP,false,1
+724,764,false,TWIST_LEFT,27.7,0,TWIST_LEFT,false,2
+879,929,false,SHAKE,29.3,0,SHAKE,false,2
+-1,-1,false,NO_WORD,0.0,-1,1345,false,0
+1092,1126,false,FLICK_DOWN,35.7,3,FLICK_DOWN,false,2
+1235,1267,false,SHAKE,43.6,0,SHAKE,false,2
+1353,1386,false,TWIST_LEFT,43.5,0,TWIST_LEFT,false,2
+-1,-1,false,NO_WORD,0.0,-1,254,false,0

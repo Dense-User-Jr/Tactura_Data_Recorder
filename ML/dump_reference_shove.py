@@ -6,8 +6,8 @@ Usage:  python ML/dump_reference_shove.py
 Plays a few of the shove recordings of 2026-11-16 one after another as one
 stream, thinned to the 50 readings a second that Listen mode has, and writes
 down both the events and what `ShoveDetector` in ML/shove_reference.py made of
-them. The recordings live in `recordings_shove_v1/`, which is kept out of git,
-so the events themselves go in the file and the test needs nothing else.
+them. The recordings are in `data/russell/recordings/`. The events themselves
+also go in the file, so the test needs nothing else.
 
 Lines of wear/src/test/resources/reference_shove.csv:
 
@@ -23,7 +23,7 @@ from pathlib import Path
 import shove_reference as S
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SOURCE = PROJECT_ROOT / "recordings_shove_v1"
+SOURCE = PROJECT_ROOT / "data" / "russell" / "recordings"
 OUTPUT = PROJECT_ROOT / "wear" / "src" / "test" / "resources" / "reference_shove.csv"
 # Two of each shove (54 is a faint one that is turned down, 62 is also named Flick Down
 # by the blueprints), then a Twist Right with a shove up and one with a shove right.

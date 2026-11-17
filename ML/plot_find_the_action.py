@@ -14,7 +14,7 @@ import numpy as np
 import blueprint_reference as ref
 
 REPO = Path(__file__).resolve().parent.parent
-WINDOW = REPO / "classify_logs" / "0036_classify_pred-twist_left-39_20261110_192749.csv"
+WINDOW = REPO / "data" / "russell" / "classify" / "0036_classify_pred-twist_left-39_20261110_192749.csv"
 OUT = REPO / "docs" / "img" / "find-the-action.png"
 
 INK, GREY, BLUE, RED = "#1f2328", "#9aa0a6", "#1f6feb", "#d1242f"

@@ -6,9 +6,9 @@ Run from the repository root:
 
 It reads two kinds of data:
 
-  recordings/GestureDataRecorder   Record-mode CSVs. The label column is the truth.
-  classify_logs (or --watch-test)  Classify-mode CSVs pulled from a watch, plus a
-                                   labels.csv that says what was really done.
+  data/dhruv/recordings                     Record-mode CSVs. The label column is the truth.
+  data/russell/classify (or --watch-test)   Classify-mode CSVs pulled from a watch, plus a
+                                            labels.csv that says what was really done.
 
 and prints five tests. None of them is a shuffled split of everything, because
 that kind of test once reported 96% for a model that scored 49% on a real person.
@@ -217,8 +217,8 @@ def test_per_gesture(title, samples, reps, draws, seed):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--recordings", type=Path, default=PROJECT_ROOT / "recordings" / "GestureDataRecorder")
-    parser.add_argument("--watch-test", type=Path, default=PROJECT_ROOT / "classify_logs")
+    parser.add_argument("--recordings", type=Path, default=PROJECT_ROOT / "data" / "dhruv" / "recordings")
+    parser.add_argument("--watch-test", type=Path, default=PROJECT_ROOT / "data" / "russell" / "classify")
     parser.add_argument("--draws", type=int, default=20, help="random draws per test (default 20)")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()

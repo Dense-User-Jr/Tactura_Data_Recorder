@@ -19,7 +19,7 @@ import kotlin.math.abs
 class GestureBlueprintsParityTest {
     private val repoRoot = listOf("..", ".")
         .map(::File)
-        .first { File(it, "recordings/GestureDataRecorder").isDirectory }
+        .first { File(it, "data/dhruv/recordings").isDirectory }
 
     private val lines: List<List<String>> by lazy {
         val stream = javaClass.classLoader!!.getResourceAsStream("reference_blueprints.csv")

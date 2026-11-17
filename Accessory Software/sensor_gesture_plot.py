@@ -44,7 +44,7 @@ import matplotlib.pyplot as plt
 # by just not plotting what isn't there.
 SENSOR_CHANNELS = ["accel_x", "accel_y", "accel_z", "gyro_x", "gyro_y", "gyro_z"]
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT_DIR = PROJECT_ROOT / "recordings" / "GestureDataRecorder"
+DEFAULT_INPUT_DIR = PROJECT_ROOT / "data" / "dhruv" / "recordings"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "Accessory Software" / "Graphs"
 DEFAULT_OUTPUT_NAME = "composite_sensors.png"
 
@@ -295,7 +295,7 @@ def _build_arg_parser():
         ),
         epilog=(
             "Examples:\n"
-            "  # No files -> use recordings/GestureDataRecorder/*.csv\n"
+            "  # No files -> use data/dhruv/recordings/*.csv\n"
             "  python3 sensor_gesture_plot.py\n\n"
             "  # One file, one group -- named after the file itself\n"
             "  python3 sensor_gesture_plot.py twist1.csv\n\n"
@@ -313,7 +313,7 @@ def _build_arg_parser():
         "files", nargs="*",
            help="CSV file path(s). Each file becomes its own group, named after "
                "the file (without extension), unless --group is used instead. "
-               "With no files, all CSVs in recordings/GestureDataRecorder are used.",
+               "With no files, all CSVs in data/dhruv/recordings are used.",
     )
     parser.add_argument(
         "--group", action="append", default=[], metavar="LABEL=FILE[,FILE...]",

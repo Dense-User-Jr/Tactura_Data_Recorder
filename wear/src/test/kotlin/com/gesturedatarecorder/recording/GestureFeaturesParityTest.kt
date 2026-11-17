@@ -8,13 +8,13 @@ import java.io.File
 
 /**
  * Guards the contract between the watch and the training pipeline, using real recordings
- * from recordings/GestureDataRecorder:
+ * from data/dhruv/recordings:
  *  1. GestureFeatures.kt produces exactly the features of Python's recording_features()
  *     (reference values from ML/dump_reference_features.py);
  *  2. CaptureCsv rebuilds a recorded CSV byte for byte, so the on-watch CSV format is unchanged.
  */
 class GestureFeaturesParityTest {
-    private val recordingsDir = listOf("../recordings/GestureDataRecorder", "recordings/GestureDataRecorder")
+    private val recordingsDir = listOf("../data/dhruv/recordings", "data/dhruv/recordings")
         .map(::File)
         .first { it.isDirectory }
 

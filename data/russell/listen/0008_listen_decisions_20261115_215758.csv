@@ -1,0 +1,6 @@
+start,last,too_long,decision,match_percent,version,nearest,ignored_by_note,clips
+260,267,false,NONE,0.0,1,FLICK_UP,false,1
+300,327,false,FLICK_DOWN,23.8,1,FLICK_DOWN,false,2
+803,840,false,SHAKE,48.3,0,SHAKE,false,2
+1027,1056,false,TWIST_LEFT,12.3,0,TWIST_LEFT,false,2
+-1,-1,false,NO_WORD,0.0,-1,254,false,0

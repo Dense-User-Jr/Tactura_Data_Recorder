@@ -2,13 +2,15 @@
 
 Everything pulled from `/sdcard/Download/GestureClassify` on the lab's Galaxy Watch 7 through 2026-11-15: 461 windows, all Russell, watch on the left wrist.
 
-The file names and the `gesture_label` column hold what the watch **guessed**, not what was done. The watch started its numbering over on the evening of 11/10, so the numbers 0001 to 0077 appear twice. Go by the full file name.
+The file names and the `gesture_label` column hold what the watch **guessed**, not what was done. What was really done is in the three labels files below. The watch started its numbering over on the evening of 11/10, so the numbers 0001 to 0077 appear twice. Go by the full file name.
 
 | Session | Files | Truth |
 | --- | --- | --- |
 | 11/10, 7:13 to 7:38 PM, old forest model | 0001 to 0077 with a `20261110_19` timestamp | `labels.csv` |
-| 11/10, 10:42 to 11:50 PM, first blueprint build | 0001 to 0110 with a `20261110_22` or `20261110_23` timestamp | not written down yet |
-| 11/15, 4:37 to 9:21 PM | 0111 to 0384 | not written down yet |
+| 11/10, 10:42 to 11:50 PM, first blueprint build | 0001 to 0110 with a `20261110_22` or `20261110_23` timestamp | `labels_20261110_late.csv` |
+| 11/15, 4:37 to 9:21 PM | 0111 to 0384 | `labels_20261115.csv` |
+
+The two later answer keys were rebuilt on 11/16 from the order the gestures were done in, as Russell reported it at the time, and they reproduce every score in the plan doc. `data/README.md` explains the `truth` words.
 
 ## The 11/10 evening test (`labels.csv`)
 

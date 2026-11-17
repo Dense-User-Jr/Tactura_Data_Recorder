@@ -1,0 +1,101 @@
+file,truth,note
+0001_shake_20261115_172659.csv,SHAKE,"Record mode, the gesture selected on the watch"
+0002_shake_20261115_172708.csv,SHAKE,"Record mode, the gesture selected on the watch"
+0003_shake_20261115_172716.csv,SHAKE,"Record mode, the gesture selected on the watch"
+0004_shake_20261115_172724.csv,SHAKE,"Record mode, the gesture selected on the watch"
+0005_shake_20261115_172732.csv,SHAKE,"Record mode, the gesture selected on the watch"
+0006_shake_20261115_172739.csv,SHAKE,"Record mode, the gesture selected on the watch"
+0007_shake_20261115_172751.csv,SHAKE,"Record mode, the gesture selected on the watch"
+0008_flick_down_20261115_174448.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0009_flick_down_20261115_174455.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0010_flick_down_20261115_174502.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0011_flick_down_20261115_174509.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0012_flick_down_20261115_174516.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0013_flick_down_20261115_174523.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0014_flick_down_20261115_174531.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0015_flick_down_20261115_174538.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0016_flick_down_20261115_174545.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0017_flick_down_20261115_174559.csv,FLICK_DOWN,"Record mode, the gesture selected on the watch"
+0018_double_tap_20261115_230916.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0019_double_tap_20261115_230928.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0020_double_tap_20261115_230938.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0021_double_tap_20261115_230948.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0022_double_tap_20261115_230957.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0023_double_tap_20261115_231007.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0024_double_tap_20261115_231016.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0025_double_tap_20261115_231026.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0026_double_tap_20261115_231035.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0027_double_tap_20261115_231045.csv,PINCH,"single pinch, named double_tap because Double Tap gave the fast readings"
+0028_double_tap_20261115_231103.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0029_double_tap_20261115_231113.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0030_double_tap_20261115_231122.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0031_double_tap_20261115_231132.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0032_double_tap_20261115_231142.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0033_double_tap_20261115_231151.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0034_double_tap_20261115_231200.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0035_double_tap_20261115_231210.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0036_double_tap_20261115_231219.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0037_double_tap_20261115_231229.csv,DOUBLE_PINCH,"double pinch, named double_tap because Double Tap gave the fast readings"
+0038_double_tap_20261115_231427.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0039_double_tap_20261115_231436.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0040_double_tap_20261115_231448.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0041_double_tap_20261115_231457.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0042_double_tap_20261115_231507.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0043_double_tap_20261115_231516.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0044_double_tap_20261115_231525.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0045_double_tap_20261115_231535.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0046_double_tap_20261115_231543.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0047_double_tap_20261115_231553.csv,FIST,"fist (close the hand, then open), named double_tap because Double Tap gave the fast readings"
+0048_double_tap_20261115_231608.csv,STILL,"arm still, named double_tap because Double Tap gave the fast readings"
+0049_double_tap_20261115_231617.csv,STILL,"arm still, named double_tap because Double Tap gave the fast readings"
+0050_double_tap_20261115_231626.csv,STILL,"arm still, named double_tap because Double Tap gave the fast readings"
+0051_double_tap_20261115_231635.csv,STILL,"arm still, named double_tap because Double Tap gave the fast readings"
+0052_double_tap_20261115_231644.csv,STILL,"arm still, named double_tap because Double Tap gave the fast readings"
+0053_double_tap_20261116_000937.csv,SHOVE_UP,named double_tap because Double Tap gave the fast readings
+0054_double_tap_20261116_000946.csv,SHOVE_UP,named double_tap because Double Tap gave the fast readings
+0055_double_tap_20261116_000957.csv,SHOVE_UP,named double_tap because Double Tap gave the fast readings
+0056_double_tap_20261116_001007.csv,SHOVE_UP,named double_tap because Double Tap gave the fast readings
+0057_double_tap_20261116_001017.csv,SHOVE_UP,named double_tap because Double Tap gave the fast readings
+0058_double_tap_20261116_001027.csv,SHOVE_UP,named double_tap because Double Tap gave the fast readings
+0059_double_tap_20261116_001038.csv,SHOVE_UP,named double_tap because Double Tap gave the fast readings
+0060_double_tap_20261116_001048.csv,SHOVE_UP,named double_tap because Double Tap gave the fast readings
+0061_double_tap_20261116_001225.csv,SHOVE_DOWN,named double_tap because Double Tap gave the fast readings
+0062_double_tap_20261116_001240.csv,SHOVE_DOWN,named double_tap because Double Tap gave the fast readings
+0063_double_tap_20261116_001250.csv,SHOVE_DOWN,named double_tap because Double Tap gave the fast readings
+0064_double_tap_20261116_001259.csv,SHOVE_DOWN,named double_tap because Double Tap gave the fast readings
+0065_double_tap_20261116_001455.csv,SHOVE_DOWN,named double_tap because Double Tap gave the fast readings
+0066_double_tap_20261116_001505.csv,SHOVE_DOWN,named double_tap because Double Tap gave the fast readings
+0067_double_tap_20261116_001514.csv,SHOVE_DOWN,named double_tap because Double Tap gave the fast readings
+0068_double_tap_20261116_001524.csv,SHOVE_DOWN,named double_tap because Double Tap gave the fast readings
+0069_double_tap_20261116_001545.csv,SHOVE_LEFT,named double_tap because Double Tap gave the fast readings
+0070_double_tap_20261116_001554.csv,SHOVE_LEFT,named double_tap because Double Tap gave the fast readings
+0071_double_tap_20261116_001603.csv,SHOVE_LEFT,named double_tap because Double Tap gave the fast readings
+0072_double_tap_20261116_001613.csv,SHOVE_LEFT,named double_tap because Double Tap gave the fast readings
+0073_double_tap_20261116_001625.csv,SHOVE_LEFT,named double_tap because Double Tap gave the fast readings
+0074_double_tap_20261116_001634.csv,SHOVE_LEFT,named double_tap because Double Tap gave the fast readings
+0075_double_tap_20261116_001644.csv,SHOVE_LEFT,named double_tap because Double Tap gave the fast readings
+0076_double_tap_20261116_001654.csv,SHOVE_LEFT,named double_tap because Double Tap gave the fast readings
+0077_double_tap_20261116_001843.csv,SHOVE_RIGHT,named double_tap because Double Tap gave the fast readings
+0078_double_tap_20261116_001854.csv,SHOVE_RIGHT,named double_tap because Double Tap gave the fast readings
+0079_double_tap_20261116_001905.csv,SHOVE_RIGHT,named double_tap because Double Tap gave the fast readings
+0080_double_tap_20261116_002003.csv,SHOVE_RIGHT,named double_tap because Double Tap gave the fast readings
+0081_double_tap_20261116_002014.csv,SHOVE_RIGHT,named double_tap because Double Tap gave the fast readings
+0082_double_tap_20261116_002024.csv,SHOVE_RIGHT,named double_tap because Double Tap gave the fast readings
+0083_double_tap_20261116_002033.csv,SHOVE_RIGHT,named double_tap because Double Tap gave the fast readings
+0084_double_tap_20261116_002043.csv,SHOVE_RIGHT,named double_tap because Double Tap gave the fast readings
+0085_double_tap_20261116_002134.csv,TWIST_RIGHT+SHOVE_UP,"Twist Right while shoving up, named double_tap because Double Tap gave the fast readings"
+0086_double_tap_20261116_002146.csv,TWIST_RIGHT+SHOVE_UP,"Twist Right while shoving up, named double_tap because Double Tap gave the fast readings"
+0087_double_tap_20261116_002156.csv,TWIST_RIGHT+SHOVE_UP,"Twist Right while shoving up, named double_tap because Double Tap gave the fast readings"
+0088_double_tap_20261116_002206.csv,TWIST_RIGHT+SHOVE_UP,"Twist Right while shoving up, named double_tap because Double Tap gave the fast readings"
+0089_double_tap_20261116_002217.csv,TWIST_RIGHT+SHOVE_UP,"Twist Right while shoving up, named double_tap because Double Tap gave the fast readings"
+0090_double_tap_20261116_002227.csv,TWIST_RIGHT+SHOVE_UP,"Twist Right while shoving up, named double_tap because Double Tap gave the fast readings"
+0091_double_tap_20261116_002237.csv,TWIST_RIGHT+SHOVE_UP,"Twist Right while shoving up, named double_tap because Double Tap gave the fast readings"
+0092_double_tap_20261116_002246.csv,TWIST_RIGHT+SHOVE_UP,"Twist Right while shoving up, named double_tap because Double Tap gave the fast readings"
+0093_double_tap_20261116_002258.csv,TWIST_RIGHT+SHOVE_RIGHT,"Twist Right while shoving right, named double_tap because Double Tap gave the fast readings"
+0094_double_tap_20261116_002308.csv,TWIST_RIGHT+SHOVE_RIGHT,"Twist Right while shoving right, named double_tap because Double Tap gave the fast readings"
+0095_double_tap_20261116_002319.csv,TWIST_RIGHT+SHOVE_RIGHT,"Twist Right while shoving right, named double_tap because Double Tap gave the fast readings"
+0096_double_tap_20261116_002329.csv,TWIST_RIGHT+SHOVE_RIGHT,"Twist Right while shoving right, named double_tap because Double Tap gave the fast readings"
+0097_double_tap_20261116_002339.csv,TWIST_RIGHT+SHOVE_RIGHT,"Twist Right while shoving right, named double_tap because Double Tap gave the fast readings"
+0098_double_tap_20261116_002348.csv,TWIST_RIGHT+SHOVE_RIGHT,"Twist Right while shoving right, named double_tap because Double Tap gave the fast readings"
+0099_double_tap_20261116_002358.csv,TWIST_RIGHT+SHOVE_RIGHT,"Twist Right while shoving right, named double_tap because Double Tap gave the fast readings"
+0100_double_tap_20261116_002407.csv,TWIST_RIGHT+SHOVE_RIGHT,"Twist Right while shoving right, named double_tap because Double Tap gave the fast readings"
